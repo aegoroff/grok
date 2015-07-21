@@ -73,10 +73,10 @@ LITERAL ([^%\r\n]|%[^\{]|%\{\})
 
 <INCOMMENT>{CRLF} {  BEGIN(INITIAL); return CRLF; }
 
-{CRLF} { BEGIN(INITIAL); }
+{CRLF} { }
 
-<INDEFINITION><<EOF>> { BEGIN(INITIAL); return CRLF; }
-<INCOMMENT><<EOF>> { BEGIN(INITIAL); return CRLF; }
+<INGROK><<EOF>> { BEGIN(INITIAL); }
+<INCOMMENT><<EOF>> { BEGIN(INITIAL); }
 
 <INGROK>{OPEN} {  BEGIN(INPATTERN); return OPEN; }
 

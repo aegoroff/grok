@@ -12,12 +12,11 @@
 #include <apr_general.h>
 #include "argtable2.h"
 
-extern FILE* yyin;
-
 #define OPT_F_SHORT "p"
 #define OPT_F_LONG "patterns"
 #define OPT_F_DESCR "one or more pattern files"
 
+extern void yyrestart(FILE * input_file);
 
 int main(int argc, char* argv[]) {
     errno_t error = 0;
