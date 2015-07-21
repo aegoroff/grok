@@ -85,7 +85,7 @@ LITERAL ([^%\r\n]|%[^\{]|%\{\})
 	return LITERAL; 
 }
 
-<INPATTERN>COMMA { return COMMA; }
+<INPATTERN>{COMMA} { return COMMA; }
 
 <INPATTERN>{DOT} { return DOT; }
 <INPATTERN>{ARROW} { return ARROW; }
