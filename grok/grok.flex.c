@@ -867,15 +867,15 @@ case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
 #line 76 "grok.lex"
-{ /* Do nothing by default */ }
+{ BEGIN(INITIAL); }
 	YY_BREAK
 case YY_STATE_EOF(INDEFINITION):
 #line 78 "grok.lex"
-{ return END; }
+{ BEGIN(INITIAL); return END; }
 	YY_BREAK
 case YY_STATE_EOF(INCOMMENT):
 #line 79 "grok.lex"
-{ return END; }
+{ BEGIN(INITIAL); return END; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
