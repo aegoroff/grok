@@ -85,7 +85,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(APR_HOME)\apr\include;$(APR_HOME)\apr-util\include;$(APR_HOME)\apr-iconv\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(APR_HOME14)\apr\include;$(APR_HOME14)\apr-util\include;$(APR_HOME14)\apr-iconv\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;APR_DECLARE_STATIC;APU_DECLARE_STATIC;API_DECLARE_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
       <CompileAs>CompileAsC</CompileAs>
@@ -93,7 +93,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Ws2_32.lib;apr-1.lib;apriconv-1.lib;aprutil-1.lib;strsafe.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(APR_HOME)\apr\LibD;$(APR_HOME)\apr-util\LibD;$(APR_HOME)\apr-iconv\LibD;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(APR_HOME14)\apr\LibD;$(APR_HOME14)\apr-util\LibD;$(APR_HOME14)\apr-iconv\LibD;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX86</TargetMachine>
@@ -104,7 +104,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(APR_HOME)\apr\include;$(APR_HOME)\apr-util\include;$(APR_HOME)\apr-iconv\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(APR_HOME14)\apr\include;$(APR_HOME14)\apr-util\include;$(APR_HOME14)\apr-iconv\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;APR_DECLARE_STATIC;APU_DECLARE_STATIC;API_DECLARE_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
       <CompileAs>CompileAsC</CompileAs>
@@ -112,7 +112,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Ws2_32.lib;apr-1.lib;apriconv-1.lib;aprutil-1.lib;strsafe.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(APR_HOME)\apr\x64\LibD;$(APR_HOME)\apr-util\x64\LibD;$(APR_HOME)\apr-iconv\x64\LibD;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(APR_HOME14)\apr\x64\LibD;$(APR_HOME14)\apr-util\x64\LibD;$(APR_HOME14)\apr-iconv\x64\LibD;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
@@ -121,7 +121,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(APR_HOME)\apr\include;$(APR_HOME)\apr-util\include;$(APR_HOME)\apr-iconv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(APR_HOME14)\apr\include;$(APR_HOME14)\apr-util\include;$(APR_HOME14)\apr-iconv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;APR_DECLARE_STATIC;APU_DECLARE_STATIC;API_DECLARE_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -137,14 +137,14 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>Ws2_32.lib;apr-1.lib;apriconv-1.lib;aprutil-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(APR_HOME)\apr\LibR;$(APR_HOME)\apr-util\LibR;$(APR_HOME)\apr-iconv\LibR;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(APR_HOME14)\apr\LibR;$(APR_HOME14)\apr-util\LibR;$(APR_HOME14)\apr-iconv\LibR;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(APR_HOME)\apr\include;$(APR_HOME)\apr-util\include;$(APR_HOME)\apr-iconv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(APR_HOME14)\apr\include;$(APR_HOME14)\apr-util\include;$(APR_HOME14)\apr-iconv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;APR_DECLARE_STATIC;APU_DECLARE_STATIC;API_DECLARE_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -160,7 +160,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>Ws2_32.lib;apr-1.lib;apriconv-1.lib;aprutil-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(APR_HOME)\apr\x64\LibR;$(APR_HOME)\apr-util\x64\LibR;$(APR_HOME)\apr-iconv\x64\LibR;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(APR_HOME14)\apr\x64\LibR;$(APR_HOME14)\apr-util\x64\LibR;$(APR_HOME14)\apr-iconv\x64\LibR;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
