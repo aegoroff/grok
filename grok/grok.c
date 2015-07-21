@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
   
     status = apr_app_initialize(&argc, &argv, NULL);
     if (status != APR_SUCCESS) {
-        printf("Couldn't initialize APR");
+		CrtPrintf("Couldn't initialize APR");
         return EXIT_FAILURE;
     }
 
@@ -44,10 +44,10 @@ int main(int argc, char* argv[]) {
 	// read from stdin
 	if (argc < 2) {
 		if (!yyparse()) {
-			printf("Parse worked\n");
+			CrtPrintf("Parse worked\n");
 		}
 		else {
-			printf("Parse failed\n");
+			CrtPrintf("Parse failed\n");
 		}
 		goto cleanup;
 	}
@@ -76,10 +76,10 @@ int main(int argc, char* argv[]) {
 		}
 		yyrestart(f);
 		if (!yyparse()) {
-			printf("Parse worked\n");
+			CrtPrintf("Parse worked\n");
 		}
 		else {
-			printf("Parse failed\n");
+			CrtPrintf("Parse failed\n");
 		}
 		fclose(f);
 	}
@@ -90,6 +90,6 @@ cleanup:
 }
 
 int yyerror(char* s) {
-    fprintf(stderr, "error: %s\n", s);
+	CrtFprintf(stderr, "error: %s\n", s);
     return 1;
 }
