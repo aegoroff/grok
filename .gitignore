@@ -10,6 +10,9 @@ packages/
 *.vcxproj.user
 *.DotSettings.user
 *.csproj.user
+grok.flex.c
+grok.tab.c
+grok.tab.h
 Debug/
 Release/
 !lib/Debug/
