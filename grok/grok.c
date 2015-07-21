@@ -14,15 +14,20 @@
 
 extern FILE* yyin;
 
-#define OPT_F_SHORT "F"
-#define OPT_F_LONG "query"
-#define OPT_F_DESCR "one or more query files"
+#define OPT_F_SHORT "p"
+#define OPT_F_LONG "patterns"
+#define OPT_F_DESCR "one or more pattern files"
 
 
 int main(int argc, char* argv[]) {
     errno_t error = 0;
     apr_status_t status = APR_SUCCESS;
 	struct arg_file* files = arg_filen(OPT_F_SHORT, OPT_F_LONG, NULL, 1, argc + 2, OPT_F_DESCR);
+	struct arg_end* end = arg_end(10);
+	int nerrors = 0;
+	int i = 0;
+
+	void* argtable[] = { files, end };
 
 	setlocale(LC_ALL, ".ACP");
 	setlocale(LC_NUMERIC, "C");
@@ -37,21 +42,48 @@ int main(int argc, char* argv[]) {
     
     frontend_init();
 
-    if(argc > 1) {
-        error = fopen_s(&yyin, argv[1], "r");
-        if(error) {
-            perror(argv[1]);
-            goto cleanup;
-        }
+	// read from stdin
+	if (argc < 2) {
+		if (!yyparse()) {
+			printf("Parse worked\n");
+		}
+		else {
+			printf("Parse failed\n");
+		}
+		goto cleanup;
+	}
+
+	if (arg_nullcheck(argtable) != 0) {
+		arg_print_syntax(stdout, argtable, NEW_LINE NEW_LINE);
+		arg_print_glossary_gnu(stdout, argtable);
+		goto cleanup;
+	}
+
+	nerrors = arg_parse(argc, argv, argtable);
+
+    if(nerrors > 0) {
+		arg_print_syntax(stdout, argtable, NEW_LINE NEW_LINE);
+		arg_print_glossary_gnu(stdout, argtable);
+		goto cleanup;
     }
 
-
-    if(!yyparse()) {
-        printf("Parse worked\n");
-    }
-    else {
-        printf("Parse failed\n");
-    }
+	for (; i < files->count; i++) {
+		FILE* f = NULL;
+		char* p = files->filename[i];
+		error = fopen_s(&f, p, "r");
+		if (error) {
+			perror(argv[1]);
+			goto cleanup;
+		}
+		yyrestart(f);
+		if (!yyparse()) {
+			printf("Parse worked\n");
+		}
+		else {
+			printf("Parse failed\n");
+		}
+		fclose(f);
+	}
 
 cleanup:
     frontend_cleanup();
