@@ -75,8 +75,8 @@ LITERAL ([^%\r\n]|%[^\{]|%\{\})
 
 {CRLF} { BEGIN(INITIAL); }
 
-<INDEFINITION><<EOF>> { BEGIN(INITIAL); return END; }
-<INCOMMENT><<EOF>> { BEGIN(INITIAL); return END; }
+<INDEFINITION><<EOF>> { BEGIN(INITIAL); return CRLF; }
+<INCOMMENT><<EOF>> { BEGIN(INITIAL); return CRLF; }
 
 <INGROK>{OPEN} {  BEGIN(INPATTERN); return OPEN; }
 

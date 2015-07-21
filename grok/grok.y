@@ -32,7 +32,6 @@
 %token <lit> LITERAL
 %token COMMENT
 %token CRLF
-%token END
 
 %type <def> key
 %type <lit> literal
@@ -50,7 +49,6 @@ line
     : key WS groks { on_definition_end(); }
     | COMMENT
     | CRLF
-    | END
     ;
 
 key : PATTERN_DEFINITION  { on_definition($1); };

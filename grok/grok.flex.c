@@ -871,11 +871,11 @@ YY_RULE_SETUP
 	YY_BREAK
 case YY_STATE_EOF(INDEFINITION):
 #line 78 "grok.lex"
-{ BEGIN(INITIAL); return END; }
+{ BEGIN(INITIAL); return CRLF; }
 	YY_BREAK
 case YY_STATE_EOF(INCOMMENT):
 #line 79 "grok.lex"
-{ BEGIN(INITIAL); return END; }
+{ BEGIN(INITIAL); return CRLF; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP

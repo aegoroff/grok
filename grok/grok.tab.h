@@ -60,8 +60,7 @@ extern int yydebug;
     WS = 270,
     LITERAL = 271,
     COMMENT = 272,
-    CRLF = 273,
-    END = 274
+    CRLF = 273
   };
 #endif
 
@@ -75,7 +74,7 @@ union YYSTYPE
 	char* def;
 	char* lit;
 
-#line 79 "grok.tab.h" /* yacc.c:1909  */
+#line 78 "grok.tab.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
