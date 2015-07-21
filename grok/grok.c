@@ -4,17 +4,28 @@
 #include "targetver.h"
 
 #include <stdio.h>
+#include <locale.h>
 #include "apr.h"
 #include "grok.tab.h"
 #include "frontend.h"
 #include <apr_errno.h>
 #include <apr_general.h>
+#include "argtable2.h"
 
 extern FILE* yyin;
+
+#define OPT_F_SHORT "F"
+#define OPT_F_LONG "query"
+#define OPT_F_DESCR "one or more query files"
+
 
 int main(int argc, char* argv[]) {
     errno_t error = 0;
     apr_status_t status = APR_SUCCESS;
+	struct arg_file* files = arg_filen(OPT_F_SHORT, OPT_F_LONG, NULL, 1, argc + 2, OPT_F_DESCR);
+
+	setlocale(LC_ALL, ".ACP");
+	setlocale(LC_NUMERIC, "C");
   
     status = apr_app_initialize(&argc, &argv, NULL);
     if (status != APR_SUCCESS) {

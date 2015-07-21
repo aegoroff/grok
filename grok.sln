@@ -1,9 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "grok", "grok\grok.vcxproj", "{EA48CF34-B92F-430D-A2AE-3FA848DBE759}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F632DA6F-F8E5-4FC9-830D-6BC217937F2D} = {F632DA6F-F8E5-4FC9-830D-6BC217937F2D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "argtable", "argtable\argtable.vcxproj", "{F632DA6F-F8E5-4FC9-830D-6BC217937F2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +26,14 @@ Global
 		{EA48CF34-B92F-430D-A2AE-3FA848DBE759}.Release|Win32.Build.0 = Release|Win32
 		{EA48CF34-B92F-430D-A2AE-3FA848DBE759}.Release|x64.ActiveCfg = Release|x64
 		{EA48CF34-B92F-430D-A2AE-3FA848DBE759}.Release|x64.Build.0 = Release|x64
+		{F632DA6F-F8E5-4FC9-830D-6BC217937F2D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F632DA6F-F8E5-4FC9-830D-6BC217937F2D}.Debug|Win32.Build.0 = Debug|Win32
+		{F632DA6F-F8E5-4FC9-830D-6BC217937F2D}.Debug|x64.ActiveCfg = Debug|x64
+		{F632DA6F-F8E5-4FC9-830D-6BC217937F2D}.Debug|x64.Build.0 = Debug|x64
+		{F632DA6F-F8E5-4FC9-830D-6BC217937F2D}.Release|Win32.ActiveCfg = Release|Win32
+		{F632DA6F-F8E5-4FC9-830D-6BC217937F2D}.Release|Win32.Build.0 = Release|Win32
+		{F632DA6F-F8E5-4FC9-830D-6BC217937F2D}.Release|x64.ActiveCfg = Release|x64
+		{F632DA6F-F8E5-4FC9-830D-6BC217937F2D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
