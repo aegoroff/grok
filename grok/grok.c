@@ -18,6 +18,8 @@
 
 extern void yyrestart(FILE * input_file);
 
+void Parse();
+
 int main(int argc, char* argv[]) {
     errno_t error = 0;
     apr_status_t status = APR_SUCCESS;
@@ -43,12 +45,7 @@ int main(int argc, char* argv[]) {
 
 	// read from stdin
 	if (argc < 2) {
-		if (!yyparse()) {
-			CrtPrintf("Parse worked\n");
-		}
-		else {
-			CrtPrintf("Parse failed\n");
-		}
+		Parse();
 		goto cleanup;
 	}
 
@@ -75,18 +72,23 @@ int main(int argc, char* argv[]) {
 			goto cleanup;
 		}
 		yyrestart(f);
-		if (!yyparse()) {
-			CrtPrintf("Parse worked\n");
-		}
-		else {
-			CrtPrintf("Parse failed\n");
-		}
+		Parse();
 		fclose(f);
 	}
 
 cleanup:
     frontend_cleanup();
     return 0;
+}
+
+void Parse()
+{
+	if (!yyparse()) {
+		CrtPrintf("Parse worked\n");
+	}
+	else {
+		CrtPrintf("Parse failed\n");
+	}
 }
 
 int yyerror(char* s) {
