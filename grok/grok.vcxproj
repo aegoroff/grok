@@ -204,10 +204,10 @@
     </Flex>
     <Bison Include="grok.y">
       <FileType>Document</FileType>
-      <Debug Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</Debug>
-      <Debug Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</Debug>
-      <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</Verbose>
-      <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</Verbose>
+      <Debug Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</Debug>
+      <Debug Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Debug>
+      <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</Verbose>
+      <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Verbose>
       <Warnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">all</Warnings>
       <Warnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">all</Warnings>
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).tab.c</OutputFile>
@@ -220,6 +220,8 @@
       <Verbose Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</Verbose>
       <Warnings Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">all</Warnings>
       <Warnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">all</Warnings>
+      <Report Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">all</Report>
+      <Report Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">all</Report>
     </Bison>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

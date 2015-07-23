@@ -13,6 +13,7 @@ packages/
 grok.flex.c
 grok.tab.c
 grok.tab.h
+grok.output
 Debug/
 Release/
 !lib/Debug/
