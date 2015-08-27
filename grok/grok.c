@@ -21,18 +21,22 @@
 
 
 extern void yyrestart(FILE * input_file);
+BOOL match_re(char* pattern, char* subject);
 
 void Parse();
 
 int main(int argc, char* argv[]) {
     errno_t error = 0;
     apr_status_t status = APR_SUCCESS;
+
+    struct arg_str* string = arg_str0("s", "string", NULL, "string to match");
+    struct arg_str* macro = arg_str0("m", "macro", NULL, "pattern macros to build regexp");
 	struct arg_file* files = arg_filen(OPT_F_SHORT, OPT_F_LONG, NULL, 1, argc + 2, OPT_F_DESCR);
 	struct arg_end* end = arg_end(10);
 	int nerrors = 0;
 	int i = 0;
 
-	void* argtable[] = { files, end };
+	void* argtable[] = { string, macro, files, end };
 
 	setlocale(LC_ALL, ".ACP");
 	setlocale(LC_NUMERIC, "C");
@@ -80,6 +84,12 @@ int main(int argc, char* argv[]) {
 		fclose(f);
 	}
 
+    if (string->count > 0 && macro->count > 0) {
+        char* pattern = get_pattern(macro->sval[0]);
+        BOOL r = match_re(pattern, string->sval[0]);
+        CrtPrintf("string: %s | match: %s | pattern: %s\n", string->sval[0], r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
+    }
+
 cleanup:
     frontend_cleanup();
     return 0;
@@ -87,10 +97,7 @@ cleanup:
 
 void Parse()
 {
-	if (!yyparse()) {
-		CrtPrintf("Parse worked\n");
-	}
-	else {
+	if (yyparse()) {
 		CrtPrintf("Parse failed\n");
 	}
 }
@@ -110,7 +117,7 @@ BOOL match_re(char* pattern, char* subject) {
     if (re == NULL) {
         PCRE2_UCHAR buffer[256];
         pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
-        printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
+        CrtPrintf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
         return FALSE;
     }
     pcre2_match_data* match_data = pcre2_match_data_create_from_pattern(re, NULL);
