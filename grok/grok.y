@@ -14,8 +14,7 @@
 %}
 
 %union {
-	char* def;
-	char* lit;
+	char* str;
 }
 
 %start translation_unit
@@ -26,19 +25,21 @@
 %token COLON
 %token OPEN
 %token CLOSE
-%token PATTERN_REF
-%token <def> PATTERN_DEFINITION
+%token <str> PATTERN_REF
+%token <str> PATTERN_DEFINITION
 %token CASTING_PATTERN
 %token TYPE_NAME
 %token LEVEL
 %token PROPERTY
 %token WS
-%token <lit> LITERAL
+%token <str> LITERAL
 %token COMMENT
 %token CRLF
 
-%type <def> key
-%type <lit> literal
+%type <str> key
+%type <str> grok
+%type <str> literal
+%type <str> definition
 
 %%
 
@@ -68,7 +69,7 @@ grok
 	;
 	
 pattern
-	: OPEN definition CLOSE
+	: OPEN definition CLOSE { on_grok($2); }
 	;
 
 literal 
@@ -76,8 +77,8 @@ literal
     ;
 
 definition
-	: PATTERN_REF
-	| PATTERN_REF semantic
+	: PATTERN_REF { $$ = $1; }
+	| PATTERN_REF semantic { $$ = $1; }
 	;
 
 semantic

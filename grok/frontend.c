@@ -33,6 +33,10 @@ void on_literal(char* str) {
     *(const char**)apr_array_push(composition) = str;
 }
 
+void on_grok(char* str) {
+    *(const char**)apr_array_push(composition) = apr_psprintf(pool, "%{%s}", str);;
+}
+
 char* frountend_strdup(char* str) {
     return apr_pstrdup(pool, str);
 }

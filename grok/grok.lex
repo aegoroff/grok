@@ -61,7 +61,7 @@ LITERAL ([^%\r\n]|%[^\{]|%\{\})
 
 {PATTERN_DEFINITION} { 
 	BEGIN(INDEFINITION); 
-	yylval.def = frountend_strdup(yytext);
+	yylval.str = frountend_strdup(yytext);
 	return PATTERN_DEFINITION; 
 }
 
@@ -81,7 +81,7 @@ LITERAL ([^%\r\n]|%[^\{]|%\{\})
 <INGROK>{OPEN} {  BEGIN(INPATTERN); return OPEN; }
 
 <INGROK>{LITERAL}+ { 
-	yylval.lit = frountend_strdup(yytext);
+	yylval.str = frountend_strdup(yytext);
 	return LITERAL; 
 }
 
@@ -109,7 +109,10 @@ LITERAL ([^%\r\n]|%[^\{]|%\{\})
 <INPATTERN>{LEVEL_ERROR} { return LEVEL; }
 <INPATTERN>{LEVEL_FATAL} { return LEVEL; }
 
-<INPATTERN>{PATTERN_REF} { return PATTERN_REF; }
+<INPATTERN>{PATTERN_REF} { 
+	yylval.str = frountend_strdup(yytext);
+	return PATTERN_REF; 
+}
 <INPATTERN>{PROPERTY} { return PROPERTY; }
 
 <INPATTERN>{CASTING_PATTERN} { return CASTING_PATTERN; }
