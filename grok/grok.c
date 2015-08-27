@@ -1,6 +1,8 @@
 // calc.cpp : Defines the entry point for the console application.
 //
 
+#define PCRE2_CODE_UNIT_WIDTH 8
+
 #include "targetver.h"
 
 #include <stdio.h>
@@ -11,10 +13,12 @@
 #include <apr_errno.h>
 #include <apr_general.h>
 #include "argtable2.h"
+#include "../pcre/pcre2.h"
 
 #define OPT_F_SHORT "p"
 #define OPT_F_LONG "patterns"
 #define OPT_F_DESCR "one or more pattern files"
+
 
 extern void yyrestart(FILE * input_file);
 
@@ -91,7 +95,41 @@ void Parse()
 	}
 }
 
-int yyerror(char* s) {
-	CrtFprintf(stderr, "error: %s\n", s);
-    return 1;
+BOOL match_re(char* pattern, char* subject) {
+    int errornumber = 0;
+    size_t erroroffset = 0;
+
+    pcre2_code* re = pcre2_compile(
+        pattern,       /* the pattern */
+        PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
+        0,                     /* default options */
+        &errornumber,          /* for error number */
+        &erroroffset,          /* for error offset */
+        NULL);                 /* use default compile context */
+
+    if (re == NULL) {
+        PCRE2_UCHAR buffer[256];
+        pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
+        printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
+        return FALSE;
+    }
+    pcre2_match_data* match_data = pcre2_match_data_create_from_pattern(re, NULL);
+
+    int flags = PCRE2_NOTEMPTY;
+    if (!strstr(subject, "^")) {
+        flags |= PCRE2_NOTBOL;
+    }
+    if (!strstr(subject, "$")) {
+        flags |= PCRE2_NOTEOL;
+    }
+
+    int rc = pcre2_match(
+        re,                   /* the compiled pattern */
+        subject,              /* the subject string */
+        strlen(subject),       /* the length of the subject */
+        0,                    /* start at offset 0 in the subject */
+        flags,
+        match_data,           /* block for storing the result */
+        NULL);                /* use default match context */
+    return rc >= 0;
 }

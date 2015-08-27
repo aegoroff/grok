@@ -2,7 +2,11 @@
     #include <stdio.h>
     #include <stdlib.h>
 	#include "grok.tab.h"
+	#include "lib.h"
 	#include "frontend.h"
+
+	extern int yylineno;
+    extern char *yytext;
 
 	int yyerror(char *s);
 	int yylex();
@@ -113,3 +117,8 @@ member
 	;
 
 %%
+
+int yyerror(char* s) {
+	CrtFprintf(stderr, "%d: %s at %s\n", yylineno, s, yytext);
+	return 1;
+}
