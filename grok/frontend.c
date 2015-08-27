@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include  "frontend.h"
 #include "apr.h"
-#include "apr_general.h"
 #include "apr_tables.h"
 #include "apr_pools.h"
 #include "apr_strings.h"
@@ -15,13 +14,9 @@ apr_hash_t* definition;
 apr_array_header_t* composition = NULL;
 char* currentDef = NULL;
 
-void frontend_init() {
-    apr_pool_create(&pool, NULL);
+void frontend_init(apr_pool_t* p) {
+    pool = p;
     definition = apr_hash_make(pool);
-}
-
-void frontend_cleanup() {
-    apr_pool_destroy(pool);
 }
 
 void on_definition(char* def) {
