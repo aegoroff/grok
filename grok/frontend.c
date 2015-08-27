@@ -37,6 +37,11 @@ void on_grok(char* str) {
     *(const char**)apr_array_push(composition) = apr_psprintf(pool, "%{%s}", str);;
 }
 
+void get_pattern(char* def) {
+    const char* result = apr_hash_get(definition, (const char*)def, APR_HASH_KEY_STRING);
+    return result;
+}
+
 char* frountend_strdup(char* str) {
     return apr_pstrdup(pool, str);
 }
