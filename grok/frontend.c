@@ -7,7 +7,9 @@
 #include "apr_strings.h"
 #include "apr_hash.h"
 
-#define ARRAY_INIT_SZ           32
+#define ARRAY_INIT_SZ   256
+
+void compose(char*, Part_t);
 
 apr_pool_t* pool;
 apr_hash_t* definition;
@@ -21,19 +23,26 @@ void frontend_init(apr_pool_t* p) {
 
 void on_definition(char* def) {
     currentDef = def;
-    composition = apr_array_make(pool, ARRAY_INIT_SZ, sizeof(const char*));
+    composition = apr_array_make(pool, ARRAY_INIT_SZ, sizeof(Info_t*));
 }
 
 void on_literal(char* str) {
-    *(const char**)apr_array_push(composition) = str;
+    compose(str, PartLiteral);
 }
 
 void on_grok(char* str) {
-    *(const char**)apr_array_push(composition) = apr_psprintf(pool, "%{%s}", str);;
+    compose(str, PartReference);
 }
 
 char* get_pattern(char* def) {
-    const char* result = apr_hash_get(definition, (const char*)def, APR_HASH_KEY_STRING);
+    apr_array_header_t* parts = apr_hash_get(definition, (const char*)def, APR_HASH_KEY_STRING);
+
+    char* result = NULL;
+    result = ((Info_t**)parts->elts)[0]->Info;
+    for (int i = 1; i < parts->nelts; i++) {
+        Info_t* info = ((Info_t**)parts->elts)[i];
+        result = apr_pstrcat(pool, result, info->Info, NULL);
+    }
     return result;
 }
 
@@ -42,12 +51,16 @@ char* frountend_strdup(char* str) {
 }
 
 void on_definition_end() {
-    int i = 1;
-    char* result = NULL;
-    result = ((const char**)composition->elts)[0];
-    for (; i < composition->nelts; i++) {
-        const char *s = ((const char**)composition->elts)[i];
-        result = apr_pstrcat(pool, result, s, NULL);
+    apr_array_header_t* parts = apr_array_make(pool, composition->nelts, sizeof(Info_t*));
+    for (int i = 0; i < composition->nelts; i++) {
+        *(Info_t**)apr_array_push(parts) = ((Info_t**)composition->elts)[i];
     }
-    apr_hash_set(definition, (const char*)currentDef, APR_HASH_KEY_STRING, result);
+    apr_hash_set(definition, (const char*)currentDef, APR_HASH_KEY_STRING, parts);
+}
+
+void compose(char* data, Part_t type) {
+    Info_t* result = (Info_t*)apr_pcalloc(pool, sizeof(Info_t));
+    result->Type = type;
+    result->Info = data;
+    *(Info_t**)apr_array_push(composition) = result;
 }

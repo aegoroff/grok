@@ -1,5 +1,16 @@
 ﻿#include <apr_general.h>
 
+
+typedef enum Part {
+    PartLiteral,
+    PartReference
+} Part_t;
+
+typedef struct Info {
+    Part_t Type;
+    char* Info;
+} Info_t;
+
 void frontend_init(apr_pool_t* pool);
 
 void on_definition(char* def);
