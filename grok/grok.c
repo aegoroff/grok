@@ -35,7 +35,7 @@ void* pcre_alloc(size_t, void*);
 void pcre_free(void*, void*);
 
 pcre2_general_context* pcre_context = NULL;
-apr_pool_t* pool;
+apr_pool_t* main_pool;
 
 void Parse();
 
@@ -64,9 +64,9 @@ int main(int argc, char* argv[]) {
 
     atexit(apr_terminate);
 
-    apr_pool_create(&pool, NULL);
+    apr_pool_create(&main_pool, NULL);
     pcre_context = pcre2_general_context_create(&pcre_alloc, &pcre_free, NULL);
-    fend_init(pool);
+    fend_init(main_pool);
 
     // read from stdin
     if(argc < 2) {
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 
     for(; i < files->count; i++) {
         FILE* f = NULL;
-        char* p = files->filename[i];
+        const char* p = files->filename[i];
         error = fopen_s(&f, p, "r");
         if(error) {
             perror(argv[1]);
@@ -102,14 +102,14 @@ int main(int argc, char* argv[]) {
     }
 
     if(string->count > 0 && macro->count > 0) {
-        char* pattern = fend_get_pattern(macro->sval[0]);
+        const char* pattern = fend_get_pattern(macro->sval[0]);
         BOOL r = match_re(pattern, string->sval[0]);
         CrtPrintf("string: %s | match: %s | pattern: %s\n", string->sval[0], r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
     }
 
 cleanup:
     pcre2_general_context_free(pcre_context);
-    apr_pool_destroy(pool);
+    apr_pool_destroy(main_pool);
     return 0;
 }
 
@@ -159,7 +159,7 @@ BOOL match_re(char* pattern, char* subject) {
 }
 
 void* pcre_alloc(size_t size, void* memory_data) {
-    return apr_palloc(pool, size);
+    return apr_palloc(main_pool, size);
 }
 
 void pcre_free(void* p1, void* p2) {}
