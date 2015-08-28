@@ -37,9 +37,8 @@ void on_grok(char* str) {
 char* get_pattern(char* def) {
     apr_array_header_t* parts = apr_hash_get(definition, (const char*)def, APR_HASH_KEY_STRING);
 
-    char* result = NULL;
-    result = ((Info_t**)parts->elts)[0]->Info;
-    for (int i = 1; i < parts->nelts; i++) {
+    char* result = "";
+    for (int i = 0; i < parts->nelts; i++) {
         Info_t* info = ((Info_t**)parts->elts)[i];
         result = apr_pstrcat(pool, result, info->Info, NULL);
     }
