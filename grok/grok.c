@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include "apr.h"
+#include "apr_file_io.h"
 #include "grok.tab.h"
 #include "frontend.h"
 #include "backend.h"
@@ -39,13 +40,15 @@ int main(int argc, char* argv[]) {
     apr_status_t status = APR_SUCCESS;
 
     struct arg_str* string = arg_str0("s", "string", NULL, "string to match");
+    struct arg_file* file = arg_file0("f", "file", NULL, "full path to file to read data from");
+
     struct arg_str* macro = arg_str0("m", "macro", NULL, "pattern macros to build regexp");
     struct arg_file* files = arg_filen(OPT_F_SHORT, OPT_F_LONG, NULL, 1, argc + 2, OPT_F_DESCR);
     struct arg_end* end = arg_end(10);
     int nerrors = 0;
     int i = 0;
 
-    void* argtable[] = {string, macro, files, end};
+    void* argtable[] = {string, macro, file, files, end};
 
     setlocale(LC_ALL, ".ACP");
     setlocale(LC_NUMERIC, "C");
@@ -100,9 +103,24 @@ match:
         BOOL r = bend_match_re(pattern, string->sval[0]);
         lib_printf("string: %s | match: %s | pattern: %s\n", string->sval[0], r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
     }
+    if(file->count > 0 && macro->count > 0) {
+        const char* pattern = bend_create_pattern(macro->sval[0]);
+        apr_file_t* file_handle = NULL;
+        status = apr_file_open(&file_handle, file->filename[0], APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
+
+        int len = 0xFFF * sizeof(char);
+        char* buffer = (char**)apr_pcalloc(main_pool, len);
+
+        status = apr_file_gets(buffer, len, file_handle);
+
+        status = apr_file_close(file_handle);
+        BOOL r = bend_match_re(pattern, buffer);
+        lib_printf("string: %s | match: %s | pattern: %s\n", buffer, r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
+    }
 
 cleanup:
     bend_cleanup();
+    arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     apr_pool_destroy(main_pool);
     return 0;
 }
