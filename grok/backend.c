@@ -102,7 +102,7 @@ char* bend_create_pattern(const char* macro) {
                 // childs in reverse order
                 apr_array_header_t* childs = fend_get_pattern(current->data);
 
-                // trailing )
+                // trailing ) of named pattern
                 if (current->reference != NULL) {
                     Info_t* trail_paren = (Info_t*)apr_pcalloc(local_pool, sizeof(Info_t));
                     trail_paren->type = PartLiteral;
@@ -118,7 +118,7 @@ char* bend_create_pattern(const char* macro) {
                     const char* reference = current->reference;
                     const char* result = apr_hash_get(used_properties, reference, APR_HASH_KEY_STRING);
                     if (result != NULL) {
-                        reference = apr_pstrcat(bend_pool, current->data, "_", reference, NULL);
+                        reference = apr_pstrcat(local_pool, current->data, "_", reference, NULL);
                     }
                     apr_hash_set(used_properties, reference, APR_HASH_KEY_STRING, current->data);
                     
