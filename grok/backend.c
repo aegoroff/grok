@@ -18,6 +18,7 @@
 #include "backend.h"
 #include <apr_strings.h>
 #include "frontend.h"
+#include <apr_hash.h>
 
 
 apr_pool_t* bend_pool = NULL;
@@ -81,8 +82,12 @@ BOOL bend_match_re(char* pattern, char* subject) {
 char* bend_create_pattern(const char* macro) {
     apr_array_header_t* root_elements = fend_get_pattern(macro);
 
-    apr_array_header_t* stack = apr_array_make(bend_pool, COMPOSE_INIT_SZ, sizeof(Info_t*));
-    apr_array_header_t* composition = apr_array_make(bend_pool, COMPOSE_INIT_SZ, sizeof(char*));
+    apr_pool_t* local_pool = NULL;
+    apr_pool_create(&local_pool, bend_pool);
+
+    apr_array_header_t* stack = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(Info_t*));
+    apr_array_header_t* composition = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(char*));
+    apr_hash_t* used_properties = apr_hash_make(local_pool);
 
     for(int i = 0; i < root_elements->nelts; i++) {
         Info_t* top = ((Info_t**)root_elements->elts)[i];
@@ -96,8 +101,30 @@ char* bend_create_pattern(const char* macro) {
             else {
                 // childs in reverse order
                 apr_array_header_t* childs = fend_get_pattern(current->data);
+
+                // trailing )
+                if (current->reference != NULL) {
+                    Info_t* trail_paren = (Info_t*)apr_pcalloc(local_pool, sizeof(Info_t));
+                    trail_paren->type = PartLiteral;
+                    trail_paren->data = ")";
+                    *(Info_t**)apr_array_push(stack) = trail_paren;
+                }
+
                 for(int j = childs->nelts - 1; j >= 0; j--) {
                     *(Info_t**)apr_array_push(stack) = ((Info_t**)childs->elts)[j];
+                }
+                // leading (?<name>
+                if(current->reference != NULL) {
+                    const char* reference = current->reference;
+                    const char* result = apr_hash_get(used_properties, reference, APR_HASH_KEY_STRING);
+                    if (result != NULL) {
+                        reference = apr_pstrcat(bend_pool, current->data, "_", reference, NULL);
+                    }
+                    apr_hash_set(used_properties, reference, APR_HASH_KEY_STRING, current->data);
+                    
+                    *(char**)apr_array_push(composition) = "(?<";
+                    *(char**)apr_array_push(composition) = reference;
+                    *(char**)apr_array_push(composition) = ">";
                 }
             }
         }
@@ -107,5 +134,6 @@ char* bend_create_pattern(const char* macro) {
         char* part = ((Info_t**)composition->elts)[i];
         result = apr_pstrcat(bend_pool, result, part, NULL);
     }
+    apr_pool_destroy(local_pool);
     return result;
 }
