@@ -115,7 +115,17 @@ match:
 
         status = apr_file_close(file_handle);
         BOOL r = bend_match_re(pattern, buffer);
-        lib_printf("string: %s | match: %s | pattern: %s\n", buffer, r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
+        lib_printf("file: %s | match: %s | pattern: %s\n", file->filename[0], r ? "TRUE" : "FALSE", macro->sval[0]);
+        if(r) {
+            lib_printf("\n\n");
+            for (apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
+                const char *k;
+                const char *v;
+
+                apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
+                lib_printf("%s: %s\n", k, v);
+            }
+        }
     }
 
 cleanup:

@@ -79,19 +79,20 @@ BOOL bend_match_re(pattern_t* pattern, char* subject) {
         NULL); /* use default match context */
 
     BOOL result = rc > 0;
+    if(!result) {
+        return result;
+    }
 
-    apr_hash_index_t* hi;
-    for (hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
+    for (apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
         const char *k;
         const char *v;
 
         apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
-        PCRE2_SIZE len = 512 * sizeof(PCRE2_UCHAR);
+        PCRE2_SIZE len = 128 * sizeof(PCRE2_UCHAR);
         PCRE2_UCHAR* buffer = (PCRE2_UCHAR*)apr_pcalloc(bend_pool, len);
         pcre2_substring_copy_byname(match_data, k, buffer, &len);
-        lib_printf("%s: %s\n", k, buffer);
+        apr_hash_set(pattern->properties, k, APR_HASH_KEY_STRING, buffer);
     }
-    lib_printf("\n\n");
     return result;
 }
 
