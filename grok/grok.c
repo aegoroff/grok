@@ -21,6 +21,7 @@
 #include "frontend.h"
 #include <apr_errno.h>
 #include <apr_general.h>
+#include <apr_strings.h>
 #include "argtable2.h"
 #include "../pcre/pcre2.h"
 
@@ -29,10 +30,12 @@
 #define OPT_F_DESCR "one or more pattern files"
 
 
+// Forwards
 extern void yyrestart(FILE* input_file);
 BOOL match_re(char* pattern, char* subject);
 void* pcre_alloc(size_t, void*);
 void pcre_free(void*, void*);
+char* create_pattern(apr_array_header_t* parts);
 
 pcre2_general_context* pcre_context = NULL;
 apr_pool_t* main_pool;
@@ -102,7 +105,8 @@ int main(int argc, char* argv[]) {
     }
 
     if(string->count > 0 && macro->count > 0) {
-        const char* pattern = fend_get_pattern(macro->sval[0]);
+        apr_array_header_t* parts = fend_get_pattern(macro->sval[0]);
+        const char* pattern = create_pattern(parts);
         BOOL r = match_re(pattern, string->sval[0]);
         CrtPrintf("string: %s | match: %s | pattern: %s\n", string->sval[0], r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
     }
@@ -117,6 +121,15 @@ void Parse() {
     if(yyparse()) {
         CrtPrintf("Parse failed\n");
     }
+}
+
+char* create_pattern(apr_array_header_t* parts) {
+    char* result = "";
+    for (int i = 0; i < parts->nelts; i++) {
+        Info_t* info = ((Info_t**)parts->elts)[i];
+        result = apr_pstrcat(main_pool, result, info->Info, NULL);
+    }
+    return result;
 }
 
 BOOL match_re(char* pattern, char* subject) {

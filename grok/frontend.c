@@ -60,15 +60,9 @@ void app_part(char* data, Part_t type) {
     *(Info_t**)apr_array_push(fend_composition) = result;
 }
 
-char* fend_get_pattern(char* def) {
+apr_array_header_t* fend_get_pattern(char* def) {
     apr_array_header_t* parts = apr_hash_get(fend_definition, (const char*)def, APR_HASH_KEY_STRING);
-
-    char* result = "";
-    for (int i = 0; i < parts->nelts; i++) {
-        Info_t* info = ((Info_t**)parts->elts)[i];
-        result = apr_pstrcat(fend_pool, result, info->Info, NULL);
-    }
-    return result;
+    return parts;
 }
 
 char* fend_strdup(char* str) {

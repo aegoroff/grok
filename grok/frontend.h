@@ -11,6 +11,7 @@
 
 
 #include <apr_general.h>
+#include <apr_tables.h>
 
 typedef enum Part {
     PartLiteral,
@@ -29,7 +30,7 @@ void fend_on_definition_end(char* key);
 
 void fend_on_literal(char* str);
 void fend_on_grok(char* str);
-char* fend_get_pattern(char* def);
+apr_array_header_t* fend_get_pattern(char* def);
 
 char* fend_strdup(char* str);
 
