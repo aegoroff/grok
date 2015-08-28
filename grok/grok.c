@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
     // read from stdin
     if(argc < 2) {
         run_parsing();
-        goto cleanup;
+        goto match;
     }
 
     if(arg_nullcheck(argtable) != 0) {
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
         run_parsing();
         fclose(f);
     }
-
+match:
     if(string->count > 0 && macro->count > 0) {
         const char* pattern = bend_create_pattern(macro->sval[0]);
         BOOL r = bend_match_re(pattern, string->sval[0]);
