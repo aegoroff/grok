@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
         status = apr_file_open(&file_handle, file->filename[0], APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
 
         int len = 0xFFF * sizeof(char);
-        char* buffer = (char**)apr_pcalloc(main_pool, len);
+        char* buffer = (char*)apr_pcalloc(main_pool, len);
 
         status = apr_file_gets(buffer, len, file_handle);
 

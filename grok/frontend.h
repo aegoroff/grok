@@ -39,7 +39,7 @@ void fend_on_definition_end(char* key);
 void fend_on_literal(char* str);
 void fend_on_grok(Macro_t* str);
 Macro_t* fend_on_macro(char* name, char* prop);
-apr_array_header_t* fend_get_pattern(char* def);
+apr_array_header_t* fend_get_pattern(const char* def);
 
 char* fend_strdup(char* str);
 

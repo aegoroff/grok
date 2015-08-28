@@ -68,8 +68,8 @@ void app_part(char* data, char* reference, Part_t type) {
     *(Info_t**)apr_array_push(fend_composition) = result;
 }
 
-apr_array_header_t* fend_get_pattern(char* def) {
-    apr_array_header_t* parts = apr_hash_get(fend_definition, (const char*)def, APR_HASH_KEY_STRING);
+apr_array_header_t* fend_get_pattern(const char* def) {
+    apr_array_header_t* parts = apr_hash_get(fend_definition, def, APR_HASH_KEY_STRING);
     return parts;
 }
 

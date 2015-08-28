@@ -40,7 +40,7 @@ void bend_cleanup() {
     apr_pool_destroy(bend_pool);
 }
 
-BOOL bend_match_re(pattern_t* pattern, char* subject) {
+BOOL bend_match_re(pattern_t* pattern, const char* subject) {
     int errornumber = 0;
     size_t erroroffset = 0;
 
@@ -119,7 +119,7 @@ pattern_t* bend_create_pattern(const char* macro) {
             else {
                 // named pattern case handling
                 if (current->reference != NULL) {
-                    const char* reference = current->reference;
+                    char* reference = current->reference;
                     // duplicate properties elimnation
                     const char* result = apr_hash_get(used_properties, reference, APR_HASH_KEY_STRING);
                     if (result != NULL) {
@@ -148,7 +148,7 @@ pattern_t* bend_create_pattern(const char* macro) {
     }
     char* regex = "";
     for(int i = 0; i < composition->nelts; i++) {
-        char* part = ((Info_t**)composition->elts)[i];
+        char* part = ((char**)composition->elts)[i];
         regex = apr_pstrcat(bend_pool, regex, part, NULL);
     }
     apr_pool_destroy(local_pool);

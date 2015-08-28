@@ -187,7 +187,7 @@ int lib_fprintf(FILE* file, __format_string const char* format, ...) {
     return result;
 }
 
-int lib_sprintf(const char* buffer, __format_string const char* format, ...) {
+int lib_sprintf(char* buffer, __format_string const char* format, ...) {
     va_list params = NULL;
     int result = 0;
     va_start(params, format);
