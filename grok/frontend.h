@@ -9,6 +9,8 @@
  * Copyright: (c) Alexander Egorov 2015
  */
 
+#ifndef GROK_FRONTEND_H_
+#define GROK_FRONTEND_H_
 
 #include <apr_general.h>
 #include <apr_tables.h>
@@ -34,4 +36,4 @@ apr_array_header_t* fend_get_pattern(char* def);
 
 char* fend_strdup(char* str);
 
-
+#endif // GROK_FRONTEND_H_

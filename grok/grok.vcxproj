@@ -171,12 +171,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="backend.h" />
     <ClInclude Include="grok.tab.h" />
     <ClInclude Include="frontend.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\srclib\lib.c" />
+    <ClCompile Include="backend.c" />
     <ClCompile Include="grok.c" />
     <ClCompile Include="grok.flex.c" />
     <ClCompile Include="grok.tab.c" />

@@ -19,29 +19,20 @@
 #include "apr.h"
 #include "grok.tab.h"
 #include "frontend.h"
+#include "backend.h"
 #include <apr_errno.h>
 #include <apr_general.h>
-#include <apr_strings.h>
 #include "argtable2.h"
-#include "../pcre/pcre2.h"
 
 #define OPT_F_SHORT "p"
 #define OPT_F_LONG "patterns"
 #define OPT_F_DESCR "one or more pattern files"
 
-
 // Forwards
 extern void yyrestart(FILE* input_file);
-BOOL match_re(char* pattern, char* subject);
-void* pcre_alloc(size_t, void*);
-void pcre_free(void*, void*);
-char* create_pattern(apr_array_header_t* parts);
+void run_parsing();
 
-pcre2_general_context* pcre_context = NULL;
 apr_pool_t* main_pool;
-
-void Parse();
-
 
 int main(int argc, char* argv[]) {
     errno_t error = 0;
@@ -68,12 +59,12 @@ int main(int argc, char* argv[]) {
     atexit(apr_terminate);
 
     apr_pool_create(&main_pool, NULL);
-    pcre_context = pcre2_general_context_create(&pcre_alloc, &pcre_free, NULL);
+    bend_init(main_pool);
     fend_init(main_pool);
 
     // read from stdin
     if(argc < 2) {
-        Parse();
+        run_parsing();
         goto cleanup;
     }
 
@@ -100,79 +91,24 @@ int main(int argc, char* argv[]) {
             goto cleanup;
         }
         yyrestart(f);
-        Parse();
+        run_parsing();
         fclose(f);
     }
 
     if(string->count > 0 && macro->count > 0) {
-        apr_array_header_t* parts = fend_get_pattern(macro->sval[0]);
-        const char* pattern = create_pattern(parts);
-        BOOL r = match_re(pattern, string->sval[0]);
+        const char* pattern = bend_create_pattern(macro->sval[0]);
+        BOOL r = bend_match_re(pattern, string->sval[0]);
         CrtPrintf("string: %s | match: %s | pattern: %s\n", string->sval[0], r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
     }
 
 cleanup:
-    pcre2_general_context_free(pcre_context);
+    bend_cleanup();
     apr_pool_destroy(main_pool);
     return 0;
 }
 
-void Parse() {
+void run_parsing() {
     if(yyparse()) {
         CrtPrintf("Parse failed\n");
     }
 }
-
-char* create_pattern(apr_array_header_t* parts) {
-    char* result = "";
-    for (int i = 0; i < parts->nelts; i++) {
-        Info_t* info = ((Info_t**)parts->elts)[i];
-        result = apr_pstrcat(main_pool, result, info->Info, NULL);
-    }
-    return result;
-}
-
-BOOL match_re(char* pattern, char* subject) {
-    int errornumber = 0;
-    size_t erroroffset = 0;
-
-    pcre2_code* re = pcre2_compile(
-        pattern, /* the pattern */
-        PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
-        0, /* default options */
-        &errornumber, /* for error number */
-        &erroroffset, /* for error offset */
-        NULL); /* use default compile context */
-
-    if(re == NULL) {
-        PCRE2_UCHAR buffer[256];
-        pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
-        CrtPrintf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
-        return FALSE;
-    }
-    pcre2_match_data* match_data = pcre2_match_data_create_from_pattern(re, NULL);
-
-    int flags = PCRE2_NOTEMPTY;
-    if(!strstr(subject, "^")) {
-        flags |= PCRE2_NOTBOL;
-    }
-    if(!strstr(subject, "$")) {
-        flags |= PCRE2_NOTEOL;
-    }
-
-    int rc = pcre2_match(
-        re, /* the compiled pattern */
-        subject, /* the subject string */
-        strlen(subject), /* the length of the subject */
-        0, /* start at offset 0 in the subject */
-        flags,
-        match_data, /* block for storing the result */
-        NULL); /* use default match context */
-    return rc >= 0;
-}
-
-void* pcre_alloc(size_t size, void* memory_data) {
-    return apr_palloc(main_pool, size);
-}
-
-void pcre_free(void* p1, void* p2) {}
