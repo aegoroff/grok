@@ -113,7 +113,10 @@ LITERAL ([^%\r\n]|%[^\{]|%\{\})
 	yylval.str = fend_strdup(yytext);
 	return PATTERN_REF; 
 }
-<INPATTERN>{PROPERTY} { return PROPERTY; }
+<INPATTERN>{PROPERTY} { 
+	yylval.str = fend_strdup(yytext);
+	return PROPERTY; 
+}
 
 <INPATTERN>{CASTING_PATTERN} { return CASTING_PATTERN; }
 

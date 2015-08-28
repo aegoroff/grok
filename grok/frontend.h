@@ -21,9 +21,15 @@ typedef enum Part {
 } Part_t;
 
 typedef struct Info {
-    Part_t Type;
-    char* Info;
+    Part_t type;
+    char* data;
+    char* reference;
 } Info_t;
+
+typedef struct Macro {
+    char* name;
+    char* property;
+} Macro_t;
 
 void fend_init(apr_pool_t* pool);
 
@@ -31,7 +37,8 @@ void fend_on_definition();
 void fend_on_definition_end(char* key);
 
 void fend_on_literal(char* str);
-void fend_on_grok(char* str);
+void fend_on_grok(Macro_t* str);
+Macro_t* fend_on_macro(char* name, char* prop);
 apr_array_header_t* fend_get_pattern(char* def);
 
 char* fend_strdup(char* str);

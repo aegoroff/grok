@@ -22,7 +22,7 @@
 #define ARRAY_INIT_SZ   256
 
 // Forwards
-void app_part(char*, Part_t);
+void app_part(char* data, char* reference, Part_t type);
 
 apr_pool_t* fend_pool = NULL;
 apr_hash_t* fend_definition = NULL;
@@ -46,17 +46,25 @@ void fend_on_definition_end(char* key) {
 }
 
 void fend_on_literal(char* str) {
-    app_part(str, PartLiteral);
+    app_part(str, NULL, PartLiteral);
 }
 
-void fend_on_grok(char* str) {
-    app_part(str, PartReference);
+void fend_on_grok(Macro_t* macro) {
+    app_part(macro->name, macro->property, PartReference);
 }
 
-void app_part(char* data, Part_t type) {
+Macro_t* fend_on_macro(char* name, char* prop) {
+    Macro_t* result = (Macro_t*)apr_pcalloc(fend_pool, sizeof(Macro_t));
+    result->name = name;
+    result->property = prop;
+    return result;
+}
+
+void app_part(char* data, char* reference, Part_t type) {
     Info_t* result = (Info_t*)apr_pcalloc(fend_pool, sizeof(Info_t));
-    result->Type = type;
-    result->Info = data;
+    result->type = type;
+    result->data = data;
+    result->reference = reference;
     *(Info_t**)apr_array_push(fend_composition) = result;
 }
 

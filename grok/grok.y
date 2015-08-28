@@ -1,9 +1,5 @@
 %{
-    #include <stdio.h>
-    #include <stdlib.h>
 	#include "grok.tab.h"
-	#include "lib.h"
-	#include "frontend.h"
 
 	extern int yylineno;
     extern char *yytext;
@@ -13,8 +9,18 @@
 	int definitions = 0;
 %}
 
+%code requires
+{
+	#include <stdio.h>
+    #include <stdlib.h>
+	#include "lib.h"
+	#include "frontend.h"
+}
+
+
 %union {
 	char* str;
+	Macro_t* macro;
 }
 
 %start translation_unit
@@ -30,7 +36,7 @@
 %token CASTING_PATTERN
 %token TYPE_NAME
 %token LEVEL
-%token PROPERTY
+%token <str> PROPERTY
 %token WS
 %token <str> LITERAL
 %token COMMENT
@@ -39,7 +45,9 @@
 %type <str> key
 %type <str> grok
 %type <str> literal
-%type <str> definition
+%type <macro> macro
+%type <str> property
+%type <str> semantic
 
 %%
 
@@ -69,25 +77,25 @@ grok
 	;
 	
 pattern
-	: OPEN definition CLOSE { fend_on_grok($2); }
+	: OPEN macro CLOSE { fend_on_grok($2); }
 	;
 
 literal 
     : LITERAL { fend_on_literal($1); }
     ;
 
-definition
-	: PATTERN_REF { $$ = $1; }
-	| PATTERN_REF semantic { $$ = $1; }
+macro
+	: PATTERN_REF { $$ = fend_on_macro($1, NULL); }
+	| PATTERN_REF semantic { $$ = fend_on_macro($1, $2); }
 	;
 
 semantic
-	: property
-    | property casting
+	: property { $$ = $1; }
+    | property casting { $$ = $1; }
 	;
     
 property
-	: COLON PROPERTY
+	: COLON PROPERTY { $$ = $2; }
 	;
 
 casting

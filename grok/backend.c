@@ -90,12 +90,12 @@ char* bend_create_pattern(const char* macro) {
 
         while(stack->nelts > 0) {
             Info_t* current = *((Info_t**)apr_array_pop(stack));
-            if(current->Type == PartLiteral) {
-                *(char**)apr_array_push(composition) = current->Info;
+            if(current->type == PartLiteral) {
+                *(char**)apr_array_push(composition) = current->data;
             }
             else {
                 // childs in reverse order
-                apr_array_header_t* childs = fend_get_pattern(current->Info);
+                apr_array_header_t* childs = fend_get_pattern(current->data);
                 for(int j = childs->nelts - 1; j >= 0; j--) {
                     *(Info_t**)apr_array_push(stack) = ((Info_t**)childs->elts)[j];
                 }
