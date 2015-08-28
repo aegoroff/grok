@@ -40,12 +40,12 @@ void bend_cleanup() {
     apr_pool_destroy(bend_pool);
 }
 
-BOOL bend_match_re(char* pattern, char* subject) {
+BOOL bend_match_re(pattern_t* pattern, char* subject) {
     int errornumber = 0;
     size_t erroroffset = 0;
 
     pcre2_code* re = pcre2_compile(
-        pattern, /* the pattern */
+        pattern->regex, /* the pattern */
         PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
         0, /* default options */
         &errornumber, /* for error number */
@@ -80,10 +80,22 @@ BOOL bend_match_re(char* pattern, char* subject) {
 
     BOOL result = rc > 0;
 
+    apr_hash_index_t* hi;
+    for (hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
+        const char *k;
+        const char *v;
+
+        apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
+        PCRE2_SIZE len = 512 * sizeof(PCRE2_UCHAR);
+        PCRE2_UCHAR* buffer = (PCRE2_UCHAR*)apr_pcalloc(bend_pool, len);
+        pcre2_substring_copy_byname(match_data, k, buffer, &len);
+        lib_printf("%s: %s\n", k, buffer);
+    }
+    lib_printf("\n\n");
     return result;
 }
 
-char* bend_create_pattern(const char* macro) {
+pattern_t* bend_create_pattern(const char* macro) {
     apr_array_header_t* root_elements = fend_get_pattern(macro);
 
     apr_pool_t* local_pool = NULL;
@@ -91,7 +103,7 @@ char* bend_create_pattern(const char* macro) {
 
     apr_array_header_t* stack = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(Info_t*));
     apr_array_header_t* composition = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(char*));
-    apr_hash_t* used_properties = apr_hash_make(local_pool);
+    apr_hash_t* used_properties = apr_hash_make(bend_pool);
 
     for(int i = 0; i < root_elements->nelts; i++) {
         Info_t* top = ((Info_t**)root_elements->elts)[i];
@@ -133,11 +145,16 @@ char* bend_create_pattern(const char* macro) {
             }
         }
     }
-    char* result = "";
+    char* regex = "";
     for(int i = 0; i < composition->nelts; i++) {
         char* part = ((Info_t**)composition->elts)[i];
-        result = apr_pstrcat(bend_pool, result, part, NULL);
+        regex = apr_pstrcat(bend_pool, regex, part, NULL);
     }
     apr_pool_destroy(local_pool);
+    
+    pattern_t* result = (pattern_t*)apr_pcalloc(bend_pool, sizeof(pattern_t));
+    result->regex = regex;
+    result->properties = used_properties;
+
     return result;
 }

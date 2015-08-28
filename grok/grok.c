@@ -99,12 +99,12 @@ int main(int argc, char* argv[]) {
     }
 match:
     if(string->count > 0 && macro->count > 0) {
-        const char* pattern = bend_create_pattern(macro->sval[0]);
+        pattern_t* pattern = bend_create_pattern(macro->sval[0]);
         BOOL r = bend_match_re(pattern, string->sval[0]);
         lib_printf("string: %s | match: %s | pattern: %s\n", string->sval[0], r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
     }
     if(file->count > 0 && macro->count > 0) {
-        const char* pattern = bend_create_pattern(macro->sval[0]);
+        pattern_t* pattern = bend_create_pattern(macro->sval[0]);
         apr_file_t* file_handle = NULL;
         status = apr_file_open(&file_handle, file->filename[0], APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
 
