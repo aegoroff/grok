@@ -80,37 +80,6 @@ BOOL bend_match_re(char* pattern, char* subject) {
 
     BOOL result = rc > 0;
 
-    if(!result) {
-        return result;
-    }
-    PCRE2_UCHAR** list = NULL;
-    PCRE2_SIZE* lengthsptr;
-    pcre2_substring_list_get(match_data, &list, &lengthsptr);
-
-    //timestamp
-    PCRE2_SIZE len = 512 * sizeof(PCRE2_UCHAR);
-    PCRE2_UCHAR* buffer = (PCRE2_UCHAR*)apr_pcalloc(bend_pool, len);
-    pcre2_substring_copy_byname(match_data, "timestamp", buffer, &len);
-    lib_printf("%s\n", buffer);
-    pcre2_substring_copy_byname(match_data, "response", buffer, &len);
-    lib_printf("%s\n", buffer);
-    pcre2_substring_copy_byname(match_data, "clientip", buffer, &len);
-    lib_printf("%s\n", buffer);
-    pcre2_substring_copy_byname(match_data, "ident", buffer, &len);
-    lib_printf("%s\n", buffer);
-    pcre2_substring_copy_byname(match_data, "auth", buffer, &len);
-    lib_printf("%s\n", buffer);
-    pcre2_substring_copy_byname(match_data, "verb", buffer, &len);
-    lib_printf("%s\n", buffer);
-    pcre2_substring_copy_byname(match_data, "request", buffer, &len);
-    lib_printf("%s\n", buffer);
-    pcre2_substring_copy_byname(match_data, "httpversion", buffer, &len);
-    lib_printf("%s\n", buffer);
-    pcre2_substring_copy_byname(match_data, "rawrequest", buffer, &len);
-    lib_printf("%s\n", buffer);
-    pcre2_substring_copy_byname(match_data, "bytes", buffer, &len);
-    lib_printf("%s\n", buffer);
-
     return result;
 }
 
