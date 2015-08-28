@@ -2,8 +2,6 @@
 
 %option noyywrap 
 %{
-    #include <stdlib.h>
-	#include "frontend.h"
     #include "grok.tab.h"
 %}
 
