@@ -108,7 +108,7 @@ char* bend_create_pattern(const char* macro) {
                     Info_t* trail_paren = (Info_t*)apr_pcalloc(local_pool, sizeof(Info_t));
                     trail_paren->type = PartLiteral;
                     trail_paren->data = ")";
-                    //*(Info_t**)apr_array_push(stack) = trail_paren;
+                    *(Info_t**)apr_array_push(stack) = trail_paren;
                 }
 
                 for(int j = childs->nelts - 1; j >= 0; j--) {
