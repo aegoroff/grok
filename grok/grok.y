@@ -51,12 +51,12 @@ lines
     ;
 	
 line
-    : key WS groks { fend_on_definition_end(); }
+    : key WS groks { fend_on_definition_end($1); }
     | COMMENT
     | CRLF
     ;
 
-key : PATTERN_DEFINITION  { fend_on_definition($1); };
+key : PATTERN_DEFINITION  { fend_on_definition(); $$ = $1; };
 
 groks 
     : grok

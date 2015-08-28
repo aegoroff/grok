@@ -24,11 +24,13 @@ typedef struct Info {
 
 void fend_init(apr_pool_t* pool);
 
-void fend_on_definition(char* def);
+void fend_on_definition();
+void fend_on_definition_end(char* key);
+
 void fend_on_literal(char* str);
 void fend_on_grok(char* str);
 char* fend_get_pattern(char* def);
 
 char* fend_strdup(char* str);
 
-void fend_on_definition_end();
+
