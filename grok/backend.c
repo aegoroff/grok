@@ -53,8 +53,9 @@ BOOL bend_match_re(char* pattern, char* subject) {
         NULL); /* use default compile context */
 
     if(re == NULL) {
-        PCRE2_UCHAR buffer[256];
-        pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
+        int len = 256 * sizeof(PCRE2_UCHAR);
+        PCRE2_UCHAR* buffer = (PCRE2_UCHAR*)apr_pcalloc(bend_pool, len);
+        pcre2_get_error_message(errornumber, buffer, len);
         CrtPrintf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
         return FALSE;
     }
@@ -107,7 +108,7 @@ char* bend_create_pattern(const char* macro) {
                     Info_t* trail_paren = (Info_t*)apr_pcalloc(local_pool, sizeof(Info_t));
                     trail_paren->type = PartLiteral;
                     trail_paren->data = ")";
-                    *(Info_t**)apr_array_push(stack) = trail_paren;
+                    //*(Info_t**)apr_array_push(stack) = trail_paren;
                 }
 
                 for(int j = childs->nelts - 1; j >= 0; j--) {
