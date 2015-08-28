@@ -73,19 +73,19 @@ uint32_t lib_get_processor_count(void) {
 }
 
 void lib_print_size(uint64_t size) {
-    FileSize_t normalized = lib_normalize_size(size);
+    lib_file_size_t normalized = lib_normalize_size(size);
     lib_printf(normalized.unit ? BIG_FILE_FORMAT : SMALL_FILE_FORMAT, //-V510
-               normalized.value, lib_sizes[normalized.unit], size, lib_sizes[SizeUnitBytes]);
+               normalized.value, lib_sizes[normalized.unit], size, lib_sizes[size_unit_bytes]);
 }
 
 void lib_size_to_string(uint64_t size, size_t strSize, char* str) {
-    FileSize_t normalized = lib_normalize_size(size);
+    lib_file_size_t normalized = lib_normalize_size(size);
 
     if(str == NULL) {
         return;
     }
     sprintf_s(str, strSize, normalized.unit ? BIG_FILE_FORMAT : SMALL_FILE_FORMAT, //-V510
-              normalized.value, lib_sizes[normalized.unit], size, lib_sizes[SizeUnitBytes]);
+              normalized.value, lib_sizes[normalized.unit], size, lib_sizes[size_unit_bytes]);
 }
 
 uint32_t lib_htoi(const char* ptr, int size) {
@@ -149,11 +149,11 @@ uint64_t ilog(uint64_t x) {
     return (INT64_BITS_COUNT - 1) - (n - x);
 }
 
-FileSize_t lib_normalize_size(uint64_t size) {
-    FileSize_t result = {0};
-    result.unit = size == 0 ? SizeUnitBytes : ilog(size) / ilog(BINARY_THOUSAND);
-    if(result.unit == SizeUnitBytes) {
-        result.value.sizeInBytes = size;
+lib_file_size_t lib_normalize_size(uint64_t size) {
+    lib_file_size_t result = {0};
+    result.unit = size == 0 ? size_unit_bytes : ilog(size) / ilog(BINARY_THOUSAND);
+    if(result.unit == size_unit_bytes) {
+        result.value.size_in_bytes = size;
     }
     else {
         result.value.size = size / pow(BINARY_THOUSAND, result.unit);
@@ -201,8 +201,8 @@ int lib_sprintf(char* buffer, __format_string const char* format, ...) {
     return result;
 }
 
-Time_t lib_normalize_time(double seconds) {
-    Time_t result = {0};
+lib_time_t lib_normalize_time(double seconds) {
+    lib_time_t result = {0};
     double tmp = 0;
 
     result.total_seconds = seconds;
@@ -221,7 +221,7 @@ Time_t lib_normalize_time(double seconds) {
     return result;
 }
 
-void lib_time_to_string(Time_t time, size_t strSize, char* str) {
+void lib_lib_time_to_string(lib_time_t time, size_t strSize, char* str) {
     if((str == NULL) || (strSize == 0)) {
         return;
     }
@@ -268,7 +268,7 @@ void lib_stop_timer(void) {
 #endif
 }
 
-Time_t lib_read_elapsed_time(void) {
+lib_time_t lib_read_elapsed_time(void) {
     return lib_normalize_time(lib_span);
 }
 

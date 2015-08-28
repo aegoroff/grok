@@ -102,17 +102,17 @@ pattern_t* bend_create_pattern(const char* macro) {
     apr_pool_t* local_pool = NULL;
     apr_pool_create(&local_pool, bend_pool);
 
-    apr_array_header_t* stack = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(Info_t*));
+    apr_array_header_t* stack = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(info_t*));
     apr_array_header_t* composition = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(char*));
     apr_hash_t* used_properties = apr_hash_make(bend_pool);
 
     for(int i = 0; i < root_elements->nelts; i++) {
-        Info_t* top = ((Info_t**)root_elements->elts)[i];
-        *(Info_t**)apr_array_push(stack) = top;
+        info_t* top = ((info_t**)root_elements->elts)[i];
+        *(info_t**)apr_array_push(stack) = top;
 
         while(stack->nelts > 0) {
-            Info_t* current = *((Info_t**)apr_array_pop(stack));
-            if(current->type == PartLiteral) {
+            info_t* current = *((info_t**)apr_array_pop(stack));
+            if(current->type == part_literal) {
                 // plain literal case
                 *(char**)apr_array_push(composition) = current->data;
             }
@@ -133,15 +133,15 @@ pattern_t* bend_create_pattern(const char* macro) {
                     *(char**)apr_array_push(composition) = ">";
                     
                     // trailing ) into stack bottom
-                    Info_t* trail_paren = (Info_t*)apr_pcalloc(local_pool, sizeof(Info_t));
-                    trail_paren->type = PartLiteral;
+                    info_t* trail_paren = (info_t*)apr_pcalloc(local_pool, sizeof(info_t));
+                    trail_paren->type = part_literal;
                     trail_paren->data = ")";
-                    *(Info_t**)apr_array_push(stack) = trail_paren;
+                    *(info_t**)apr_array_push(stack) = trail_paren;
                 }
                 // childs in reverse order
                 apr_array_header_t* childs = fend_get_pattern(current->data);
                 for(int j = childs->nelts - 1; j >= 0; j--) {
-                    *(Info_t**)apr_array_push(stack) = ((Info_t**)childs->elts)[j];
+                    *(info_t**)apr_array_push(stack) = ((info_t**)childs->elts)[j];
                 }
             }
         }

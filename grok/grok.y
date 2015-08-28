@@ -18,7 +18,7 @@
 
 %union {
 	char* str;
-	Macro_t* macro;
+	macro_t* macro;
 }
 
 %start translation_unit

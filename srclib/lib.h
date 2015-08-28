@@ -51,36 +51,36 @@ extern "C" {
 #define ALLOCATION_FAILURE_MESSAGE ALLOCATION_FAIL_FMT " in: %s:%d" NEW_LINE
 
 typedef enum {
-    SizeUnitBytes = 0,
-    SizeUnitKBytes = 1,
-    SizeUnitMBytes = 2,
-    SizeUnitGBytes = 3,
-    SizeUnitTBytes = 4,
-    SizeUnitPBytes = 5,
-    SizeUnitEBytes = 6,
-    SizeUnitZBytes = 7,
-    SizeUnitYBytes = 8,
-    SizeUnitBBytes = 9,
-    SizeUnitGPBytes = 10
-} SizeUnit_t;
+    size_unit_bytes = 0,
+    size_unit_kbytes = 1,
+    size_unit_mbytes = 2,
+    size_unit_gbytes = 3,
+    size_unit_tbytes = 4,
+    size_unit_pbytes = 5,
+    size_unit_ebytes = 6,
+    size_unit_zbytes = 7,
+    size_unit_ybytes = 8,
+    size_unit_bbytes = 9,
+    size_unit_gpbytes = 10
+} size_unit_t;
 
-typedef struct FileSize {
-    SizeUnit_t unit;
+typedef struct lib_file_size {
+    size_unit_t unit;
     // Union of either size in bytes or size it KBytes, MBytes etc.
     union {
         double   size;
-        uint64_t sizeInBytes;
+        uint64_t size_in_bytes;
     } value;
-} FileSize_t;
+} lib_file_size_t;
 
-typedef struct Time {
+typedef struct lib_time {
     uint32_t years;
     uint32_t days;
     uint32_t hours;
     uint32_t minutes;
     double   seconds;
     double   total_seconds;
-} Time_t;
+} lib_time_t;
 
 #ifdef __STDC_WANT_SECURE_LIB__
 extern int lib_printf(__format_string const char* format, ...);
@@ -102,20 +102,20 @@ extern int lib_sprintf(char* buffer, const char* format, ...);
 
 extern void lib_print_size(uint64_t size);
 
-extern FileSize_t lib_normalize_size(uint64_t size);
+extern lib_file_size_t lib_normalize_size(uint64_t size);
 
 /*!
  * Prints new line into stdout
  */
 extern void lib_new_line(void);
 
-extern Time_t lib_normalize_time(double seconds);
+extern lib_time_t lib_normalize_time(double seconds);
 
 extern void lib_start_timer(void);
 extern void lib_stop_timer(void);
-extern Time_t lib_read_elapsed_time(void);
+extern lib_time_t lib_read_elapsed_time(void);
 extern void lib_size_to_string(uint64_t size, size_t strSize, char* str);
-extern void lib_time_to_string(Time_t time, size_t strSize, char* str);
+extern void lib_lib_time_to_string(lib_time_t time, size_t strSize, char* str);
 extern void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz);
 extern uint32_t lib_htoi(const char* ptr, int size);
 extern uint32_t lib_get_processor_count(void);

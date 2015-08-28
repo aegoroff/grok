@@ -22,7 +22,7 @@
 #define ARRAY_INIT_SZ   256
 
 // Forwards
-void app_part(char* data, char* reference, Part_t type);
+void app_part(char* data, char* reference, part_t type);
 
 apr_pool_t* fend_pool = NULL;
 apr_hash_t* fend_definition = NULL;
@@ -34,38 +34,38 @@ void fend_init(apr_pool_t* p) {
 }
 
 void fend_on_definition() {
-    fend_composition = apr_array_make(fend_pool, ARRAY_INIT_SZ, sizeof(Info_t*));
+    fend_composition = apr_array_make(fend_pool, ARRAY_INIT_SZ, sizeof(info_t*));
 }
 
 void fend_on_definition_end(char* key) {
-    apr_array_header_t* parts = apr_array_make(fend_pool, fend_composition->nelts, sizeof(Info_t*));
+    apr_array_header_t* parts = apr_array_make(fend_pool, fend_composition->nelts, sizeof(info_t*));
     for (int i = 0; i < fend_composition->nelts; i++) {
-        *(Info_t**)apr_array_push(parts) = ((Info_t**)fend_composition->elts)[i];
+        *(info_t**)apr_array_push(parts) = ((info_t**)fend_composition->elts)[i];
     }
     apr_hash_set(fend_definition, (const char*)key, APR_HASH_KEY_STRING, parts);
 }
 
 void fend_on_literal(char* str) {
-    app_part(str, NULL, PartLiteral);
+    app_part(str, NULL, part_literal);
 }
 
-void fend_on_grok(Macro_t* macro) {
-    app_part(macro->name, macro->property, PartReference);
+void fend_on_grok(macro_t* macro) {
+    app_part(macro->name, macro->property, part_reference);
 }
 
-Macro_t* fend_on_macro(char* name, char* prop) {
-    Macro_t* result = (Macro_t*)apr_pcalloc(fend_pool, sizeof(Macro_t));
+macro_t* fend_on_macro(char* name, char* prop) {
+    macro_t* result = (macro_t*)apr_pcalloc(fend_pool, sizeof(macro_t));
     result->name = name;
     result->property = prop;
     return result;
 }
 
-void app_part(char* data, char* reference, Part_t type) {
-    Info_t* result = (Info_t*)apr_pcalloc(fend_pool, sizeof(Info_t));
+void app_part(char* data, char* reference, part_t type) {
+    info_t* result = (info_t*)apr_pcalloc(fend_pool, sizeof(info_t));
     result->type = type;
     result->data = data;
     result->reference = reference;
-    *(Info_t**)apr_array_push(fend_composition) = result;
+    *(info_t**)apr_array_push(fend_composition) = result;
 }
 
 apr_array_header_t* fend_get_pattern(const char* def) {
