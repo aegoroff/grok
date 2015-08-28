@@ -51,12 +51,12 @@ lines
     ;
 	
 line
-    : key WS groks { on_definition_end(); }
+    : key WS groks { fend_on_definition_end(); }
     | COMMENT
     | CRLF
     ;
 
-key : PATTERN_DEFINITION  { on_definition($1); };
+key : PATTERN_DEFINITION  { fend_on_definition($1); };
 
 groks 
     : grok
@@ -69,11 +69,11 @@ grok
 	;
 	
 pattern
-	: OPEN definition CLOSE { on_grok($2); }
+	: OPEN definition CLOSE { fend_on_grok($2); }
 	;
 
 literal 
-    : LITERAL { on_literal($1); }
+    : LITERAL { fend_on_literal($1); }
     ;
 
 definition

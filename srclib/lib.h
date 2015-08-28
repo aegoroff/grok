@@ -4,9 +4,9 @@
             Created by: Alexander Egorov
             \endverbatim
  * \date    \verbatim
-            Creation date: 2010-03-05
+            Creation date: 2015-07-21
             \endverbatim
- * Copyright: (c) Alexander Egorov 2009-2011
+ * Copyright: (c) Alexander Egorov 2015
  */
 
 #ifndef HC_LIB_H_

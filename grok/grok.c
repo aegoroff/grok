@@ -1,5 +1,14 @@
-// calc.cpp : Defines the entry point for the console application.
-//
+/*!
+ * \brief   The file contains compiler driver
+ * \author  \verbatim
+            Created by: Alexander Egorov
+            \endverbatim
+ * \date    \verbatim
+            Creation date: 2015-07-21
+            \endverbatim
+ * Copyright: (c) Alexander Egorov 2015
+ */
+
 
 #define PCRE2_CODE_UNIT_WIDTH 8
 
@@ -57,7 +66,7 @@ int main(int argc, char* argv[]) {
 
     apr_pool_create(&pool, NULL);
     pcre_context = pcre2_general_context_create(&pcre_alloc, &pcre_free, NULL);
-    frontend_init(pool);
+    fend_init(pool);
 
     // read from stdin
     if(argc < 2) {
@@ -93,7 +102,7 @@ int main(int argc, char* argv[]) {
     }
 
     if(string->count > 0 && macro->count > 0) {
-        char* pattern = get_pattern(macro->sval[0]);
+        char* pattern = fend_get_pattern(macro->sval[0]);
         BOOL r = match_re(pattern, string->sval[0]);
         CrtPrintf("string: %s | match: %s | pattern: %s\n", string->sval[0], r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
     }

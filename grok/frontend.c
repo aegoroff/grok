@@ -1,4 +1,16 @@
-﻿#include <stdio.h>
+﻿/*!
+ * \brief   The file contains frontend implementation
+ * \author  \verbatim
+            Created by: Alexander Egorov
+            \endverbatim
+ * \date    \verbatim
+            Creation date: 2015-07-21
+            \endverbatim
+ * Copyright: (c) Alexander Egorov 2015
+ */
+
+
+#include <stdio.h>
 #include <stdlib.h>
 #include  "frontend.h"
 #include "apr.h"
@@ -16,25 +28,25 @@ apr_hash_t* definition;
 apr_array_header_t* composition = NULL;
 char* currentDef = NULL;
 
-void frontend_init(apr_pool_t* p) {
+void fend_init(apr_pool_t* p) {
     pool = p;
     definition = apr_hash_make(pool);
 }
 
-void on_definition(char* def) {
+void fend_on_definition(char* def) {
     currentDef = def;
     composition = apr_array_make(pool, ARRAY_INIT_SZ, sizeof(Info_t*));
 }
 
-void on_literal(char* str) {
+void fend_on_literal(char* str) {
     app_part(str, PartLiteral);
 }
 
-void on_grok(char* str) {
+void fend_on_grok(char* str) {
     app_part(str, PartReference);
 }
 
-char* get_pattern(char* def) {
+char* fend_get_pattern(char* def) {
     apr_array_header_t* parts = apr_hash_get(definition, (const char*)def, APR_HASH_KEY_STRING);
 
     char* result = "";
@@ -45,11 +57,11 @@ char* get_pattern(char* def) {
     return result;
 }
 
-char* frountend_strdup(char* str) {
+char* fend_strdup(char* str) {
     return apr_pstrdup(pool, str);
 }
 
-void on_definition_end() {
+void fend_on_definition_end() {
     apr_array_header_t* parts = apr_array_make(pool, composition->nelts, sizeof(Info_t*));
     for (int i = 0; i < composition->nelts; i++) {
         *(Info_t**)apr_array_push(parts) = ((Info_t**)composition->elts)[i];

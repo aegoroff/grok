@@ -1,5 +1,16 @@
-﻿#include <apr_general.h>
+﻿/*!
+ * \brief   The file contains frontend interface
+ * \author  \verbatim
+            Created by: Alexander Egorov
+            \endverbatim
+ * \date    \verbatim
+            Creation date: 2015-07-21
+            \endverbatim
+ * Copyright: (c) Alexander Egorov 2015
+ */
 
+
+#include <apr_general.h>
 
 typedef enum Part {
     PartLiteral,
@@ -11,13 +22,13 @@ typedef struct Info {
     char* Info;
 } Info_t;
 
-void frontend_init(apr_pool_t* pool);
+void fend_init(apr_pool_t* pool);
 
-void on_definition(char* def);
-void on_literal(char* str);
-void on_grok(char* str);
-char* get_pattern(char* def);
+void fend_on_definition(char* def);
+void fend_on_literal(char* str);
+void fend_on_grok(char* str);
+char* fend_get_pattern(char* def);
 
-char* frountend_strdup(char* str);
+char* fend_strdup(char* str);
 
-void on_definition_end();
+void fend_on_definition_end();
