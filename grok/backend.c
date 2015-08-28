@@ -97,35 +97,35 @@ char* bend_create_pattern(const char* macro) {
         while(stack->nelts > 0) {
             Info_t* current = *((Info_t**)apr_array_pop(stack));
             if(current->type == PartLiteral) {
+                // plain literal case
                 *(char**)apr_array_push(composition) = current->data;
             }
             else {
-                // childs in reverse order
-                apr_array_header_t* childs = fend_get_pattern(current->data);
-
-                // trailing ) of named pattern
+                // named pattern case handling
                 if (current->reference != NULL) {
-                    Info_t* trail_paren = (Info_t*)apr_pcalloc(local_pool, sizeof(Info_t));
-                    trail_paren->type = PartLiteral;
-                    trail_paren->data = ")";
-                    *(Info_t**)apr_array_push(stack) = trail_paren;
-                }
-
-                for(int j = childs->nelts - 1; j >= 0; j--) {
-                    *(Info_t**)apr_array_push(stack) = ((Info_t**)childs->elts)[j];
-                }
-                // leading (?<name>
-                if(current->reference != NULL) {
                     const char* reference = current->reference;
+                    // duplicate properties elimnation
                     const char* result = apr_hash_get(used_properties, reference, APR_HASH_KEY_STRING);
                     if (result != NULL) {
                         reference = apr_pstrcat(local_pool, current->data, "_", reference, NULL);
                     }
                     apr_hash_set(used_properties, reference, APR_HASH_KEY_STRING, current->data);
                     
+                    // leading (?<name> immediately into composition
                     *(char**)apr_array_push(composition) = "(?<";
                     *(char**)apr_array_push(composition) = reference;
                     *(char**)apr_array_push(composition) = ">";
+                    
+                    // trailing ) into stack bottom
+                    Info_t* trail_paren = (Info_t*)apr_pcalloc(local_pool, sizeof(Info_t));
+                    trail_paren->type = PartLiteral;
+                    trail_paren->data = ")";
+                    *(Info_t**)apr_array_push(stack) = trail_paren;
+                }
+                // childs in reverse order
+                apr_array_header_t* childs = fend_get_pattern(current->data);
+                for(int j = childs->nelts - 1; j >= 0; j--) {
+                    *(Info_t**)apr_array_push(stack) = ((Info_t**)childs->elts)[j];
                 }
             }
         }
