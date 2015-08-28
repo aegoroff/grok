@@ -75,7 +75,7 @@ uint32_t lib_get_processor_count(void) {
 void lib_print_size(uint64_t size) {
     FileSize_t normalized = lib_normalize_size(size);
     lib_printf(normalized.unit ? BIG_FILE_FORMAT : SMALL_FILE_FORMAT, //-V510
-              normalized.value, lib_sizes[normalized.unit], size, lib_sizes[SizeUnitBytes]);
+               normalized.value, lib_sizes[normalized.unit], size, lib_sizes[SizeUnitBytes]);
 }
 
 void lib_size_to_string(uint64_t size, size_t strSize, char* str) {
@@ -182,6 +182,20 @@ int lib_fprintf(FILE* file, __format_string const char* format, ...) {
     result = vfprintf_s(file, format, params);
 #else
     result = vfprintf(file, format, params);
+#endif
+    va_end(params);
+    return result;
+}
+
+int lib_sprintf(const char* buffer, __format_string const char* format, ...) {
+    va_list params = NULL;
+    int result = 0;
+    va_start(params, format);
+#ifdef __STDC_WANT_SECURE_LIB__
+    int len = _vscprintf(format, params) + 1; // _vscprintf doesn't count terminating '\0'
+    result = vsprintf_s(buffer, len, format, params);
+#else
+    result = vsprintf(buffer, format, params);
 #endif
     va_end(params);
     return result;

@@ -94,6 +94,12 @@ extern int lib_fprintf(FILE* file, __format_string const char* format, ...);
 extern int lib_fprintf(FILE* file, const char* format, ...);
 #endif
 
+#ifdef __STDC_WANT_SECURE_LIB__
+extern int lib_sprintf(const char* buffer, __format_string const char* format, ...);
+#else
+extern int lib_sprintf(const char* buffer, const char* format, ...);
+#endif
+
 extern void lib_print_size(uint64_t size);
 
 extern FileSize_t lib_normalize_size(uint64_t size);
