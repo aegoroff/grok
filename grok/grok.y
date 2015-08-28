@@ -128,6 +128,6 @@ member
 %%
 
 int yyerror(char* s) {
-	CrtFprintf(stderr, "%d: %s at %s\n", yylineno, s, yytext);
+	lib_fprintf(stderr, "%d: %s at %s\n", yylineno, s, yytext);
 	return 1;
 }

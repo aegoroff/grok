@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 
     status = apr_app_initialize(&argc, &argv, NULL);
     if(status != APR_SUCCESS) {
-        CrtPrintf("Couldn't initialize APR");
+        lib_printf("Couldn't initialize APR");
         return EXIT_FAILURE;
     }
 
@@ -98,7 +98,7 @@ match:
     if(string->count > 0 && macro->count > 0) {
         const char* pattern = bend_create_pattern(macro->sval[0]);
         BOOL r = bend_match_re(pattern, string->sval[0]);
-        CrtPrintf("string: %s | match: %s | pattern: %s\n", string->sval[0], r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
+        lib_printf("string: %s | match: %s | pattern: %s\n", string->sval[0], r > 0 ? "TRUE" : "FALSE", macro->sval[0]);
     }
 
 cleanup:
@@ -109,6 +109,6 @@ cleanup:
 
 void run_parsing() {
     if(yyparse()) {
-        CrtPrintf("Parse failed\n");
+        lib_printf("Parse failed\n");
     }
 }

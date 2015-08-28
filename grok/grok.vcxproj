@@ -171,6 +171,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\srclib\lib.h" />
     <ClInclude Include="backend.h" />
     <ClInclude Include="grok.tab.h" />
     <ClInclude Include="frontend.h" />

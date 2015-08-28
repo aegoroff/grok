@@ -56,7 +56,7 @@ BOOL bend_match_re(char* pattern, char* subject) {
         int len = 256 * sizeof(PCRE2_UCHAR);
         PCRE2_UCHAR* buffer = (PCRE2_UCHAR*)apr_pcalloc(bend_pool, len);
         pcre2_get_error_message(errornumber, buffer, len);
-        CrtPrintf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
+        lib_printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
         return FALSE;
     }
     pcre2_match_data* match_data = pcre2_match_data_create_from_pattern(re, NULL);
