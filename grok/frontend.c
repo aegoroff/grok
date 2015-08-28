@@ -9,7 +9,7 @@
 
 #define ARRAY_INIT_SZ   256
 
-void compose(char*, Part_t);
+void app_part(char*, Part_t);
 
 apr_pool_t* pool;
 apr_hash_t* definition;
@@ -27,11 +27,11 @@ void on_definition(char* def) {
 }
 
 void on_literal(char* str) {
-    compose(str, PartLiteral);
+    app_part(str, PartLiteral);
 }
 
 void on_grok(char* str) {
-    compose(str, PartReference);
+    app_part(str, PartReference);
 }
 
 char* get_pattern(char* def) {
@@ -58,7 +58,7 @@ void on_definition_end() {
     apr_hash_set(definition, (const char*)currentDef, APR_HASH_KEY_STRING, parts);
 }
 
-void compose(char* data, Part_t type) {
+void app_part(char* data, Part_t type) {
     Info_t* result = (Info_t*)apr_pcalloc(pool, sizeof(Info_t));
     result->Type = type;
     result->Info = data;
