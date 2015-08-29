@@ -29,6 +29,10 @@
 #define OPT_F_LONG "patterns"
 #define OPT_F_DESCR "one or more pattern files"
 
+#define OPT_HELP_SHORT "h"
+#define OPT_HELP_LONG "help"
+#define OPT_HELP_DESCR "print this help and exit"
+
 // Forwards
 extern void yyrestart(FILE* input_file);
 void run_parsing();
@@ -41,6 +45,7 @@ int main(int argc, char* argv[]) {
     errno_t error = 0;
     apr_status_t status = APR_SUCCESS;
 
+    struct arg_lit* help = arg_lit0(OPT_HELP_SHORT, OPT_HELP_LONG, OPT_HELP_DESCR);
     struct arg_str* string = arg_str0("s", "string", NULL, "string to match");
     struct arg_file* file = arg_file0("f", "file", NULL, "full path to file to read data from");
 
@@ -50,7 +55,7 @@ int main(int argc, char* argv[]) {
     int nerrors = 0;
     int i = 0;
 
-    void* argtable[] = {string, file, macro, files, end};
+    void* argtable[] = { help, string, file, macro, files, end };
 
     setlocale(LC_ALL, ".ACP");
     setlocale(LC_NUMERIC, "C");
@@ -74,7 +79,7 @@ int main(int argc, char* argv[]) {
 
     nerrors = arg_parse(argc, argv, argtable);
 
-    if(nerrors > 0) {
+    if(nerrors > 0 || help->count > 0) {
         print_syntax(argtable);
         goto cleanup;
     }
