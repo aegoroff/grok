@@ -130,21 +130,27 @@ int main(int argc, char* argv[]) {
         int len = 0xFFF * sizeof(char);
         char* buffer = (char*)apr_pcalloc(main_pool, len);
 
-        status = apr_file_gets(buffer, len, file_handle);
+        long long lineno = 1;
+        do {
+            status = apr_file_gets(buffer, len, file_handle);
+            BOOL r = bend_match_re(pattern, buffer);
+            if(status != APR_EOF) {
+                lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macroF->sval[0]);
+            }
+            if (r) {
+                lib_printf("\n");
+                for (apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
+                    const char *k;
+                    const char *v;
+
+                    apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
+                    lib_printf("%s: %s\n", k, v);
+                }
+                lib_printf("\n\n");
+            }
+        } while (status == APR_SUCCESS);
 
         status = apr_file_close(file_handle);
-        BOOL r = bend_match_re(pattern, buffer);
-        lib_printf("file: %s | match: %s | pattern: %s\n", file->filename[0], r ? "TRUE" : "FALSE", macroF->sval[0]);
-        if(r) {
-            lib_printf("\n\n");
-            for (apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
-                const char *k;
-                const char *v;
-
-                apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
-                lib_printf("%s: %s\n", k, v);
-            }
-        }
     }
     else {
         print_syntax(argtable, argtableS, argtableF);
