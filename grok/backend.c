@@ -99,6 +99,10 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
 pattern_t* bend_create_pattern(const char* macro) {
     apr_array_header_t* root_elements = fend_get_pattern(macro);
 
+    if (root_elements == NULL) {
+        return NULL;
+    }
+
     apr_pool_t* local_pool = NULL;
     apr_pool_create(&local_pool, bend_pool);
 
