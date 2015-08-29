@@ -126,6 +126,10 @@ int main(int argc, char* argv[]) {
         pattern_t* pattern = bend_create_pattern(macroF->sval[0]);
         apr_file_t* file_handle = NULL;
         status = apr_file_open(&file_handle, file->filename[0], APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
+        if (status != APR_SUCCESS) {
+            lib_printf("cannot open file %s\n", file->filename[0]);
+            goto cleanup;
+        }
 
         int len = 0xFFF * sizeof(char);
         char* buffer = (char*)apr_pcalloc(main_pool, len);
