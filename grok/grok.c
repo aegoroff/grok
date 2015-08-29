@@ -32,6 +32,8 @@
 // Forwards
 extern void yyrestart(FILE* input_file);
 void run_parsing();
+void print_copyright();
+void print_syntax(void* argtable);
 
 apr_pool_t* main_pool;
 
@@ -48,7 +50,7 @@ int main(int argc, char* argv[]) {
     int nerrors = 0;
     int i = 0;
 
-    void* argtable[] = {string, macro, file, files, end};
+    void* argtable[] = {string, file, macro, files, end};
 
     setlocale(LC_ALL, ".ACP");
     setlocale(LC_NUMERIC, "C");
@@ -66,16 +68,14 @@ int main(int argc, char* argv[]) {
     fend_init(main_pool);
     
     if(arg_nullcheck(argtable) != 0) {
-        arg_print_syntax(stdout, argtable, NEW_LINE NEW_LINE);
-        arg_print_glossary_gnu(stdout, argtable);
+        print_syntax(argtable);
         goto cleanup;
     }
 
     nerrors = arg_parse(argc, argv, argtable);
 
     if(nerrors > 0) {
-        arg_print_syntax(stdout, argtable, NEW_LINE NEW_LINE);
-        arg_print_glossary_gnu(stdout, argtable);
+        print_syntax(argtable);
         goto cleanup;
     }
 
@@ -132,4 +132,15 @@ void run_parsing() {
     if(yyparse()) {
         lib_printf("Parse failed\n");
     }
+}
+
+void print_copyright(void) {
+    lib_printf(COPYRIGHT_FMT, APP_NAME);
+}
+
+void print_syntax(void* argtable) {
+    print_copyright();
+    lib_printf(PROG_EXE);
+    arg_print_syntax(stdout, argtable, NEW_LINE NEW_LINE);
+    arg_print_glossary_gnu(stdout, argtable);
 }
