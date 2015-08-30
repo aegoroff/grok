@@ -24,9 +24,9 @@
 // Forwards
 void app_part(char* data, char* reference, part_t type);
 
-apr_pool_t* fend_pool = NULL;
-apr_hash_t* fend_definition = NULL;
-apr_array_header_t* fend_composition = NULL;
+static apr_pool_t* fend_pool = NULL;
+static apr_hash_t* fend_definition = NULL;
+static apr_array_header_t* fend_composition = NULL;
 
 void fend_init(apr_pool_t* p) {
     fend_pool = p;

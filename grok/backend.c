@@ -21,7 +21,7 @@
 #include <apr_hash.h>
 
 
-apr_pool_t* bend_pool = NULL;
+static apr_pool_t* bend_pool = NULL;
 pcre2_general_context* pcre_context = NULL;
 
 void* pcre_alloc(size_t size, void* memory_data) {

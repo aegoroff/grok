@@ -52,7 +52,7 @@ void print_copyright();
 void print_syntax(void* argtable, void* argtableS, void* argtableF);
 void compile_lib(struct arg_file* files);
 
-apr_pool_t* main_pool;
+static apr_pool_t* main_pool;
 
 int main(int argc, char* argv[]) {
     errno_t error = 0;
