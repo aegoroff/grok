@@ -176,6 +176,7 @@
     <ClInclude Include="configuration.h" />
     <ClInclude Include="grok.tab.h" />
     <ClInclude Include="frontend.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -228,6 +229,9 @@
       <Report Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">all</Report>
       <Report Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">all</Report>
     </Bison>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="grok.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
