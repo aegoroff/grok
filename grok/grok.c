@@ -59,7 +59,6 @@ int main(int argc, char* argv[]) {
     
     conf_configure_app(configuration);
 
-cleanup:
     bend_cleanup();
     apr_pool_destroy(main_pool);
     return 0;
