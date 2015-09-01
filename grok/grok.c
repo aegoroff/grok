@@ -55,7 +55,6 @@ void compile_lib(struct arg_file* files);
 static apr_pool_t* main_pool;
 
 int main(int argc, char* argv[]) {
-    errno_t error = 0;
     apr_status_t status = APR_SUCCESS;
 
     struct arg_lit* help = arg_lit0(OPT_HELP_SHORT, OPT_HELP_LONG, OPT_HELP_DESCR);
