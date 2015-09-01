@@ -83,9 +83,9 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
         return result;
     }
 
-    for (apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
-        const char *k;
-        const char *v;
+    for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
+        const char* k;
+        const char* v;
 
         apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
         PCRE2_SIZE len = 128 * sizeof(PCRE2_UCHAR);
@@ -99,7 +99,7 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
 pattern_t* bend_create_pattern(const char* macro) {
     apr_array_header_t* root_elements = fend_get_pattern(macro);
 
-    if (root_elements == NULL) {
+    if(root_elements == NULL) {
         return NULL;
     }
 
@@ -122,20 +122,20 @@ pattern_t* bend_create_pattern(const char* macro) {
             }
             else {
                 // named pattern case handling
-                if (current->reference != NULL) {
+                if(current->reference != NULL) {
                     char* reference = current->reference;
                     // duplicate properties elimnation
                     const char* result = apr_hash_get(used_properties, reference, APR_HASH_KEY_STRING);
-                    if (result != NULL) {
+                    if(result != NULL) {
                         reference = apr_pstrcat(local_pool, current->data, "_", reference, NULL);
                     }
                     apr_hash_set(used_properties, reference, APR_HASH_KEY_STRING, current->data);
-                    
+
                     // leading (?<name> immediately into composition
                     *(char**)apr_array_push(composition) = "(?<";
                     *(char**)apr_array_push(composition) = reference;
                     *(char**)apr_array_push(composition) = ">";
-                    
+
                     // trailing ) into stack bottom
                     info_t* trail_paren = (info_t*)apr_pcalloc(local_pool, sizeof(info_t));
                     trail_paren->type = part_literal;
@@ -156,7 +156,7 @@ pattern_t* bend_create_pattern(const char* macro) {
         regex = apr_pstrcat(bend_pool, regex, part, NULL);
     }
     apr_pool_destroy(local_pool);
-    
+
     pattern_t* result = (pattern_t*)apr_pcalloc(bend_pool, sizeof(pattern_t));
     result->regex = regex;
     result->properties = used_properties;

@@ -43,3 +43,4 @@ apr_array_header_t* fend_get_pattern(const char* def);
 char* fend_strdup(char* str);
 
 #endif // GROK_FRONTEND_H_
+

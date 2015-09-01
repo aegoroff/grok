@@ -28,3 +28,4 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject);
 pattern_t* bend_create_pattern(const char* macro);
 
 #endif // GROK_BACKEND_H_
+

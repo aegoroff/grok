@@ -58,11 +58,11 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     struct arg_end* endF = arg_end(10);
     struct arg_end* endS = arg_end(10);
 
-    void* argtable[] = { help, stringG, fileG, macro, files, end };
-    void* argtableF[] = { helpF, file, macroF, filesF, endF };
-    void* argtableS[] = { helpS, string, macroS, filesS, endS };
+    void* argtable[] = {help, stringG, fileG, macro, files, end};
+    void* argtableF[] = {helpF, file, macroF, filesF, endF};
+    void* argtableS[] = {helpS, string, macroS, filesS, endS};
 
-    if (arg_nullcheck(argtable) != 0 || arg_nullcheck(argtableF) != 0 || arg_nullcheck(argtableS) != 0) {
+    if(arg_nullcheck(argtable) != 0 || arg_nullcheck(argtableF) != 0 || arg_nullcheck(argtableS) != 0) {
         confint_print_syntax(argtable, argtableS, argtableF);
         goto cleanup;
     }
@@ -71,18 +71,18 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     int nerrorsF = arg_parse(ctx->argc, ctx->argv, argtableF);
     int nerrorsS = arg_parse(ctx->argc, ctx->argv, argtableS);
 
-    if (nerrors > 0 || help->count > 0) {
+    if(nerrors > 0 || help->count > 0) {
         confint_print_syntax(argtable, argtableS, argtableF);
-        if (help->count == 0 && ctx->argc > 1) {
+        if(help->count == 0 && ctx->argc > 1) {
             arg_print_errors(stdout, end, PROGRAM_NAME);
         }
         goto cleanup;
     }
 
-    if (nerrorsS == 0) {
+    if(nerrorsS == 0) {
         ctx->on_string(filesS, macroS->sval[0], string->sval[0]);
     }
-    else if (nerrorsF == 0) {
+    else if(nerrorsF == 0) {
         ctx->on_file(filesS, macroF->sval[0], file->filename[0]);
     }
     else {

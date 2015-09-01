@@ -42,7 +42,7 @@ extern "C" {
 
 #define COPYRIGHT_FMT_TRAIL NEW_LINE "Copyright (C) 2015 Alexander Egorov. All rights reserved." NEW_LINE NEW_LINE
 #ifdef _WIN64
-    #define COPYRIGHT_FMT NEW_LINE "%s x64" COPYRIGHT_FMT_TRAIL
+#define COPYRIGHT_FMT NEW_LINE "%s x64" COPYRIGHT_FMT_TRAIL
 #else
     #define COPYRIGHT_FMT NEW_LINE "%s x86" COPYRIGHT_FMT_TRAIL
 #endif
@@ -66,9 +66,10 @@ typedef enum {
 
 typedef struct lib_file_size {
     size_unit_t unit;
+
     // Union of either size in bytes or size it KBytes, MBytes etc.
     union {
-        double   size;
+        double size;
         uint64_t size_in_bytes;
     } value;
 } lib_file_size_t;
@@ -78,8 +79,8 @@ typedef struct lib_time {
     uint32_t days;
     uint32_t hours;
     uint32_t minutes;
-    double   seconds;
-    double   total_seconds;
+    double seconds;
+    double total_seconds;
 } lib_time_t;
 
 #ifdef __STDC_WANT_SECURE_LIB__
@@ -120,10 +121,11 @@ extern void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz)
 extern uint32_t lib_htoi(const char* ptr, int size);
 extern uint32_t lib_get_processor_count(void);
 extern int lib_count_digits_in(double x);
-extern const char* lib_get_file_name(const char *path);
+extern const char* lib_get_file_name(const char* path);
 
 
 #ifdef __cplusplus
 }
 #endif
 #endif // GROK_LIB_H_
+

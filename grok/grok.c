@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     configuration->argv = argv;
     configuration->on_string = &main_on_string;
     configuration->on_file = &main_on_file;
-    
+
     conf_configure_app(configuration);
 
     bend_cleanup();
@@ -71,11 +71,11 @@ void main_run_parsing() {
 }
 
 void main_compile_lib(struct arg_file* files) {
-    for (int i = 0; i < files->count; i++) {
+    for(int i = 0; i < files->count; i++) {
         FILE* f = NULL;
         const char* p = files->filename[i];
         errno_t error = fopen_s(&f, p, "r");
-        if (error) {
+        if(error) {
             perror(p);
             return;
         }
@@ -97,7 +97,7 @@ void main_on_file(struct arg_file* files, char* const macro, char* const path) {
     pattern_t* pattern = bend_create_pattern(macro);
     apr_file_t* file_handle = NULL;
     apr_status_t status = apr_file_open(&file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
-    if (status != APR_SUCCESS) {
+    if(status != APR_SUCCESS) {
         lib_printf("cannot open file %s\n", path);
         return;
     }
@@ -109,21 +109,22 @@ void main_on_file(struct arg_file* files, char* const macro, char* const path) {
     do {
         status = apr_file_gets(buffer, len, file_handle);
         BOOL r = bend_match_re(pattern, buffer);
-        if (status != APR_EOF) {
+        if(status != APR_EOF) {
             lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macro);
         }
-        if (r) {
+        if(r) {
             lib_printf("\n");
-            for (apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
-                const char *k;
-                const char *v;
+            for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
+                const char* k;
+                const char* v;
 
                 apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
                 lib_printf("%s: %s\n", k, v);
             }
             lib_printf("\n\n");
         }
-    } while (status == APR_SUCCESS);
+    }
+    while(status == APR_SUCCESS);
 
     status = apr_file_close(file_handle);
 }
