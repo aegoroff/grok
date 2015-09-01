@@ -25,6 +25,7 @@
 #include <apr_general.h>
 #include "argtable2.h"
 #include "configuration.h"
+#include <DebugHelplers.h>
 
 // Forwards
 extern void yyrestart(FILE* input_file);
@@ -36,6 +37,13 @@ void main_on_file(struct arg_file* files, char* const macro, char* const path);
 static apr_pool_t* main_pool;
 
 int main(int argc, char* argv[]) {
+
+#ifdef WIN32
+#ifndef _DEBUG // only Release configuration dump generating
+    SetUnhandledExceptionFilter(TopLevelFilter);
+#endif
+#endif
+
     setlocale(LC_ALL, ".ACP");
     setlocale(LC_NUMERIC, "C");
 
