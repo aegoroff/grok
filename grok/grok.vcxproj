@@ -173,6 +173,7 @@
   <ItemGroup>
     <ClInclude Include="..\srclib\lib.h" />
     <ClInclude Include="backend.h" />
+    <ClInclude Include="configuration.h" />
     <ClInclude Include="grok.tab.h" />
     <ClInclude Include="frontend.h" />
     <ClInclude Include="targetver.h" />
@@ -180,6 +181,7 @@
   <ItemGroup>
     <ClCompile Include="..\srclib\lib.c" />
     <ClCompile Include="backend.c" />
+    <ClCompile Include="configuration.c" />
     <ClCompile Include="grok.c" />
     <ClCompile Include="grok.flex.c" />
     <ClCompile Include="grok.tab.c" />
