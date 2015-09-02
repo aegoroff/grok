@@ -4,7 +4,8 @@
 	extern int yylineno;
     extern char *yytext;
 
-	int yyerror(char *s);
+	void yyerror(char *s, ...);
+	void lyyerror(YYLTYPE t, char *s, ...);
 	int yylex();
 	int definitions = 0;
 %}
@@ -15,6 +16,7 @@
 	#include "frontend.h"
 }
 
+%locations
 
 %union {
 	char* str;
@@ -125,7 +127,22 @@ member
 
 %%
 
-int yyerror(char* s) {
-	lib_fprintf(stderr, "%d: %s at %s\n", yylineno, s, yytext);
-	return 1;
+void yyerror(char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	if(yylloc.first_line)
+		lib_fprintf(stderr, "%d.%d-%d.%d: error: ", yylloc.first_line, yylloc.first_column, yylloc.last_line, yylloc.last_column);
+	vfprintf(stderr, s, ap);
+	lib_fprintf(stderr, "\n");
+}
+
+void lyyerror(YYLTYPE t, char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	if(t.first_line)
+		lib_fprintf(stderr, "%d.%d-%d.%d: error: ", t.first_line, t.first_column, t.last_line, t.last_column);
+	vfprintf(stderr, s, ap);
+	lib_fprintf(stderr, "\n");
 }

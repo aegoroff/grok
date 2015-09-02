@@ -1,9 +1,26 @@
 /* recognize tokens for the calculator and print them out */
 
-%option noyywrap 
 %{
     #include "grok.tab.h"
+	/* handle locations */
+	int yycolumn = 1;
+
+#define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line; \
+    yylloc.first_column = yylloc.last_column; \
+    for(int i = 0; yytext[i] != '\0'; i++) { \
+        if(yytext[i] == '\n') { \
+            yylloc.last_line++; \
+            yylloc.last_column = 0; \
+        } \
+        else { \
+            yylloc.last_column++; \
+        } \
+    }
 %}
+
+%option noyywrap 
+%option yylineno
 
 COMMA   ","
 DOT     "."
@@ -67,11 +84,11 @@ LITERAL ([^%\r\n]|%[^\{]|%\{\})
 
 <INDEFINITION>{WS}+ { BEGIN(INGROK); return WS; }
 
-<INGROK>{CRLF} {  BEGIN(INITIAL);  return CRLF; }
+<INGROK>{CRLF} {  BEGIN(INITIAL); yycolumn = 1;  return CRLF; }
 
-<INCOMMENT>{CRLF} {  BEGIN(INITIAL); return CRLF; }
+<INCOMMENT>{CRLF} {  BEGIN(INITIAL); yycolumn = 1; return CRLF; }
 
-{CRLF} { }
+{CRLF} { yycolumn = 1; }
 
 <INGROK><<EOF>> { BEGIN(INITIAL); }
 <INCOMMENT><<EOF>> { BEGIN(INITIAL); }
