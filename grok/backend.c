@@ -44,6 +44,10 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
     int errornumber = 0;
     size_t erroroffset = 0;
 
+    if(pattern == NULL) {
+        return FALSE;
+    }
+
     pcre2_code* re = pcre2_compile(
         pattern->regex, /* the pattern */
         PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
