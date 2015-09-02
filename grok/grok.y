@@ -133,7 +133,12 @@ void yyerror(char *s, ...)
 	va_start(ap, s);
 	if(yylloc.first_line)
 		lib_fprintf(stderr, "%d.%d-%d.%d: error: ", yylloc.first_line, yylloc.first_column, yylloc.last_line, yylloc.last_column);
-	vfprintf(stderr, s, ap);
+#ifdef __STDC_WANT_SECURE_LIB__
+    vfprintf_s(stderr, s, ap);
+#else
+    vfprintf(stderr, s, ap);
+#endif
+	va_end(ap);
 	lib_fprintf(stderr, "\n");
 }
 
@@ -143,6 +148,11 @@ void lyyerror(YYLTYPE t, char *s, ...)
 	va_start(ap, s);
 	if(t.first_line)
 		lib_fprintf(stderr, "%d.%d-%d.%d: error: ", t.first_line, t.first_column, t.last_line, t.last_column);
-	vfprintf(stderr, s, ap);
+#ifdef __STDC_WANT_SECURE_LIB__
+    vfprintf_s(stderr, s, ap);
+#else
+    vfprintf(stderr, s, ap);
+#endif
+	va_end(ap);
 	lib_fprintf(stderr, "\n");
 }
