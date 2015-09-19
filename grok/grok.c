@@ -40,6 +40,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef WIN32
 #ifndef _DEBUG // only Release configuration dump generating
+
     SetUnhandledExceptionFilter(TopLevelFilter);
 #endif
 #endif
@@ -135,4 +136,7 @@ void main_on_file(struct arg_file* files, char* const macro, char* const path) {
     while(status == APR_SUCCESS);
 
     status = apr_file_close(file_handle);
+    if(status != APR_SUCCESS) {
+        lib_printf("file %s closing error\n", path);
+    }
 }
