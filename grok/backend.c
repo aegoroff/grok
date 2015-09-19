@@ -57,7 +57,8 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
         NULL); /* use default compile context */
 
     if(re == NULL) {
-        int len = 256 * sizeof(PCRE2_UCHAR);
+        size_t error_buff_size_in_chars = 256;
+        int len = error_buff_size_in_chars * sizeof(PCRE2_UCHAR);
         PCRE2_UCHAR* buffer = (PCRE2_UCHAR*)apr_pcalloc(bend_pool, len);
         pcre2_get_error_message(errornumber, buffer, len);
         lib_printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
@@ -92,7 +93,8 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
         const char* v;
 
         apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
-        PCRE2_SIZE len = 128 * sizeof(PCRE2_UCHAR);
+        size_t buffer_size_in_chars = 128;
+        PCRE2_SIZE len = buffer_size_in_chars * sizeof(PCRE2_UCHAR);
         PCRE2_UCHAR* buffer = (PCRE2_UCHAR*)apr_pcalloc(bend_pool, len);
         pcre2_substring_copy_byname(match_data, k, buffer, &len);
         apr_hash_set(pattern->properties, k, APR_HASH_KEY_STRING, buffer);
