@@ -33,8 +33,13 @@
 #define OPT_FILE_LONG "file"
 #define OPT_FILE_DESCR "full path to file to read data from"
 
-void confint_print_copyright(void);
-void confint_print_syntax(void* argtable, void* argtableS, void* argtableF);
+ /*
+    conf_ - public members
+    prconf_ - private members
+ */
+
+void prconf_print_copyright(void);
+void prconf_print_syntax(void* argtable, void* argtableS, void* argtableF);
 
 void conf_configure_app(configuration_ctx_t* ctx) {
     struct arg_lit* help = arg_lit0(OPT_HELP_SHORT, OPT_HELP_LONG, OPT_HELP_DESCR);
@@ -63,7 +68,7 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     void* argtableS[] = {helpS, string, macroS, filesS, endS};
 
     if(arg_nullcheck(argtable) != 0 || arg_nullcheck(argtableF) != 0 || arg_nullcheck(argtableS) != 0) {
-        confint_print_syntax(argtable, argtableS, argtableF);
+        prconf_print_syntax(argtable, argtableS, argtableF);
         goto cleanup;
     }
 
@@ -72,7 +77,7 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     int nerrorsS = arg_parse(ctx->argc, ctx->argv, argtableS);
 
     if(nerrors > 0 || help->count > 0) {
-        confint_print_syntax(argtable, argtableS, argtableF);
+        prconf_print_syntax(argtable, argtableS, argtableF);
         if(help->count == 0 && ctx->argc > 1) {
             arg_print_errors(stdout, end, PROGRAM_NAME);
         }
@@ -86,7 +91,7 @@ void conf_configure_app(configuration_ctx_t* ctx) {
         ctx->on_file(filesS, macroF->sval[0], file->filename[0]);
     }
     else {
-        confint_print_syntax(argtable, argtableS, argtableF);
+        prconf_print_syntax(argtable, argtableS, argtableF);
         arg_print_errors(stdout, endF, PROGRAM_NAME);
         arg_print_errors(stdout, endS, PROGRAM_NAME);
     }
@@ -97,12 +102,12 @@ cleanup:
     arg_freetable(argtableF, sizeof(argtableF) / sizeof(argtableF[0]));
 }
 
-void confint_print_copyright(void) {
+void prconf_print_copyright(void) {
     lib_printf(COPYRIGHT_FMT, APP_NAME);
 }
 
-void confint_print_syntax(void* argtable, void* argtableS, void* argtableF) {
-    confint_print_copyright();
+void prconf_print_syntax(void* argtable, void* argtableS, void* argtableF) {
+    prconf_print_copyright();
 
     lib_printf(PROG_EXE);
     arg_print_syntax(stdout, argtableS, NEW_LINE NEW_LINE);

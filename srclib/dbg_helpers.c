@@ -11,16 +11,21 @@
 
 #include "targetver.h"
 #include <stdio.h>
-#include "DebugHelplers.h"
+#include "dbg_helpers.h"
 
 #define DBG_HELP_DLL "DBGHELP.DLL"
 #define DUMP_FILE_NAME PROGRAM_NAME ".exe.dmp"
 #define DUMP_FUNCTION "MiniDumpWriteDump"
 #define UNHANDLED_EXCEPTION_OCCURRED " An unhandled exception occurred. "
 
-void PrintWin32Error(const char* message);
+ /*
+    dbg_ - public members
+    prdbg_ - private members
+ */
 
-LONG WINAPI TopLevelFilter(struct _EXCEPTION_POINTERS* pExceptionInfo)
+void prdbg_print_win32_error(const char* message);
+
+LONG WINAPI dbg_top_level_filter(struct _EXCEPTION_POINTERS* p_exception_info)
 {
     LONG result = EXCEPTION_CONTINUE_SEARCH;    // finalize process in standard way by default
     HMODULE hDll = NULL;
@@ -32,13 +37,13 @@ LONG WINAPI TopLevelFilter(struct _EXCEPTION_POINTERS* pExceptionInfo)
     hDll = LoadLibraryA(DBG_HELP_DLL);
 
     if (hDll == NULL) {
-        PrintWin32Error(" Cannot load dll " DBG_HELP_DLL);
+        prdbg_print_win32_error(" Cannot load dll " DBG_HELP_DLL);
         return result;
     }
     // get func address
     pfnDump = (MINIDUMPWRITEDUMP)GetProcAddress(hDll, DUMP_FUNCTION);
     if (!pfnDump) {
-        PrintWin32Error(" Cannot get address of " DUMP_FUNCTION " function");
+        prdbg_print_win32_error(" Cannot get address of " DUMP_FUNCTION " function");
         return result;
     }
 
@@ -51,12 +56,12 @@ LONG WINAPI TopLevelFilter(struct _EXCEPTION_POINTERS* pExceptionInfo)
                         NULL);
 
     if (hFile == INVALID_HANDLE_VALUE) {
-        PrintWin32Error(UNHANDLED_EXCEPTION_OCCURRED "Error on creating dump file: " DUMP_FILE_NAME);
+        prdbg_print_win32_error(UNHANDLED_EXCEPTION_OCCURRED "Error on creating dump file: " DUMP_FILE_NAME);
         return result;
     }
 
     exInfo.ThreadId = GetCurrentThreadId();
-    exInfo.ExceptionPointers = pExceptionInfo;
+    exInfo.ExceptionPointers = p_exception_info;
     exInfo.ClientPointers = 0;
 
     // Write pDumpFile
@@ -66,13 +71,13 @@ LONG WINAPI TopLevelFilter(struct _EXCEPTION_POINTERS* pExceptionInfo)
         printf_s(UNHANDLED_EXCEPTION_OCCURRED "Dump saved to: %s", DUMP_FILE_NAME);
         result = EXCEPTION_EXECUTE_HANDLER;
     } else {
-        PrintWin32Error(UNHANDLED_EXCEPTION_OCCURRED "Error saving dump file: " DUMP_FILE_NAME);
+        prdbg_print_win32_error(UNHANDLED_EXCEPTION_OCCURRED "Error saving dump file: " DUMP_FILE_NAME);
     }
     CloseHandle(hFile);
     return result;
 }
 
-void PrintWin32Error(const char* message)
+void prdbg_print_win32_error(const char* message)
 {
     DWORD errorCode = 0;
     void* buffer = NULL;

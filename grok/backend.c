@@ -20,6 +20,9 @@
 #include "frontend.h"
 #include <apr_hash.h>
 
+ /*
+    bend_ - public members
+ */
 
 static apr_pool_t* bend_pool = NULL;
 pcre2_general_context* pcre_context = NULL;

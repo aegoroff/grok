@@ -25,7 +25,11 @@
 #include <apr_general.h>
 #include "argtable2.h"
 #include "configuration.h"
-#include <DebugHelplers.h>
+#include <dbg_helpers.h>
+
+ /*
+    main_ - public members
+ */
 
 // Forwards
 extern void yyrestart(FILE* input_file);
@@ -40,8 +44,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef WIN32
 #ifndef _DEBUG // only Release configuration dump generating
-
-    SetUnhandledExceptionFilter(TopLevelFilter);
+    SetUnhandledExceptionFilter(dbg_top_level_filter);
 #endif
 #endif
 

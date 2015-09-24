@@ -21,8 +21,13 @@
 
 #define ARRAY_INIT_SZ   256
 
+/*
+    fend_ - public members
+    prfend_ - private members
+*/
+
 // Forwards
-void app_part(char* data, char* reference, part_t type);
+void prfend_add_part(char* data, char* reference, part_t type);
 
 static apr_pool_t* fend_pool = NULL;
 static apr_hash_t* fend_definition = NULL;
@@ -46,11 +51,11 @@ void fend_on_definition_end(char* key) {
 }
 
 void fend_on_literal(char* str) {
-    app_part(str, NULL, part_literal);
+    prfend_add_part(str, NULL, part_literal);
 }
 
 void fend_on_grok(macro_t* macro) {
-    app_part(macro->name, macro->property, part_reference);
+    prfend_add_part(macro->name, macro->property, part_reference);
 }
 
 macro_t* fend_on_macro(char* name, char* prop) {
@@ -60,7 +65,7 @@ macro_t* fend_on_macro(char* name, char* prop) {
     return result;
 }
 
-void app_part(char* data, char* reference, part_t type) {
+void prfend_add_part(char* data, char* reference, part_t type) {
     info_t* result = (info_t*)apr_pcalloc(fend_pool, sizeof(info_t));
     result->type = type;
     result->data = data;

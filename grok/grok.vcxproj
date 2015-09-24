@@ -171,7 +171,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\srclib\DebugHelplers.h" />
+    <ClInclude Include="..\srclib\dbg_helpers.h" />
     <ClInclude Include="..\srclib\lib.h" />
     <ClInclude Include="backend.h" />
     <ClInclude Include="configuration.h" />
@@ -181,7 +181,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\srclib\DebugHelplers.c" />
+    <ClCompile Include="..\srclib\dbg_helpers.c" />
     <ClCompile Include="..\srclib\lib.c" />
     <ClCompile Include="backend.c" />
     <ClCompile Include="configuration.c" />
