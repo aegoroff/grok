@@ -23,3 +23,5 @@ Release/
 !lib/x64/Release/
 pcre-vsbuild/
 pcre-*/
+*.VC.db
+*.VC.opendb
