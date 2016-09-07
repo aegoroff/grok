@@ -23,9 +23,9 @@ typedef struct pattern {
 
 void bend_init(apr_pool_t* pool);
 void bend_cleanup();
-
 BOOL bend_match_re(pattern_t* pattern, const char* subject);
-pattern_t* bend_create_pattern(const char* macro);
+
+pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool);
 
 #endif // GROK_BACKEND_H_
 

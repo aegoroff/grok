@@ -38,8 +38,8 @@
 extern void yyrestart(FILE* input_file);
 void main_run_parsing();
 void main_compile_lib(struct arg_file* files);
-void main_on_string(struct arg_file* files, char* const macro, char* const str);
-void main_on_file(struct arg_file* files, char* const macro, char* const path);
+void main_on_string(struct arg_file* files, char* const macro, char* const str, int grep_mode);
+void main_on_file(struct arg_file* files, char* const macro, char* const path, int grep_mode);
 void main_compile_pattern_file(const char* p);
 BOOL main_try_compile_as_wildcard(const char* p);
 
@@ -65,7 +65,6 @@ int main(int argc, char* argv[]) {
     atexit(apr_terminate);
 
     apr_pool_create(&main_pool, NULL);
-    bend_init(main_pool);
     fend_init(main_pool);
 
     configuration_ctx_t* configuration = (configuration_ctx_t*)apr_pcalloc(main_pool, sizeof(configuration_ctx_t));
@@ -76,7 +75,6 @@ int main(int argc, char* argv[]) {
 
     conf_configure_app(configuration);
 
-    bend_cleanup();
     apr_pool_destroy(main_pool);
     return 0;
 }
@@ -172,16 +170,18 @@ void main_compile_lib(struct arg_file* files) {
     }
 }
 
-void main_on_string(struct arg_file* files, char* const macro, char* const str) {
+void main_on_string(struct arg_file* files, char* const macro, char* const str, int grep_mode) {
     main_compile_lib(files);
-    pattern_t* pattern = bend_create_pattern(macro);
+    pattern_t* pattern = bend_create_pattern(macro, main_pool);
+    bend_init(main_pool);
     BOOL r = bend_match_re(pattern, str);
     lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
+    bend_cleanup();
 }
 
-void main_on_file(struct arg_file* files, char* const macro, char* const path) {
+void main_on_file(struct arg_file* files, char* const macro, char* const path, int grep_mode) {
     main_compile_lib(files);
-    pattern_t* pattern = bend_create_pattern(macro);
+    pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
     apr_status_t status = apr_file_open(&file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
     if(status != APR_SUCCESS) {
@@ -194,12 +194,20 @@ void main_on_file(struct arg_file* files, char* const macro, char* const path) {
 
     long long lineno = 1;
     do {
+        bend_init(main_pool);
         status = apr_file_gets(buffer, len, file_handle);
         BOOL r = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
-            lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macro);
+            if(grep_mode) {
+                if(r) {
+                    lib_printf(buffer);
+                }
+            }
+            else {
+                lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macro);
+            }
         }
-        if(r) {
+        if(r && !grep_mode) {
             lib_printf("\n");
             for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
                 const char* k;
@@ -210,6 +218,7 @@ void main_on_file(struct arg_file* files, char* const macro, char* const path) {
             }
             lib_printf("\n\n");
         }
+        bend_cleanup();
     }
     while(status == APR_SUCCESS);
 
