@@ -17,9 +17,11 @@ grok.tab.h
 grok.output
 Debug/
 Release/
-!lib/Debug/
-!lib/Release/
-!lib/x64/Debug/
-!lib/x64/Release/
+!src/lib/Debug/
+!src/lib/Release/
+!src/lib/x64/Debug/
+!src/lib/x64/Release/
 pcre-vsbuild/
 pcre-*/
+*.VC.db
+*.VC.opendb

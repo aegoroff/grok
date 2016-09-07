@@ -42,7 +42,7 @@ static apr_pool_t* main_pool;
 
 int main(int argc, char* argv[]) {
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #ifndef _DEBUG // only Release configuration dump generating
     SetUnhandledExceptionFilter(dbg_top_level_filter);
 #endif
