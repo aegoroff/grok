@@ -88,7 +88,7 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
 
     BOOL result = rc > 0;
     if(!result) {
-        return result;
+        goto cleanup;
     }
 
     for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
@@ -102,10 +102,13 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
         pcre2_substring_copy_byname(match_data, k, buffer, &len);
         apr_hash_set(pattern->properties, k, APR_HASH_KEY_STRING, buffer);
     }
+cleanup:
+    pcre2_match_data_free(match_data);
+    pcre2_code_free(re);
     return result;
 }
 
-pattern_t* bend_create_pattern(const char* macro) {
+pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool) {
     apr_array_header_t* root_elements = fend_get_pattern(macro);
 
     if(root_elements == NULL) {
@@ -113,11 +116,11 @@ pattern_t* bend_create_pattern(const char* macro) {
     }
 
     apr_pool_t* local_pool = NULL;
-    apr_pool_create(&local_pool, bend_pool);
+    apr_pool_create(&local_pool, pool);
 
     apr_array_header_t* stack = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(info_t*));
     apr_array_header_t* composition = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(char*));
-    apr_hash_t* used_properties = apr_hash_make(bend_pool);
+    apr_hash_t* used_properties = apr_hash_make(pool);
 
     for(int i = 0; i < root_elements->nelts; i++) {
         info_t* top = ((info_t**)root_elements->elts)[i];
@@ -162,11 +165,11 @@ pattern_t* bend_create_pattern(const char* macro) {
     char* regex = "";
     for(int i = 0; i < composition->nelts; i++) {
         char* part = ((char**)composition->elts)[i];
-        regex = apr_pstrcat(bend_pool, regex, part, NULL);
+        regex = apr_pstrcat(pool, regex, part, NULL);
     }
     apr_pool_destroy(local_pool);
 
-    pattern_t* result = (pattern_t*)apr_pcalloc(bend_pool, sizeof(pattern_t));
+    pattern_t* result = (pattern_t*)apr_pcalloc(pool, sizeof(pattern_t));
     result->regex = regex;
     result->properties = used_properties;
 
