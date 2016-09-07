@@ -18,6 +18,8 @@
 #include <locale.h>
 #include "apr.h"
 #include "apr_file_io.h"
+#include "apr_file_info.h"
+#include "apr_fnmatch.h"
 #include "grok.tab.h"
 #include "frontend.h"
 #include "backend.h"
@@ -26,8 +28,9 @@
 #include "argtable2.h"
 #include "configuration.h"
 #include <dbg_helpers.h>
+#include <apr_strings.h>
 
- /*
+/*
     main_ - public members
  */
 
@@ -37,6 +40,8 @@ void main_run_parsing();
 void main_compile_lib(struct arg_file* files);
 void main_on_string(struct arg_file* files, char* const macro, char* const str);
 void main_on_file(struct arg_file* files, char* const macro, char* const path);
+void main_compile_pattern_file(const char* p);
+BOOL main_try_compile_as_wildcard(const char* p);
 
 static apr_pool_t* main_pool;
 
@@ -82,18 +87,88 @@ void main_run_parsing() {
     }
 }
 
+BOOL main_try_compile_as_wildcard(const char* pattern) {
+    char* drive = (char*)apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* dir = (char*)apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* filename = (char*)apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* ext = (char*)apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* full_dir_path;
+    char* file_pattern;
+    apr_status_t status;
+    apr_dir_t* d = NULL;
+    apr_finfo_t info = { 0 };
+    char* full_path = NULL; // Full path to file
+
+    _splitpath_s(pattern,
+                 drive, MAX_PATH, // Drive
+                 dir, MAX_PATH, // Directory
+                 filename, MAX_PATH, // Filename
+                 ext, MAX_PATH); // Extension
+            
+    full_dir_path = apr_pstrcat(main_pool, drive, dir, NULL);
+    file_pattern = apr_pstrcat(main_pool, filename, ext, NULL);
+    status = apr_dir_open(&d, full_dir_path, main_pool);
+    if (status != APR_SUCCESS) {
+        return FALSE;
+    }
+    for (;;) {
+        status = apr_dir_read(&info, APR_FINFO_NAME | APR_FINFO_MIN, d);
+        if (APR_STATUS_IS_ENOENT(status)) { // Finish reading directory
+            break;
+        }
+
+        if (info.name == NULL) { // to avoid access violation
+            continue;
+        }
+        
+        if (status != APR_SUCCESS || info.filetype != APR_REG) {
+            continue;
+        }
+
+        if (apr_fnmatch(file_pattern, info.name, APR_FNM_CASE_BLIND) != APR_SUCCESS) {
+            continue;
+        }
+        
+        status = apr_filepath_merge(&full_path,
+            full_dir_path,
+            info.name,
+            APR_FILEPATH_NATIVE,
+            main_pool);
+        
+        if (status != APR_SUCCESS) {
+            continue;
+        }
+
+        main_compile_pattern_file(full_path);
+    }
+    
+    status = apr_dir_close(d);
+    if (status != APR_SUCCESS) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+void main_compile_pattern_file(const char* p) {
+    FILE* f = NULL;
+    const char* root;
+    errno_t error = fopen_s(&f, p, "r");
+    if(error) {
+        if(!main_try_compile_as_wildcard(p)) {
+            perror(p);
+        }
+        return;
+    }
+    yyrestart(f);
+    main_run_parsing();
+    fclose(f);
+}
+
 void main_compile_lib(struct arg_file* files) {
     for(int i = 0; i < files->count; i++) {
-        FILE* f = NULL;
         const char* p = files->filename[i];
-        errno_t error = fopen_s(&f, p, "r");
-        if(error) {
-            perror(p);
-            return;
-        }
-        yyrestart(f);
-        main_run_parsing();
-        fclose(f);
+        main_compile_pattern_file(p);
     }
 }
 
