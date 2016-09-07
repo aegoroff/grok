@@ -200,7 +200,7 @@ void main_on_file(struct arg_file* files, char* const macro, char* const path, i
         if(status != APR_EOF) {
             if(grep_mode) {
                 if(r) {
-                    lib_printf(buffer);
+                    lib_printf("%s", buffer);
                 }
             }
             else {
