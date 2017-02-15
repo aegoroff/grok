@@ -1,4 +1,6 @@
-﻿/*!
+﻿// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+/*!
  * \brief   The file contains backend implementation
  * \author  \verbatim
             Created by: Alexander Egorov
@@ -70,10 +72,10 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
     pcre2_match_data* match_data = pcre2_match_data_create_from_pattern(re, NULL);
 
     int flags = PCRE2_NOTEMPTY;
-    if(!strstr(subject, "^")) {
+    if(!strchr(subject, '^')) {
         flags |= PCRE2_NOTBOL;
     }
-    if(!strstr(subject, "$")) {
+    if(!strchr(subject, '$')) {
         flags |= PCRE2_NOTEOL;
     }
 
@@ -122,7 +124,7 @@ pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool) {
     apr_array_header_t* composition = apr_array_make(local_pool, COMPOSE_INIT_SZ, sizeof(char*));
     apr_hash_t* used_properties = apr_hash_make(pool);
 
-    for(int i = 0; i < root_elements->nelts; i++) {
+    for(size_t i = 0; i < root_elements->nelts; i++) {
         info_t* top = ((info_t**)root_elements->elts)[i];
         *(info_t**)apr_array_push(stack) = top;
 
@@ -163,7 +165,7 @@ pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool) {
         }
     }
     char* regex = "";
-    for(int i = 0; i < composition->nelts; i++) {
+    for(size_t i = 0; i < composition->nelts; i++) {
         char* part = ((char**)composition->elts)[i];
         regex = apr_pstrcat(pool, regex, part, NULL);
     }
