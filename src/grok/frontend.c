@@ -1,4 +1,6 @@
-﻿/*!
+﻿// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+/*!
  * \brief   The file contains frontend implementation
  * \author  \verbatim
             Created by: Alexander Egorov
@@ -44,7 +46,7 @@ void fend_on_definition() {
 
 void fend_on_definition_end(char* key) {
     apr_array_header_t* parts = apr_array_make(fend_pool, fend_composition->nelts, sizeof(info_t*));
-    for(int i = 0; i < fend_composition->nelts; i++) {
+    for(size_t i = 0; i < fend_composition->nelts; i++) {
         *(info_t**)apr_array_push(parts) = ((info_t**)fend_composition->elts)[i];
     }
     apr_hash_set(fend_definition, (const char*)key, APR_HASH_KEY_STRING, parts);

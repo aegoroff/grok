@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 /*!
  * \brief   The file contains compiler driver
  * \author  \verbatim
@@ -164,7 +166,7 @@ void main_compile_pattern_file(const char* p) {
 }
 
 void main_compile_lib(struct arg_file* files) {
-    for(int i = 0; i < files->count; i++) {
+    for(size_t i = 0; i < files->count; i++) {
         const char* p = files->filename[i];
         main_compile_pattern_file(p);
     }
