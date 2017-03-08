@@ -1,5 +1,6 @@
 packages/
 .idea/
+.vs/
 *.obj
 *.VC.opendb
 *.suo
