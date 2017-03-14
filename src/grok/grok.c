@@ -15,7 +15,6 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 
 #include "targetver.h"
-
 #include <stdio.h>
 #include <locale.h>
 #include "apr.h"
@@ -177,7 +176,16 @@ void main_on_string(struct arg_file* files, char* const macro, char* const str, 
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     bend_init(main_pool);
     BOOL r = bend_match_re(pattern, str);
-    lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
+
+    if (grep_mode) {
+        if (r) {
+            lib_printf("%s", str);
+        }
+    }
+    else {
+        lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
+    }
+
     bend_cleanup();
 }
 
@@ -209,6 +217,8 @@ void main_on_file(struct arg_file* files, char* const macro, char* const path, i
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macro);
             }
         }
+
+        // Extract meta information if applicable and pattern contains instructions to extract properties
         if(r && !grep_mode) {
             lib_printf("\n");
             for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
