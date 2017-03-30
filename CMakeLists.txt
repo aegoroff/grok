@@ -56,6 +56,7 @@ ENDIF()
 file(GLOB GROK_SOURCE_FILES "${SRC}/${GROK}/*.c")
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB ARGTABLE_SOURCE_FILES "${SRC}/${ARGTABLE}/*.c")
+file(GLOB PATTERN_FILES "patterns/*.patterns")
 
 SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_auto_possess.c
@@ -104,3 +105,6 @@ endif()
 ADD_EXECUTABLE(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
 TARGET_LINK_LIBRARIES(grok ws2_32 apr-1 apriconv-1 aprutil-1 pcre strsafe argtable)
+
+install(TARGETS grok DESTINATION bin)
+install(FILES ${PATTERN_FILES} DESTINATION bin)
