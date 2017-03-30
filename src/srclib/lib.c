@@ -6,9 +6,9 @@
             Created by: Alexander Egorov
             \endverbatim
  * \date    \verbatim
-            Creation date: 2015-07-21
+            Creation date: 2010-03-05
             \endverbatim
- * Copyright: (c) Alexander Egorov 2015
+ * Copyright: (c) Alexander Egorov 2009-2017
  */
 
 #include <stdarg.h>
@@ -23,6 +23,7 @@
 
  /*
     lib_ - public members
+    prdlib_ - private members
  */
 
 #define BIG_FILE_FORMAT "%.2f %s (%llu %s)" // greater or equal 1 Kb
@@ -39,7 +40,7 @@
 #define INT64_BITS_COUNT 64
 
 // forwards
-uint64_t ilog(uint64_t x);
+static uint64_t prlib_ilog(uint64_t x);
 
 static char* lib_sizes[] = {
     "bytes",
@@ -83,19 +84,19 @@ void lib_print_size(uint64_t size) {
                normalized.value, lib_sizes[normalized.unit], size, lib_sizes[size_unit_bytes]);
 }
 
-void lib_size_to_string(uint64_t size, size_t strSize, char* str) {
+void lib_size_to_string(uint64_t size, char* str) {
     lib_file_size_t normalized = lib_normalize_size(size);
 
     if(str == NULL) {
         return;
     }
-    sprintf_s(str, strSize, normalized.unit ? BIG_FILE_FORMAT : SMALL_FILE_FORMAT, //-V510
+    lib_sprintf(str, normalized.unit ? BIG_FILE_FORMAT : SMALL_FILE_FORMAT, //-V510
               normalized.value, lib_sizes[normalized.unit], size, lib_sizes[size_unit_bytes]);
 }
 
 uint32_t lib_htoi(const char* ptr, int size) {
     uint32_t value = 0;
-    char ch = 0;
+    char ch;
     int count = 0;
 
     if(ptr == NULL || size <= 0) {
@@ -136,8 +137,8 @@ void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz) {
     }
 }
 
-uint64_t ilog(uint64_t x) {
-    uint64_t y = 0;
+uint64_t prlib_ilog(uint64_t x) {
+    uint64_t y;
     uint64_t n = INT64_BITS_COUNT;
     int c = INT64_BITS_COUNT / 2;
 
@@ -156,7 +157,7 @@ uint64_t ilog(uint64_t x) {
 
 lib_file_size_t lib_normalize_size(uint64_t size) {
     lib_file_size_t result = {0};
-    result.unit = size == 0 ? size_unit_bytes : ilog(size) / ilog(BINARY_THOUSAND);
+    result.unit = size == 0 ? size_unit_bytes : prlib_ilog(size) / prlib_ilog(BINARY_THOUSAND);
     if(result.unit == size_unit_bytes) {
         result.value.size_in_bytes = size;
     }
@@ -168,7 +169,7 @@ lib_file_size_t lib_normalize_size(uint64_t size) {
 
 int lib_printf(__format_string const char* format, ...) {
     va_list params = NULL;
-    int result = 0;
+    int result;
     va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
     result = vfprintf_s(stdout, format, params);
@@ -181,7 +182,7 @@ int lib_printf(__format_string const char* format, ...) {
 
 int lib_fprintf(FILE* file, __format_string const char* format, ...) {
     va_list params = NULL;
-    int result = 0;
+    int result;
     va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
     result = vfprintf_s(file, format, params);
@@ -194,7 +195,7 @@ int lib_fprintf(FILE* file, __format_string const char* format, ...) {
 
 int lib_sprintf(char* buffer, __format_string const char* format, ...) {
     va_list params = NULL;
-    int result = 0;
+    int result;
     va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
     int len = _vscprintf(format, params) + 1; // _vscprintf doesn't count terminating '\0'
@@ -208,7 +209,6 @@ int lib_sprintf(char* buffer, __format_string const char* format, ...) {
 
 lib_time_t lib_normalize_time(double seconds) {
     lib_time_t result = {0};
-    double tmp = 0;
 
     result.total_seconds = seconds;
     result.years = seconds / SECONDS_PER_YEAR;
@@ -216,7 +216,7 @@ lib_time_t lib_normalize_time(double seconds) {
     result.hours = (((uint64_t)seconds % SECONDS_PER_YEAR) % SECONDS_PER_DAY) / SECONDS_PER_HOUR;
     result.minutes = ((uint64_t)seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
     result.seconds = ((uint64_t)seconds % SECONDS_PER_HOUR) % SECONDS_PER_MINUTE;
-    tmp = result.seconds;
+    double tmp = result.seconds;
     result.seconds +=
             seconds -
             ((double)(result.years * SECONDS_PER_YEAR) + (double)(result.days * SECONDS_PER_DAY) + (double)(result.hours * SECONDS_PER_HOUR) + (double)(result.minutes * SECONDS_PER_MINUTE) + result.seconds);
@@ -226,28 +226,28 @@ lib_time_t lib_normalize_time(double seconds) {
     return result;
 }
 
-void lib_lib_time_to_string(lib_time_t time, size_t strSize, char* str) {
-    if((str == NULL) || (strSize == 0)) {
+void lib_time_to_string(lib_time_t time, char* str) {
+    if(str == NULL) {
         return;
     }
 
     if(time.years) {
-        sprintf_s(str, strSize, YEARS_FMT DAYS_FMT HOURS_FMT MIN_FMT SEC_FMT, time.years, time.days, time.hours, time.minutes, time.seconds);
+        lib_sprintf(str, YEARS_FMT DAYS_FMT HOURS_FMT MIN_FMT SEC_FMT, time.years, time.days, time.hours, time.minutes, time.seconds);
         return;
     }
     if(time.days) {
-        sprintf_s(str, strSize, DAYS_FMT HOURS_FMT MIN_FMT SEC_FMT, time.days, time.hours, time.minutes, time.seconds);
+        lib_sprintf(str, DAYS_FMT HOURS_FMT MIN_FMT SEC_FMT, time.days, time.hours, time.minutes, time.seconds);
         return;
     }
     if(time.hours) {
-        sprintf_s(str, strSize, HOURS_FMT MIN_FMT SEC_FMT, time.hours, time.minutes, time.seconds);
+        lib_sprintf(str, HOURS_FMT MIN_FMT SEC_FMT, time.hours, time.minutes, time.seconds);
         return;
     }
     if(time.minutes) {
-        sprintf_s(str, strSize, MIN_FMT SEC_FMT, time.minutes, time.seconds);
+        lib_sprintf(str, MIN_FMT SEC_FMT, time.minutes, time.seconds);
         return;
     }
-    sprintf_s(str, strSize, SEC_FMT, time.seconds);
+    lib_sprintf(str, SEC_FMT, time.seconds);
 }
 
 void lib_new_line(void) {
@@ -289,11 +289,10 @@ int lib_count_digits_in(double x) {
 }
 
 const char* lib_get_file_name(const char* path) {
-    const char* filename = NULL;
     if(path == NULL) {
         return path;
     }
-    filename = strrchr(path, '\\');
+    const char* filename = strrchr(path, '\\');
 
     if(filename == NULL) {
         filename = path;
