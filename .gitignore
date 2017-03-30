@@ -2,8 +2,6 @@ packages/
 .idea/
 .vs/
 *.obj
-*.VC.opendb
-*.suo
 *.sdf
 *.opensdf
 *.pdb
@@ -23,6 +21,6 @@ Release/
 !src/lib/x64/Debug/
 !src/lib/x64/Release/
 pcre-vsbuild/
+cmake-build-debug/
+cmake-build-release/
 pcre-*/
-*.VC.db
-*.VC.opendb
