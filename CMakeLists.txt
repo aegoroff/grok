@@ -13,12 +13,15 @@ set(LIBD LibD)
 set(LIBR LibR)
 
 IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS_RELEASE  "/MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
-    set(CMAKE_C_FLAGS_RELEASE  "/MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
-    set(CMAKE_CXX_FLAGS_DEBUG  "/MTd /Od")
-    set(CMAKE_C_FLAGS_DEBUG  "/MTd /Od")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
-    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /LTCG")
+    set(CMAKE_CXX_FLAGS_RELEASE  "/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
+    set(CMAKE_C_FLAGS_RELEASE  "/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG  "/MP /MTd /Od")
+    set(CMAKE_C_FLAGS_DEBUG  "/MP /MTd /Od")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    else()
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
+        set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /LTCG")
+    endif()
 ELSE()
     set(CMAKE_CXX_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
     set(CMAKE_CXX_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
@@ -74,7 +77,7 @@ SET(PCRE_SOURCE_FILES
 ADD_LIBRARY(argtable STATIC ${ARGTABLE_SOURCE_FILES})
 ADD_LIBRARY(pcre STATIC ${PCRE_SOURCE_FILES})
 
-if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     link_directories(
             "$ENV{APR_HOME14}/${APR}/x64/${LIBD}"
             "$ENV{APR_HOME14}/${APR_ICONV}/x64/${LIBD}"
