@@ -11,6 +11,12 @@ set(APR_ICONV apr-iconv)
 set(APR_UTIL apr-util)
 set(LIBD LibD)
 set(LIBR LibR)
+set(APR_X64 "$ENV{APR_HOME14}/${APR}/x64")
+set(APR_X86 "$ENV{APR_HOME14}/${APR}")
+set(APR_ICONV_X64 "$ENV{APR_HOME14}/${APR_ICONV}/x64")
+set(APR_ICONV_X86 "$ENV{APR_HOME14}/${APR_ICONV}")
+set(APR_UTIL_X64 "$ENV{APR_HOME14}/${APR_UTIL}/x64")
+set(APR_UTIL_X86 "$ENV{APR_HOME14}/${APR_UTIL}")
 
 IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE  "/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
@@ -79,15 +85,15 @@ ADD_LIBRARY(pcre STATIC ${PCRE_SOURCE_FILES})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     link_directories(
-            "$ENV{APR_HOME14}/${APR}/x64/${LIBD}"
-            "$ENV{APR_HOME14}/${APR_ICONV}/x64/${LIBD}"
-            "$ENV{APR_HOME14}/${APR_UTIL}/x64/${LIBD}"
+            "${APR_X64}/${LIBD}"
+            "${APR_ICONV_X64}/${LIBD}"
+            "${APR_UTIL_X64}/${LIBD}"
     )
 else()
     link_directories(
-            "$ENV{APR_HOME14}/${APR}/x64/${LIBR}"
-            "$ENV{APR_HOME14}/${APR_ICONV}/x64/${LIBR}"
-            "$ENV{APR_HOME14}/${APR_UTIL}/x64/${LIBR}"
+            "${APR_X64}/${LIBR}"
+            "${APR_ICONV_X64}/${LIBR}"
+            "${APR_UTIL_X64}/${LIBR}"
     )
 endif()
 
