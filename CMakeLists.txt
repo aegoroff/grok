@@ -12,6 +12,18 @@ set(APR_UTIL apr-util)
 set(LIBD LibD)
 set(LIBR LibR)
 
+IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS_RELEASE  "/MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
+    set(CMAKE_C_FLAGS_RELEASE  "/MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG  "/MTd /Od")
+    set(CMAKE_C_FLAGS_DEBUG  "/MTd /Od")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
+    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /LTCG")
+ELSE()
+    set(CMAKE_CXX_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
+    set(CMAKE_CXX_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
+ENDIF()
+
 include_directories(${SRC}/${LIB})
 include_directories(${SRC}/${ARGTABLE})
 include_directories(${SRC}/${PCRE})
@@ -57,37 +69,25 @@ SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_ucd.c
         ${SRC}/${PCRE}/pcre2_valid_utf.c
         ${SRC}/${PCRE}/pcre2_xclass.c
-)
+        )
 
 ADD_LIBRARY(argtable STATIC ${ARGTABLE_SOURCE_FILES})
 ADD_LIBRARY(pcre STATIC ${PCRE_SOURCE_FILES})
 
-set(APR1_LIB apr-1.lib)
-set(APR_ICONV_LIB apriconv-1.lib)
-set(APR_UTIL_LIB aprutil-1.lib)
-
-ADD_LIBRARY(apr1 STATIC IMPORTED)
-ADD_LIBRARY(apriconv STATIC IMPORTED)
-ADD_LIBRARY(aprutil STATIC IMPORTED)
-
-set_property(TARGET apr1 PROPERTY
-             IMPORTED_LOCATION_DEBUG "$ENV{APR_HOME14}/${APR}/x64/${LIBD}/${APR1_LIB}")
-
-set_property(TARGET apr1 PROPERTY
-             IMPORTED_LOCATION_RELEASE "$ENV{APR_HOME14}/${APR}/x64/${LIBR}/${APR1_LIB}")
-
-set_property(TARGET apriconv PROPERTY
-             IMPORTED_LOCATION_DEBUG "$ENV{APR_HOME14}/${APR_ICONV}/x64/${LIBD}/${APR_ICONV_LIB}")
-
-set_property(TARGET apriconv PROPERTY
-             IMPORTED_LOCATION_RELEASE "$ENV{APR_HOME14}/${APR_ICONV}/x64/${LIBR}/${APR_ICONV_LIB}")
-
-set_property(TARGET aprutil PROPERTY
-             IMPORTED_LOCATION_DEBUG "$ENV{APR_HOME14}/${APR_UTIL}/x64/${LIBD}/${APR_UTIL_LIB}")
-
-set_property(TARGET aprutil PROPERTY
-             IMPORTED_LOCATION_RELEASE "$ENV{APR_HOME14}/${APR_UTIL}/x64/${LIBR}/${APR_UTIL_LIB}")
+if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+    link_directories(
+            "$ENV{APR_HOME14}/${APR}/x64/${LIBD}"
+            "$ENV{APR_HOME14}/${APR_ICONV}/x64/${LIBD}"
+            "$ENV{APR_HOME14}/${APR_UTIL}/x64/${LIBD}"
+    )
+else()
+    link_directories(
+            "$ENV{APR_HOME14}/${APR}/x64/${LIBR}"
+            "$ENV{APR_HOME14}/${APR_ICONV}/x64/${LIBR}"
+            "$ENV{APR_HOME14}/${APR_UTIL}/x64/${LIBR}"
+    )
+endif()
 
 ADD_EXECUTABLE(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
-TARGET_LINK_LIBRARIES(grok ws2_32 apr1 apriconv aprutil pcre argtable)
+TARGET_LINK_LIBRARIES(grok ws2_32 apr-1 apriconv-1 aprutil-1 pcre argtable)
