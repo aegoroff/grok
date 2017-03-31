@@ -26,7 +26,7 @@
 #include "backend.h"
 #include <apr_errno.h>
 #include <apr_general.h>
-#include "argtable2.h"
+#include "argtable3.h"
 #include "configuration.h"
 #include <dbg_helpers.h>
 #include <apr_strings.h>

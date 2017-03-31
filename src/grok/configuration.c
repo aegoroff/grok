@@ -11,9 +11,10 @@
  * Copyright: (c) Alexander Egorov 2015
  */
 
-#include <argtable2.h>
+#include "argtable3.h"
 #include "targetver.h"
 #include "configuration.h"
+#include "lib.h"
 
 #define OPT_F_SHORT "p"
 #define OPT_F_LONG "patterns"
