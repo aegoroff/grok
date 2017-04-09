@@ -1,3 +1,7 @@
+/*
+* This is an open source non-commercial project. Dear PVS-Studio, please check it.
+* PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+*/
 /*************************************************
 *      Perl-Compatible Regular Expressions       *
 *************************************************/
@@ -7144,7 +7148,6 @@ for (;; pptr++)
       if (mclength == 1 || req_caseopt == 0)
         {
         firstcu = mcbuffer[0] | req_caseopt;
-        firstcu = mcbuffer[0];
         firstcuflags = req_caseopt;
         if (mclength != 1)
           {
