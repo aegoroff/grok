@@ -14,7 +14,6 @@
 
 #define PCRE2_CODE_UNIT_WIDTH 8
 
-#include "targetver.h"
 #include <stdio.h>
 #include <locale.h>
 #include "apr.h"
@@ -39,8 +38,8 @@
 extern void yyrestart(FILE* input_file);
 void main_run_parsing();
 void main_compile_lib(struct arg_file* files);
-void main_on_string(struct arg_file* files, char* const macro, char* const str, int grep_mode);
-void main_on_file(struct arg_file* files, char* const macro, char* const path, int grep_mode);
+void main_on_string(struct arg_file* files, const char* const macro, const char* const str, int grep_mode);
+void main_on_file(struct arg_file* files, const char* const macro, const char* const path, int grep_mode);
 void main_compile_pattern_file(const char* p);
 BOOL main_try_compile_as_wildcard(const char* p);
 
@@ -151,7 +150,6 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
 
 void main_compile_pattern_file(const char* p) {
     FILE* f = NULL;
-    const char* root;
     errno_t error = fopen_s(&f, p, "r");
     if(error) {
         if(!main_try_compile_as_wildcard(p)) {
@@ -171,7 +169,7 @@ void main_compile_lib(struct arg_file* files) {
     }
 }
 
-void main_on_string(struct arg_file* files, char* const macro, char* const str, int grep_mode) {
+void main_on_string(struct arg_file* files, const char* const macro, const char* const str, int grep_mode) {
     main_compile_lib(files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     bend_init(main_pool);
