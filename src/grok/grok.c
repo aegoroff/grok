@@ -41,7 +41,7 @@ void main_compile_lib(struct arg_file* files);
 void main_on_string(struct arg_file* files, const char* const macro, const char* const str, int grep_mode);
 void main_on_file(struct arg_file* files, const char* const macro, const char* const path, int grep_mode);
 void main_compile_pattern_file(const char* p);
-BOOL main_try_compile_as_wildcard(const char* p);
+BOOL main_try_compile_as_wildcard(const char* pattern);
 
 static apr_pool_t* main_pool;
 
