@@ -187,7 +187,7 @@ void main_on_string(struct arg_file* files, const char* const macro, const char*
     bend_cleanup();
 }
 
-void main_on_file(struct arg_file* files, char* const macro, char* const path, int grep_mode) {
+void main_on_file(struct arg_file* files, const char* const macro, const char* const path, int grep_mode) {
     main_compile_lib(files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
