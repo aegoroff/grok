@@ -169,11 +169,15 @@ lib_file_size_t lib_normalize_size(uint64_t size) {
     return result;
 }
 
+#ifdef _MSC_VER
 int lib_printf(__format_string const char* format, ...) {
+#else
+int lib_printf(const char* format, ...) {
+#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
-#ifdef __STDC_WANT_SECURE_LIB__
+#ifdef _MSC_VER
     result = vfprintf_s(stdout, format, params);
 #else
     result = vfprintf(stdout, format, params);
@@ -181,12 +185,15 @@ int lib_printf(__format_string const char* format, ...) {
     va_end(params);
     return result;
 }
-
+#ifdef _MSC_VER
 int lib_fprintf(FILE* file, __format_string const char* format, ...) {
+#else
+int lib_fprintf(FILE* file, const char* format, ...) {
+#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
-#ifdef __STDC_WANT_SECURE_LIB__
+#ifdef _MSC_VER
     result = vfprintf_s(file, format, params);
 #else
     result = vfprintf(file, format, params);
@@ -195,11 +202,15 @@ int lib_fprintf(FILE* file, __format_string const char* format, ...) {
     return result;
 }
 
+#ifdef _MSC_VER
 int lib_sprintf(char* buffer, __format_string const char* format, ...) {
+#else
+int lib_sprintf(char* buffer, const char* format, ...) {
+#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
-#ifdef __STDC_WANT_SECURE_LIB__
+#ifdef _MSC_VER
     int len = _vscprintf(format, params) + 1; // _vscprintf doesn't count terminating '\0'
     result = vsprintf_s(buffer, len, format, params);
 #else

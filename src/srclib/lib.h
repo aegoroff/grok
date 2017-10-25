@@ -97,19 +97,19 @@ typedef struct lib_time {
     double   total_seconds;
 } lib_time_t;
 
-#ifdef __STDC_WANT_SECURE_LIB__
+#ifdef _MSC_VER
 extern int lib_printf(__format_string const char* format, ...);
 #else
 extern int lib_printf(const char* format, ...);
 #endif
 
-#ifdef __STDC_WANT_SECURE_LIB__
+#ifdef _MSC_VER
 extern int lib_fprintf(FILE* file, __format_string const char* format, ...);
 #else
 extern int lib_fprintf(FILE* file, const char* format, ...);
 #endif
 
-#ifdef __STDC_WANT_SECURE_LIB__
+#ifdef _MSC_VER
 extern int lib_sprintf(char* buffer, __format_string const char* format, ...);
 #else
 extern int lib_sprintf(char* buffer, const char* format, ...);
