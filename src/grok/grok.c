@@ -38,14 +38,14 @@
 extern void yyrestart(FILE* input_file);
 void main_run_parsing();
 void main_compile_lib(struct arg_file* files);
-void main_on_string(struct arg_file* files, const char* const macro, const char* const str, int grep_mode);
-void main_on_file(struct arg_file* files, const char* const macro, const char* const path, int grep_mode);
+void main_on_string(struct arg_file* files, const char* macro, const char* str, int grep_mode);
+void main_on_file(struct arg_file* files, const char* macro, const char* path, int grep_mode);
 void main_compile_pattern_file(const char* p);
 BOOL main_try_compile_as_wildcard(const char* pattern);
 
 static apr_pool_t* main_pool;
 
-int main(int argc, char* argv[]) {
+int main(int argc, const char* const argv[]) {
 
 #ifdef _MSC_VER
 #ifndef _DEBUG // only Release configuration dump generating
