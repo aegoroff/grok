@@ -56,7 +56,7 @@ int main(int argc, const char* const argv[]) {
     setlocale(LC_ALL, ".ACP");
     setlocale(LC_NUMERIC, "C");
 
-    apr_status_t status = apr_app_initialize(&argc, &argv, NULL);
+    const apr_status_t status = apr_app_initialize(&argc, &argv, NULL);
     if(status != APR_SUCCESS) {
         lib_printf("Couldn't initialize APR");
         return EXIT_FAILURE;
@@ -150,7 +150,7 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
 
 void main_compile_pattern_file(const char* p) {
     FILE* f = NULL;
-    errno_t error = fopen_s(&f, p, "r");
+    const errno_t error = fopen_s(&f, p, "r");
     if(error) {
         if(!main_try_compile_as_wildcard(p)) {
             perror(p);
@@ -169,11 +169,11 @@ void main_compile_lib(struct arg_file* files) {
     }
 }
 
-void main_on_string(struct arg_file* files, const char* const macro, const char* const str, int grep_mode) {
+void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int grep_mode) {
     main_compile_lib(files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     bend_init(main_pool);
-    BOOL r = bend_match_re(pattern, str);
+    const BOOL r = bend_match_re(pattern, str);
 
     if (grep_mode) {
         if (r) {
@@ -187,7 +187,7 @@ void main_on_string(struct arg_file* files, const char* const macro, const char*
     bend_cleanup();
 }
 
-void main_on_file(struct arg_file* files, const char* const macro, const char* const path, int grep_mode) {
+void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int grep_mode) {
     main_compile_lib(files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
@@ -204,7 +204,7 @@ void main_on_file(struct arg_file* files, const char* const macro, const char* c
     do {
         bend_init(main_pool);
         status = apr_file_gets(buffer, len, file_handle);
-        BOOL r = bend_match_re(pattern, buffer);
+        const BOOL r = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
             if(grep_mode) {
                 if(r) {
