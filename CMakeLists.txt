@@ -56,6 +56,7 @@ set(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_compile.c
         ${SRC}/${PCRE}/pcre2_config.c
         ${SRC}/${PCRE}/pcre2_context.c
+        ${SRC}/${PCRE}/pcre2_convert.c
         ${SRC}/${PCRE}/pcre2_dfa_match.c
         ${SRC}/${PCRE}/pcre2_error.c
         ${SRC}/${PCRE}/pcre2_find_bracket.c

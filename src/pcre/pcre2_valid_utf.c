@@ -1,3 +1,7 @@
+/*
+* This is an open source non-commercial project. Dear PVS-Studio, please check it.
+* PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+*/
 /*************************************************
 *      Perl-Compatible Regular Expressions       *
 *************************************************/
@@ -7,7 +11,7 @@ and semantics are as close as possible to those of the Perl 5 language.
 
                        Written by Philip Hazel
      Original API code Copyright (c) 1997-2012 University of Cambridge
-         New API code Copyright (c) 2016 University of Cambridge
+          New API code Copyright (c) 2016-2017 University of Cambridge
 
 -----------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
@@ -142,20 +146,20 @@ for (p = string; length > 0; p++)
 
   if (c < 0xc0)                         /* Isolated 10xx xxxx byte */
     {
-    *erroroffset = (int)(p - string);
+    *erroroffset = (PCRE2_SIZE)(p - string);
     return PCRE2_ERROR_UTF8_ERR20;
     }
 
   if (c >= 0xfe)                        /* Invalid 0xfe or 0xff bytes */
     {
-    *erroroffset = (int)(p - string);
+    *erroroffset = (PCRE2_SIZE)(p - string);
     return PCRE2_ERROR_UTF8_ERR21;
     }
 
   ab = PRIV(utf8_table4)[c & 0x3f];     /* Number of additional bytes (1-5) */
   if (length < ab)                      /* Missing bytes */
     {
-    *erroroffset = (int)(p - string);
+    *erroroffset = (PCRE2_SIZE)(p - string);
     switch(ab - length)
       {
       case 1: return PCRE2_ERROR_UTF8_ERR1;
