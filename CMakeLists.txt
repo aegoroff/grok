@@ -14,6 +14,8 @@ set(APR_X86 "$ENV{APR_HOME15}/${APR}/x86")
 set(APR_UTIL_X64 "$ENV{APR_HOME15}/${APR_UTIL}/x64")
 set(APR_UTIL_X86 "$ENV{APR_HOME15}/${APR_UTIL}/x86")
 
+set (CMAKE_C_STANDARD 99)
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE  "/MP /Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
     set(CMAKE_CXX_FLAGS_DEBUG  "/MP /Zc:wchar_t /Zc:inline /MTd /Od /RTC1")
@@ -27,6 +29,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
     set(CMAKE_CXX_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
     set(CMAKE_CXX_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
+	set(CMAKE_C_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
+    set(CMAKE_C_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
 endif()
 
 include_directories(${SRC}/${LIB})
