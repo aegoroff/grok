@@ -17,6 +17,24 @@ SET(MIN_WINDOWS_VER             "Vista"
 
 set (CMAKE_C_STANDARD 99)
 
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS_RELEASE  "/MP /Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG  "/MP /Zc:wchar_t /Zc:inline /MTd /Od /RTC1")
+    set(CMAKE_C_FLAGS_RELEASE  "/MP /Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
+    set(CMAKE_C_FLAGS_DEBUG  "/MP /Zc:wchar_t /Zc:inline /MTd /Od /RTC1")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    else()
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
+        set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /LTCG")
+    endif()
+else()
+    set(CMAKE_CXX_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
+    set(CMAKE_CXX_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
+    set(CMAKE_C_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
+    set(CMAKE_C_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
+endif()
+
+
 SET(apr_have_ipv6_10 0)
 SET(apu_have_crypto_10 0)
 SET(apu_have_apr_iconv_10 0) # not yet implemented
@@ -44,23 +62,6 @@ ELSE()
     SET(win32_winnt_str ${MIN_WINDOWS_VER})
 ENDIF()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS_RELEASE  "/MP /Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
-    set(CMAKE_CXX_FLAGS_DEBUG  "/MP /Zc:wchar_t /Zc:inline /MTd /Od /RTC1")
-    set(CMAKE_C_FLAGS_RELEASE  "/MP /Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /GL /D NDEBUG")
-    set(CMAKE_C_FLAGS_DEBUG  "/MP /Zc:wchar_t /Zc:inline /MTd /Od /RTC1")
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    else()
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
-        set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /LTCG")
-    endif()
-else()
-    set(CMAKE_CXX_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
-    set(CMAKE_CXX_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
-	set(CMAKE_C_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
-    set(CMAKE_C_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -fverbose-asm")
-endif()
-
 include_directories(${SRC}/${LIB})
 include_directories(${SRC}/${PCRE})
 include_directories(${SRC}/${GROK})
@@ -72,12 +73,41 @@ add_definitions( -DHAVE_CONFIG_H )
 add_definitions( -DAPR_DECLARE_STATIC )
 add_definitions( -DAPU_DECLARE_STATIC )
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-add_definitions( -D__STDC_VERSION__=199901L )
-endif()
+if (UNIX OR NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    CONFIGURE_FILE(${APRSRC}include/apr.h.in
+            ${PROJECT_BINARY_DIR}/apr.h)
+    CONFIGURE_FILE(${APRUSRC}include/apu.h.in
+            ${PROJECT_BINARY_DIR}/apu.h)
+    CONFIGURE_FILE(${APRUSRC}include/apr_ldap.h.in
+            ${PROJECT_BINARY_DIR}/apr_ldap.h)
+    CONFIGURE_FILE(${APRUSRC}include/private/apu_select_dbm.h.in
+            ${PROJECT_BINARY_DIR}/apu_select_dbm.h
+            COPYONLY)
+    CONFIGURE_FILE(${APRUSRC}include/apu_want.h.in
+            ${PROJECT_BINARY_DIR}/apu_want.h
+            COPYONLY)
+else()
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+        add_definitions( -D__STDC_VERSION__=199901L )
+    endif()
 
-CONFIGURE_FILE(${APRSRC}include/apr.hwc
-        ${PROJECT_BINARY_DIR}/apr.h)
+    CONFIGURE_FILE(${APRSRC}include/apr.hwc
+            ${PROJECT_BINARY_DIR}/apr.h)
+    CONFIGURE_FILE(${APRUSRC}include/apu.hwc
+            ${PROJECT_BINARY_DIR}/apu.h)
+    CONFIGURE_FILE(${APRUSRC}include/apr_ldap.hwc
+            ${PROJECT_BINARY_DIR}/apr_ldap.h)
+    # "COPYONLY" just because anything else isn't implemented ;)
+    CONFIGURE_FILE(${APRUSRC}include/private/apu_config.hw
+            ${PROJECT_BINARY_DIR}/apu_config.h
+            COPYONLY)
+    CONFIGURE_FILE(${APRUSRC}include/private/apu_select_dbm.hw
+            ${PROJECT_BINARY_DIR}/apu_select_dbm.h
+            COPYONLY)
+    CONFIGURE_FILE(${APRUSRC}include/apu_want.hw
+            ${PROJECT_BINARY_DIR}/apu_want.h
+            COPYONLY)
+endif ()
 
 ADD_EXECUTABLE(gen_test_char ${APRSRC}tools/gen_test_char.c)
 ADD_CUSTOM_COMMAND(
@@ -112,20 +142,7 @@ SET(APR_SYSTEM_LIBS
         rpcrt4
         )
 
-CONFIGURE_FILE(${APRUSRC}include/apu.hwc
-        ${PROJECT_BINARY_DIR}/apu.h)
-CONFIGURE_FILE(${APRUSRC}include/apr_ldap.hwc
-        ${PROJECT_BINARY_DIR}/apr_ldap.h)
-# "COPYONLY" just because anything else isn't implemented ;)
-CONFIGURE_FILE(${APRUSRC}include/private/apu_config.hw
-        ${PROJECT_BINARY_DIR}/apu_config.h
-        COPYONLY)
-CONFIGURE_FILE(${APRUSRC}include/private/apu_select_dbm.hw
-        ${PROJECT_BINARY_DIR}/apu_select_dbm.h
-        COPYONLY)
-CONFIGURE_FILE(${APRUSRC}include/apu_want.hw
-        ${PROJECT_BINARY_DIR}/apu_want.h
-        COPYONLY)
+
 
 SET(XMLLIB_INCLUDE_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/${APRUSRC}xml/expat/lib)
 
