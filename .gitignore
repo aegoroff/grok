@@ -23,4 +23,5 @@ Release/
 pcre-vsbuild/
 cmake-build-debug/
 cmake-build-release/
+unuxbuild/
 pcre-*/
