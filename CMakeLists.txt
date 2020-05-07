@@ -54,7 +54,7 @@ file(GLOB GROK_SOURCE_FILES "${SRC}/${GROK}/*.c")
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
 
-set(PCRE_SOURCE_FILES
+SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_auto_possess.c
         ${SRC}/${PCRE}/pcre2_chartables.c
         ${SRC}/${PCRE}/pcre2_compile.c
@@ -63,6 +63,7 @@ set(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_convert.c
         ${SRC}/${PCRE}/pcre2_dfa_match.c
         ${SRC}/${PCRE}/pcre2_error.c
+        ${SRC}/${PCRE}/pcre2_extuni.c
         ${SRC}/${PCRE}/pcre2_find_bracket.c
         ${SRC}/${PCRE}/pcre2_jit_compile.c
         ${SRC}/${PCRE}/pcre2_maketables.c
@@ -71,6 +72,7 @@ set(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_newline.c
         ${SRC}/${PCRE}/pcre2_ord2utf.c
         ${SRC}/${PCRE}/pcre2_pattern_info.c
+        ${SRC}/${PCRE}/pcre2_script_run.c
         ${SRC}/${PCRE}/pcre2_serialize.c
         ${SRC}/${PCRE}/pcre2_string_utils.c
         ${SRC}/${PCRE}/pcre2_study.c
