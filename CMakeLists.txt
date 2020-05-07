@@ -9,10 +9,10 @@ set(APR apr)
 set(APR_UTIL apr-util)
 set(LIBD Debug)
 set(LIBR Release)
-set(APR_X64 "$ENV{APR_HOME15}/${APR}/x64")
-set(APR_X86 "$ENV{APR_HOME15}/${APR}/x86")
-set(APR_UTIL_X64 "$ENV{APR_HOME15}/${APR_UTIL}/x64")
-set(APR_UTIL_X86 "$ENV{APR_HOME15}/${APR_UTIL}/x86")
+set(APR_X64 "$ENV{APR_HOME16}/${APR}/x64")
+set(APR_X86 "$ENV{APR_HOME16}/${APR}/x86")
+set(APR_UTIL_X64 "$ENV{APR_HOME16}/${APR_UTIL}/x64")
+set(APR_UTIL_X86 "$ENV{APR_HOME16}/${APR_UTIL}/x86")
 
 set (CMAKE_C_STANDARD 99)
 
@@ -36,8 +36,8 @@ endif()
 include_directories(${SRC}/${LIB})
 include_directories(${SRC}/${PCRE})
 include_directories(${SRC}/${GROK})
-include_directories($ENV{APR_HOME14}/${APR}/include)
-include_directories($ENV{APR_HOME14}/${APR_UTIL}/include)
+include_directories($ENV{APR_HOME16}/${APR}/include)
+include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
 
 add_definitions( -DPCRE2_STATIC )
 add_definitions( -DPCRE2_CODE_UNIT_WIDTH=8 )
@@ -54,7 +54,7 @@ file(GLOB GROK_SOURCE_FILES "${SRC}/${GROK}/*.c")
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
 
-set(PCRE_SOURCE_FILES
+SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_auto_possess.c
         ${SRC}/${PCRE}/pcre2_chartables.c
         ${SRC}/${PCRE}/pcre2_compile.c
@@ -63,6 +63,7 @@ set(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_convert.c
         ${SRC}/${PCRE}/pcre2_dfa_match.c
         ${SRC}/${PCRE}/pcre2_error.c
+        ${SRC}/${PCRE}/pcre2_extuni.c
         ${SRC}/${PCRE}/pcre2_find_bracket.c
         ${SRC}/${PCRE}/pcre2_jit_compile.c
         ${SRC}/${PCRE}/pcre2_maketables.c
@@ -71,6 +72,7 @@ set(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_newline.c
         ${SRC}/${PCRE}/pcre2_ord2utf.c
         ${SRC}/${PCRE}/pcre2_pattern_info.c
+        ${SRC}/${PCRE}/pcre2_script_run.c
         ${SRC}/${PCRE}/pcre2_serialize.c
         ${SRC}/${PCRE}/pcre2_string_utils.c
         ${SRC}/${PCRE}/pcre2_study.c
