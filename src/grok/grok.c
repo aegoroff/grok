@@ -36,11 +36,17 @@
 
 // Forwards
 extern void yyrestart(FILE* input_file);
+
 void main_run_parsing();
+
 void main_compile_lib(struct arg_file* files);
+
 void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int grep_mode);
+
 void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int grep_mode);
+
 void main_compile_pattern_file(const char* p);
+
 BOOL main_try_compile_as_wildcard(const char* pattern);
 
 static apr_pool_t* main_pool;
@@ -67,7 +73,7 @@ int main(int argc, const char* const argv[]) {
     apr_pool_create(&main_pool, NULL);
     fend_init(main_pool);
 
-    configuration_ctx_t* configuration = (configuration_ctx_t*)apr_pcalloc(main_pool, sizeof(configuration_ctx_t));
+    configuration_ctx_t* configuration = (configuration_ctx_t*) apr_pcalloc(main_pool, sizeof(configuration_ctx_t));
     configuration->argc = argc;
     configuration->argv = argv;
     configuration->on_string = &main_on_string;
@@ -86,15 +92,15 @@ void main_run_parsing() {
 }
 
 BOOL main_try_compile_as_wildcard(const char* pattern) {
-    char* drive = (char*)apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* dir = (char*)apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* filename = (char*)apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* ext = (char*)apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* drive = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* dir = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* filename = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* ext = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
     char* full_dir_path;
     char* file_pattern;
     apr_status_t status;
     apr_dir_t* d = NULL;
-    apr_finfo_t info = { 0 };
+    apr_finfo_t info = {0};
     char* full_path = NULL; // Full path to file
 
     _splitpath_s(pattern,
@@ -102,46 +108,46 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
                  dir, MAX_PATH, // Directory
                  filename, MAX_PATH, // Filename
                  ext, MAX_PATH); // Extension
-            
+
     full_dir_path = apr_pstrcat(main_pool, drive, dir, NULL);
     file_pattern = apr_pstrcat(main_pool, filename, ext, NULL);
     status = apr_dir_open(&d, full_dir_path, main_pool);
-    if (status != APR_SUCCESS) {
+    if(status != APR_SUCCESS) {
         return FALSE;
     }
-    for (;;) {
+    for(;;) {
         status = apr_dir_read(&info, APR_FINFO_NAME | APR_FINFO_MIN, d);
-        if (APR_STATUS_IS_ENOENT(status)) { // Finish reading directory
+        if(APR_STATUS_IS_ENOENT(status)) { // Finish reading directory
             break;
         }
 
-        if (info.name == NULL) { // to avoid access violation
-            continue;
-        }
-        
-        if (status != APR_SUCCESS || info.filetype != APR_REG) {
+        if(info.name == NULL) { // to avoid access violation
             continue;
         }
 
-        if (apr_fnmatch(file_pattern, info.name, APR_FNM_CASE_BLIND) != APR_SUCCESS) {
+        if(status != APR_SUCCESS || info.filetype != APR_REG) {
             continue;
         }
-        
+
+        if(apr_fnmatch(file_pattern, info.name, APR_FNM_CASE_BLIND) != APR_SUCCESS) {
+            continue;
+        }
+
         status = apr_filepath_merge(&full_path,
-            full_dir_path,
-            info.name,
-            APR_FILEPATH_NATIVE,
-            main_pool);
-        
-        if (status != APR_SUCCESS) {
+                                    full_dir_path,
+                                    info.name,
+                                    APR_FILEPATH_NATIVE,
+                                    main_pool);
+
+        if(status != APR_SUCCESS) {
             continue;
         }
 
         main_compile_pattern_file(full_path);
     }
-    
+
     status = apr_dir_close(d);
-    if (status != APR_SUCCESS) {
+    if(status != APR_SUCCESS) {
         return FALSE;
     }
 
@@ -175,12 +181,11 @@ void main_on_string(struct arg_file* files, const char* const macro, const char*
     bend_init(main_pool);
     const BOOL r = bend_match_re(pattern, str);
 
-    if (grep_mode) {
-        if (r) {
+    if(grep_mode) {
+        if(r) {
             lib_printf("%s", str);
         }
-    }
-    else {
+    } else {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
     }
 
@@ -198,7 +203,7 @@ void main_on_file(struct arg_file* files, const char* const macro, const char* c
     }
 
     int len = 0xFFF * sizeof(char);
-    char* buffer = (char*)apr_pcalloc(main_pool, len);
+    char* buffer = (char*) apr_pcalloc(main_pool, len);
 
     long long lineno = 1;
     do {
@@ -210,8 +215,7 @@ void main_on_file(struct arg_file* files, const char* const macro, const char* c
                 if(r) {
                     lib_printf("%s", buffer);
                 }
-            }
-            else {
+            } else {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macro);
             }
         }
@@ -223,14 +227,13 @@ void main_on_file(struct arg_file* files, const char* const macro, const char* c
                 const char* k;
                 const char* v;
 
-                apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
+                apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
                 lib_printf("%s: %s\n", k, v);
             }
             lib_printf("\n\n");
         }
         bend_cleanup();
-    }
-    while(status == APR_SUCCESS);
+    } while(status == APR_SUCCESS);
 
     status = apr_file_close(file_handle);
     if(status != APR_SUCCESS) {
