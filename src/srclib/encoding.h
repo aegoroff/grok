@@ -17,6 +17,15 @@ extern "C" {
 #endif
 
 #include "apr_pools.h"
+#include "apr_file_io.h"
+
+typedef enum {
+    bom_unknown = 0,
+    bom_utf8 = 1,
+    bom_utf16le = 2,
+    bom_utf16be = 3,
+    bom_utf32be = 4
+} bom_t;
 
 /*!
  * IMPORTANT: Memory allocated for result must be freed up by caller
@@ -45,11 +54,17 @@ char* enc_from_unicode_to_utf8(const wchar_t* from, apr_pool_t* pool);
 
 BOOL enc_is_valid_utf8(const char* str);
 
+bom_t enc_detect_bom(apr_file_t* f);
+
+const char* enc_get_encoding_name(bom_t bom);
+
 #ifdef WIN32
+
 /*!
  * IMPORTANT: Memory allocated for result must be freed up by caller
  */
 char* enc_decode_utf8_ansi(const char* from, UINT from_code_page, UINT to_code_page, apr_pool_t* pool);
+
 #endif
 
 #ifdef __cplusplus
