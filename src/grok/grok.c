@@ -250,7 +250,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
                     apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
 
                     if (v != NULL && strlen(v)) {
-                        lib_sprintf("\t%s: %s\n", k, v);
+                        lib_printf("\t%s: %s\n", k, v);
                     }
                 }
                 lib_printf("\n\n");
