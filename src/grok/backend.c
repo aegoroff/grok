@@ -35,9 +35,10 @@ void* pcre_alloc(size_t size, void* memory_data) {
 
 void pcre_free(void* p1, void* p2) { }
 
-void bend_init(apr_pool_t* pool) {
+apr_pool_t* bend_init(apr_pool_t* pool) {
     apr_pool_create(&bend_pool, pool);
     pcre_context = pcre2_general_context_create(&pcre_alloc, &pcre_free, NULL);
+    return bend_pool;
 }
 
 void bend_cleanup() {
