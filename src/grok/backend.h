@@ -23,7 +23,7 @@ typedef struct pattern {
     apr_hash_t* properties;
 } pattern_t;
 
-void bend_init(apr_pool_t* pool);
+apr_pool_t* bend_init(apr_pool_t* pool);
 void bend_cleanup();
 BOOL bend_match_re(pattern_t* pattern, const char* subject);
 
