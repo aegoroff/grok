@@ -211,11 +211,11 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     do {
         apr_pool_t* p = bend_init(main_pool);
         status = apr_file_gets(buffer, len, file_handle);
-        const BOOL r = bend_match_re(pattern, buffer);
+        const BOOL matched = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
             if(info_mode) {
-                lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macro);
-            } else if(r) {
+                lib_printf("line: %d match: %s | pattern: %s\n", lineno++, matched ? "TRUE" : "FALSE", macro);
+            } else if(matched) {
                 if(enc_is_valid_utf8(buffer)) {
                     char* utf8 = enc_from_utf8_to_ansi(buffer, p);
                     lib_printf("%s", utf8);
@@ -226,14 +226,17 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
         }
 
         // Extract meta information if applicable and pattern contains instructions to extract properties
-        if(r && info_mode) {
-            lib_printf("\n");
+        if(matched && info_mode && apr_hash_count(pattern->properties) > 0) {
+            lib_printf("\n  Meta properties found:\n");
             for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
                 const char* k;
                 const char* v;
 
                 apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
-                lib_printf("%s: %s\n", k, v);
+
+                if (v != NULL) {
+                    lib_printf("\t%s: %s\n", k, v);
+                }
             }
             lib_printf("\n\n");
         }
