@@ -16,9 +16,9 @@
 #include "configuration.h"
 #include "lib.h"
 
-#define OPT_F_SHORT "p"
-#define OPT_F_LONG "patterns"
-#define OPT_F_DESCR "one or more pattern files"
+#define OPT_PATT_SHORT "p"
+#define OPT_PATT_LONG "patterns"
+#define OPT_PATT_DESCR "one or more pattern files"
 
 #define OPT_HELP_SHORT "h"
 #define OPT_HELP_LONG "help"
@@ -66,17 +66,17 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     struct arg_str* macroS = arg_str1(OPT_MACRO_SHORT, OPT_MACRO_LONG, NULL, OPT_MACRO_DESCR);
     struct arg_str* macroF = arg_str1(OPT_MACRO_SHORT, OPT_MACRO_LONG, NULL, OPT_MACRO_DESCR);
 
-    struct arg_file* files = arg_filen(OPT_F_SHORT, OPT_F_LONG, NULL, 1, ctx->argc + 2, OPT_F_DESCR);
-    struct arg_file* filesS = arg_filen(OPT_F_SHORT, OPT_F_LONG, NULL, 1, ctx->argc + 2, OPT_F_DESCR);
-    struct arg_file* filesF = arg_filen(OPT_F_SHORT, OPT_F_LONG, NULL, 1, ctx->argc + 2, OPT_F_DESCR);
+    struct arg_file* patterns = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 1, ctx->argc + 2, OPT_PATT_DESCR);
+    struct arg_file* patternsS = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 1, ctx->argc + 2, OPT_PATT_DESCR);
+    struct arg_file* patternsF = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 1, ctx->argc + 2, OPT_PATT_DESCR);
 
     struct arg_end* end = arg_end(10);
     struct arg_end* endF = arg_end(10);
     struct arg_end* endS = arg_end(10);
 
-    void* argtable[] = {help, info, stringG, fileG, macro, files, end};
-    void* argtableF[] = {helpF, infoF, file, macroF, filesF, endF};
-    void* argtableS[] = {helpS, infoS, string, macroS, filesS, endS};
+    void* argtable[] = {help, info, stringG, fileG, macro, patterns, end};
+    void* argtableF[] = {helpF, infoF, file, macroF, patternsF, endF};
+    void* argtableS[] = {helpS, infoS, string, macroS, patternsS, endS};
 
     if(arg_nullcheck(argtable) != 0 || arg_nullcheck(argtableF) != 0 || arg_nullcheck(argtableS) != 0) {
         prconf_print_syntax(argtable, argtableS, argtableF);
@@ -96,10 +96,10 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     }
 
     if(nerrorsS == 0) {
-        ctx->on_string(filesS, macroS->sval[0], string->sval[0], infoS->count > 0);
+        ctx->on_string(patternsS, macroS->sval[0], string->sval[0], infoS->count > 0);
     }
     else if(nerrorsF == 0) {
-        ctx->on_file(filesS, macroF->sval[0], file->filename[0], infoF->count > 0);
+        ctx->on_file(patternsS, macroF->sval[0], file->filename[0], infoF->count > 0);
     }
     else {
         prconf_print_syntax(argtable, argtableS, argtableF);

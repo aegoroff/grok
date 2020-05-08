@@ -26,3 +26,4 @@ cmake-build-release/
 pcre-*/
 /unuxbuild
 /src/grok/grok.aps
+/out/

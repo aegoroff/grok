@@ -21,8 +21,8 @@
 #include "apr_file_info.h"
 #include "apr_fnmatch.h"
 #include "grok.tab.h"
-#include "frontend.h"
 #include "backend.h"
+#include "encoding.h"
 #include <apr_errno.h>
 #include <apr_general.h>
 #include "argtable3.h"
@@ -41,9 +41,9 @@ void main_run_parsing();
 
 void main_compile_lib(struct arg_file* files);
 
-void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int info_mode);
+void main_on_string(struct arg_file* pattern_files, const char* const macro, const char* const str, const int info_mode);
 
-void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int info_mode);
+void main_on_file(struct arg_file* pattern_files, const char* const macro, const char* const path, const int info_mode);
 
 void main_compile_pattern_file(const char* p);
 
@@ -175,25 +175,25 @@ void main_compile_lib(struct arg_file* files) {
     }
 }
 
-void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int info_mode) {
-    main_compile_lib(files);
+void main_on_string(struct arg_file* pattern_files, const char* const macro, const char* const str, const int info_mode) {
+    main_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
-    bend_init(main_pool);
+    apr_pool_t* p = bend_init(main_pool);
     const BOOL r = bend_match_re(pattern, str);
 
-    if(!info_mode) {
-        if(r) {
-            lib_printf("%s", str);
-        }
-    } else {
+    if(info_mode) {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
+    } else if(r) {
+        char* utf8 = enc_from_utf8_to_ansi(str, p);
+
+        lib_printf("%s", utf8);
     }
 
     bend_cleanup();
 }
 
-void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int info_mode) {
-    main_compile_lib(files);
+void main_on_file(struct arg_file* pattern_files, const char* const macro, const char* const path, const int info_mode) {
+    main_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
     apr_status_t status = apr_file_open(&file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
@@ -207,16 +207,15 @@ void main_on_file(struct arg_file* files, const char* const macro, const char* c
 
     long long lineno = 1;
     do {
-        bend_init(main_pool);
+        apr_pool_t* p = bend_init(main_pool);
         status = apr_file_gets(buffer, len, file_handle);
         const BOOL r = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
-            if(!info_mode) {
-                if(r) {
-                    lib_printf("%s", buffer);
-                }
-            } else {
+            if(info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macro);
+            } else if(r) {
+                char* utf8 = enc_from_utf8_to_ansi(buffer, p);
+                lib_printf("%s", utf8);
             }
         }
 
