@@ -204,19 +204,30 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
         return;
     }
 
-    int len = 0xFFF * sizeof(char);
+    bom_t encoding = enc_detect_bom(file_handle);
+
+    if (encoding == bom_utf16le || encoding == bom_utf16be || encoding == bom_utf32be) {
+        lib_printf("unsupported file encoding %s\n", enc_get_encoding_name(encoding));
+        return;
+    }
+
+    int len = 2 * 0xFFF * sizeof(char);
     char* buffer = (char*) apr_pcalloc(main_pool, len);
 
     long long lineno = 1;
     do {
         apr_pool_t* p = bend_init(main_pool);
         status = apr_file_gets(buffer, len, file_handle);
+        if (lineno == 1) {
+            // Skip BOM if any
+        }
+
         const BOOL matched = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
             if(info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, matched ? "TRUE" : "FALSE", macro);
             } else if(matched) {
-                if(enc_is_valid_utf8(buffer)) {
+                if(encoding == bom_utf8 || enc_is_valid_utf8(buffer)) {
                     char* utf8 = enc_from_utf8_to_ansi(buffer, p);
                     lib_printf("%s", utf8);
                 } else {
