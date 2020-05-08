@@ -13,6 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1
     - uses: lukka/run-cmake@v2
       with:
         cmakeGenerator: VS16Win64
