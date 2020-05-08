@@ -29,4 +29,5 @@ jobs:
         buildWithCMake: true
     - uses: actions/upload-artifact@v2
       with:
+        name: grok
         path: ${{ runner.temp }}/build/Release/grok.exe
