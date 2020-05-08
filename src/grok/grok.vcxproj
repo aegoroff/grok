@@ -174,6 +174,7 @@
   <ItemGroup>
     <ClInclude Include="..\srclib\argtable3.h" />
     <ClInclude Include="..\srclib\dbg_helpers.h" />
+    <ClInclude Include="..\srclib\encoding.h" />
     <ClInclude Include="..\srclib\lib.h" />
     <ClInclude Include="backend.h" />
     <ClInclude Include="configuration.h" />
@@ -185,6 +186,7 @@
   <ItemGroup>
     <ClCompile Include="..\srclib\argtable3.c" />
     <ClCompile Include="..\srclib\dbg_helpers.c" />
+    <ClCompile Include="..\srclib\encoding.c" />
     <ClCompile Include="..\srclib\lib.c" />
     <ClCompile Include="backend.c" />
     <ClCompile Include="configuration.c" />
