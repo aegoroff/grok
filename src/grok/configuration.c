@@ -18,7 +18,7 @@
 
 #define OPT_PATT_SHORT "p"
 #define OPT_PATT_LONG "patterns"
-#define OPT_PATT_DESCR "one or more pattern files"
+#define OPT_PATT_DESCR "one or more pattern files. You can also use wildcards like path\\*.patterns"
 
 #define OPT_HELP_SHORT "h"
 #define OPT_HELP_LONG "help"
