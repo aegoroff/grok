@@ -41,9 +41,9 @@ void main_run_parsing();
 
 void main_compile_lib(struct arg_file* files);
 
-void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int grep_mode);
+void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int info_mode);
 
-void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int grep_mode);
+void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int info_mode);
 
 void main_compile_pattern_file(const char* p);
 
@@ -175,13 +175,13 @@ void main_compile_lib(struct arg_file* files) {
     }
 }
 
-void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int grep_mode) {
+void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int info_mode) {
     main_compile_lib(files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     bend_init(main_pool);
     const BOOL r = bend_match_re(pattern, str);
 
-    if(grep_mode) {
+    if(!info_mode) {
         if(r) {
             lib_printf("%s", str);
         }
@@ -192,7 +192,7 @@ void main_on_string(struct arg_file* files, const char* const macro, const char*
     bend_cleanup();
 }
 
-void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int grep_mode) {
+void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int info_mode) {
     main_compile_lib(files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
@@ -211,7 +211,7 @@ void main_on_file(struct arg_file* files, const char* const macro, const char* c
         status = apr_file_gets(buffer, len, file_handle);
         const BOOL r = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
-            if(grep_mode) {
+            if(!info_mode) {
                 if(r) {
                     lib_printf("%s", buffer);
                 }
@@ -221,7 +221,7 @@ void main_on_file(struct arg_file* files, const char* const macro, const char* c
         }
 
         // Extract meta information if applicable and pattern contains instructions to extract properties
-        if(r && !grep_mode) {
+        if(r && info_mode) {
             lib_printf("\n");
             for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
                 const char* k;

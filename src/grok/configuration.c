@@ -24,9 +24,9 @@
 #define OPT_HELP_LONG "help"
 #define OPT_HELP_DESCR "print this help and exit"
 
-#define OPT_GREP_SHORT "g"
-#define OPT_GREP_LONG "grep"
-#define OPT_GREP_DESCR "like grep i.e. output matched string without any additional info"
+#define OPT_NOGREP_SHORT "i"
+#define OPT_NOGREP_LONG "info"
+#define OPT_NOGREP_DESCR "dont work like grep i.e. output matched string with additional info"
 
 #define OPT_MACRO_SHORT "m"
 #define OPT_MACRO_LONG "macro"
@@ -53,9 +53,9 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     struct arg_lit* helpF = arg_lit0(OPT_HELP_SHORT, OPT_HELP_LONG, OPT_HELP_DESCR);
     struct arg_lit* helpS = arg_lit0(OPT_HELP_SHORT, OPT_HELP_LONG, OPT_HELP_DESCR);
     
-    struct arg_lit* grep = arg_lit0(OPT_GREP_SHORT, OPT_GREP_LONG, OPT_GREP_DESCR);
-    struct arg_lit* grepF = arg_lit0(OPT_GREP_SHORT, OPT_GREP_LONG, OPT_GREP_DESCR);
-    struct arg_lit* grepS = arg_lit0(OPT_GREP_SHORT, OPT_GREP_LONG, OPT_GREP_DESCR);
+    struct arg_lit* info = arg_lit0(OPT_NOGREP_SHORT, OPT_NOGREP_LONG, OPT_NOGREP_DESCR);
+    struct arg_lit* infoF = arg_lit0(OPT_NOGREP_SHORT, OPT_NOGREP_LONG, OPT_NOGREP_DESCR);
+    struct arg_lit* infoS = arg_lit0(OPT_NOGREP_SHORT, OPT_NOGREP_LONG, OPT_NOGREP_DESCR);
 
     struct arg_str* string = arg_str1(OPT_STR_SHORT, OPT_STR_LONG, NULL, OPT_STR_DESCR);
     struct arg_str* stringG = arg_str0(OPT_STR_SHORT, OPT_STR_LONG, NULL, OPT_STR_DESCR);
@@ -74,9 +74,9 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     struct arg_end* endF = arg_end(10);
     struct arg_end* endS = arg_end(10);
 
-    void* argtable[] = {help, grep, stringG, fileG, macro, files, end};
-    void* argtableF[] = {helpF, grepF, file, macroF, filesF, endF};
-    void* argtableS[] = {helpS, grepS, string, macroS, filesS, endS};
+    void* argtable[] = {help, info, stringG, fileG, macro, files, end};
+    void* argtableF[] = {helpF, infoF, file, macroF, filesF, endF};
+    void* argtableS[] = {helpS, infoS, string, macroS, filesS, endS};
 
     if(arg_nullcheck(argtable) != 0 || arg_nullcheck(argtableF) != 0 || arg_nullcheck(argtableS) != 0) {
         prconf_print_syntax(argtable, argtableS, argtableF);
@@ -96,10 +96,10 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     }
 
     if(nerrorsS == 0) {
-        ctx->on_string(filesS, macroS->sval[0], string->sval[0], grepS->count > 0);
+        ctx->on_string(filesS, macroS->sval[0], string->sval[0], infoS->count > 0);
     }
     else if(nerrorsF == 0) {
-        ctx->on_file(filesS, macroF->sval[0], file->filename[0], grepF->count > 0);
+        ctx->on_file(filesS, macroF->sval[0], file->filename[0], infoF->count > 0);
     }
     else {
         prconf_print_syntax(argtable, argtableS, argtableF);
