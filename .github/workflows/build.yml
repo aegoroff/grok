@@ -24,6 +24,9 @@ jobs:
         cmakeListsOrSettingsJson: CMakeListsTxtBasic
         cmakeListsTxtPath: ${{ github.workspace }}/CMakeLists.txt
         cmakeBuildType: Release
-        buildWithCMakeArgs: "--config Release -- -v:quiet -m"
+        buildWithCMakeArgs: "--config Release -- -m"
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true
+    - uses: actions/upload-artifact@v2
+      with:
+        path: ${{ runner.temp }}/build/Release/grok.exe
