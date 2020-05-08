@@ -41,9 +41,9 @@ void main_run_parsing();
 
 void main_compile_lib(struct arg_file* files);
 
-void main_on_string(struct arg_file* pattern_files, const char* const macro, const char* const str, const int info_mode);
+void main_on_string(struct arg_file* pattern_files, const char* macro, const char* str, int info_mode);
 
-void main_on_file(struct arg_file* pattern_files, const char* const macro, const char* const path, const int info_mode);
+void main_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode);
 
 void main_compile_pattern_file(const char* p);
 
