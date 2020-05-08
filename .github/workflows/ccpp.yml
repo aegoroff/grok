@@ -13,6 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: flex
+      run: "$(GnuBasePath)/win_flex.exe --wincompat --outfile=src/grok/grok.flex.c src/grok/grok.lex"
+    - name: bison
+      run: "$(GnuBasePath)/win_bison.exe --output=src/grok/grok.tab.c -dy src/grok/grok.y"
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: lukka/run-cmake@v1
       with:
