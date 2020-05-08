@@ -181,12 +181,10 @@ void main_on_string(struct arg_file* files, const char* const macro, const char*
     bend_init(main_pool);
     const BOOL r = bend_match_re(pattern, str);
 
-    if(!info_mode) {
-        if(r) {
-            lib_printf("%s", str);
-        }
-    } else {
+    if(info_mode != 0) {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
+    } else if(r) {
+        lib_printf("%s", str);
     }
 
     bend_cleanup();
@@ -211,12 +209,10 @@ void main_on_file(struct arg_file* files, const char* const macro, const char* c
         status = apr_file_gets(buffer, len, file_handle);
         const BOOL r = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
-            if(!info_mode) {
-                if(r) {
-                    lib_printf("%s", buffer);
-                }
-            } else {
+            if(info_mode != 0) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macro);
+            } else if(r) {
+                lib_printf("%s", buffer);
             }
         }
 
