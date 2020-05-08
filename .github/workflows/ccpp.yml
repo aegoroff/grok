@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: configure
-      run: "C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - NMake Makefiles" grok
+      run: "C:/Program Files/CMake/bin/cmake.exe" "-DCMAKE_BUILD_TYPE=Release" "-G" "CodeBlocks - NMake Makefiles" grok
     - name: make
       run: make
     - name: make check
