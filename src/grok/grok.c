@@ -41,9 +41,9 @@ void main_run_parsing();
 
 void main_compile_lib(struct arg_file* files);
 
-void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int info_mode);
+void main_on_string(struct arg_file* pattern_files, const char* const macro, const char* const str, const int info_mode);
 
-void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int info_mode);
+void main_on_file(struct arg_file* pattern_files, const char* const macro, const char* const path, const int info_mode);
 
 void main_compile_pattern_file(const char* p);
 
@@ -175,8 +175,8 @@ void main_compile_lib(struct arg_file* files) {
     }
 }
 
-void main_on_string(struct arg_file* files, const char* const macro, const char* const str, const int info_mode) {
-    main_compile_lib(files);
+void main_on_string(struct arg_file* pattern_files, const char* const macro, const char* const str, const int info_mode) {
+    main_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     bend_init(main_pool);
     const BOOL r = bend_match_re(pattern, str);
@@ -190,8 +190,8 @@ void main_on_string(struct arg_file* files, const char* const macro, const char*
     bend_cleanup();
 }
 
-void main_on_file(struct arg_file* files, const char* const macro, const char* const path, const int info_mode) {
-    main_compile_lib(files);
+void main_on_file(struct arg_file* pattern_files, const char* const macro, const char* const path, const int info_mode) {
+    main_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
     apr_status_t status = apr_file_open(&file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
