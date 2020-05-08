@@ -175,7 +175,8 @@ void main_compile_lib(struct arg_file* files) {
     }
 }
 
-void main_on_string(struct arg_file* pattern_files, const char* const macro, const char* const str, const int info_mode) {
+void
+main_on_string(struct arg_file* pattern_files, const char* const macro, const char* const str, const int info_mode) {
     main_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_pool_t* p = bend_init(main_pool);
@@ -192,7 +193,8 @@ void main_on_string(struct arg_file* pattern_files, const char* const macro, con
     bend_cleanup();
 }
 
-void main_on_file(struct arg_file* pattern_files, const char* const macro, const char* const path, const int info_mode) {
+void
+main_on_file(struct arg_file* pattern_files, const char* const macro, const char* const path, const int info_mode) {
     main_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
@@ -214,8 +216,12 @@ void main_on_file(struct arg_file* pattern_files, const char* const macro, const
             if(info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, r ? "TRUE" : "FALSE", macro);
             } else if(r) {
-                char* utf8 = enc_from_utf8_to_ansi(buffer, p);
-                lib_printf("%s", utf8);
+                if(enc_is_valid_utf8(buffer)) {
+                    char* utf8 = enc_from_utf8_to_ansi(buffer, p);
+                    lib_printf("%s", utf8);
+                } else {
+                    lib_printf("%s", buffer);
+                }
             }
         }
 
