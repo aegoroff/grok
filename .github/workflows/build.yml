@@ -29,7 +29,7 @@ jobs:
         buildWithCMake: true
     - name: Install
       run: |
-        cmake --install ${{ runner.temp }}/build/Release
+        cmake --install ${{ runner.temp }}/build
     - uses: actions/upload-artifact@v2
       with:
         name: grok
