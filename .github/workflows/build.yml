@@ -27,6 +27,9 @@ jobs:
         buildWithCMakeArgs: "--config Release -- -m"
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true
+    - name: Install
+      run: |
+        cmake --install ${{ runner.temp }}/build/Release
     - uses: actions/upload-artifact@v2
       with:
         name: grok
