@@ -102,5 +102,5 @@ add_executable(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
 target_link_libraries(grok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
 
-install(TARGETS grok DESTINATION bin)
-install(FILES ${PATTERN_FILES} DESTINATION bin)
+install(TARGETS grok DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+install(FILES ${PATTERN_FILES} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)

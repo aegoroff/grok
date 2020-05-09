@@ -2,7 +2,7 @@ name: Windows Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, develop ]
   pull_request:
     branches: [ master ]
 
@@ -27,7 +27,10 @@ jobs:
         buildWithCMakeArgs: "--config Release -- -m"
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true
+    - name: Install
+      run: |
+        cmake --install ${{ runner.temp }}/build
     - uses: actions/upload-artifact@v2
       with:
         name: grok
-        path: ${{ runner.temp }}/build/Release/grok.exe
+        path: ${{ github.workspace }}/bin/*.*
