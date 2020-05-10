@@ -243,7 +243,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
         // Extract meta information if applicable and pattern contains instructions to extract properties
         if(matched && info_mode && apr_hash_count(pattern->properties) > 0) {
             int count_not_empty_properties = 0;
-            // First cycle onlyy count not empty properties
+            // First cycle only count not empty properties
             for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
                 const char* k;
                 const char* v;
@@ -256,7 +256,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
             }
 
             if (count_not_empty_properties) {
-                // Secound cycle - not good but without additional memory allocation
+                // Second cycle - not good but without additional memory allocation
                 lib_printf("\n  Meta properties found:\n");
                 for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
                     const char* k;
