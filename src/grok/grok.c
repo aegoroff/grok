@@ -169,9 +169,13 @@ void main_compile_pattern_file(const char* p) {
 }
 
 void main_compile_lib(struct arg_file* files) {
-    for(size_t i = 0; i < files->count; i++) {
-        const char* p = files->filename[i];
-        main_compile_pattern_file(p);
+    if (files->count == 0) {
+        main_compile_pattern_file("*.patterns");
+    } else {
+        for(size_t i = 0; i < files->count; i++) {
+            const char* p = files->filename[i];
+            main_compile_pattern_file(p);
+        }
     }
 }
 

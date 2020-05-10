@@ -10,9 +10,9 @@ So using GROK you have to use a macro name defined in patterns instead of comple
 
 **SYNTAX**:
 ```
-grok.exe [-hi] -s <string> -m <string> -p <file> [-p <file>] [-p <file>]
+grok.exe [-hi] -s <string> -m <string> [-p <file>]...
 
-grok.exe [-hi] -f <file> -m <string> -p <file> [-p <file>] [-p <file>]
+grok.exe [-hi] -f <file> -m <string> [-p <file>]...
 
   -h, --help                print this help and exit
   -i, --info                dont work like grep i.e. output matched string with
