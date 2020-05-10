@@ -66,9 +66,9 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     struct arg_str* macroS = arg_str1(OPT_MACRO_SHORT, OPT_MACRO_LONG, NULL, OPT_MACRO_DESCR);
     struct arg_str* macroF = arg_str1(OPT_MACRO_SHORT, OPT_MACRO_LONG, NULL, OPT_MACRO_DESCR);
 
-    struct arg_file* patterns = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 1, ctx->argc + 2, OPT_PATT_DESCR);
-    struct arg_file* patternsS = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 1, ctx->argc + 2, OPT_PATT_DESCR);
-    struct arg_file* patternsF = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 1, ctx->argc + 2, OPT_PATT_DESCR);
+    struct arg_file* patterns = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 0, ctx->argc + 2, OPT_PATT_DESCR);
+    struct arg_file* patternsS = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 0, ctx->argc + 2, OPT_PATT_DESCR);
+    struct arg_file* patternsF = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 0, ctx->argc + 2, OPT_PATT_DESCR);
 
     struct arg_end* end = arg_end(10);
     struct arg_end* endF = arg_end(10);
