@@ -18,11 +18,25 @@
 #include <stdlib.h>
 #endif
 
+typedef struct bom_def {
+    bom_t bom;
+    size_t length;
+    unsigned char signature[BOM_MAX_LEN];
+} bom_def_t;
+
 static char* prenc_from_unicode_to_code_page(const wchar_t* from, UINT code_page, apr_pool_t* pool);
 
 static const char* enc_bom_names[] = {
         "Unknown", "UTF-8", "UTF-16 (LE)", "UTF-16 (BE)", "UTF-32 (BE)",
 };
+
+static bom_def_t boms[] = {                                        // Various UTF encodings
+        {bom_utf8,    3, {0xEF, 0xBB, 0xBF}},           // UTF8
+        {bom_utf16le, 2, {0xFF, 0xFE}},              // UTF16LE
+        {bom_utf16be, 2, {0xFE, 0xFF}},              // UTF16BE
+        {bom_utf32be, 4, {0x00, 0x00, 0xFE, 0xFF}},  // UTF32BE
+        // Add others as desired.  https://en.wikipedia.org/wiki/Byte_order_mark
+        {bom_unknown, 0, {0}}};
 
 const char* enc_get_encoding_name(bom_t bom) {
     if(bom < 0 || bom > bom_utf32be - 1) {
@@ -145,21 +159,7 @@ BOOL enc_is_valid_utf8(const char* str) {
     return TRUE;
 }
 
-#define BOM_MAX_LEN 5
-
 bom_t enc_detect_bom(apr_file_t* f) {
-    static const struct BOM {
-        bom_t bom;
-        size_t length;
-        unsigned char signature[BOM_MAX_LEN];
-    } BOM[] = {                                        // Various UTF encodings
-            {bom_utf8,    3, {0xEF, 0xBB, 0xBF}},           // UTF8
-            {bom_utf16le, 2, {0xFF, 0xFE}},              // UTF16LE
-            {bom_utf16be, 2, {0xFE, 0xFF}},              // UTF16BE
-            {bom_utf32be, 4, {0x00, 0x00, 0xFE, 0xFF}},  // UTF32BE
-            // Add others as desired.  https://en.wikipedia.org/wiki/Byte_order_mark
-            {bom_unknown, 0, {0}}};
-
     unsigned char bom_signature[BOM_MAX_LEN];
     apr_off_t apr_offset = 0;
     apr_status_t status = apr_file_seek(f, APR_SET, &apr_offset);  // Only file beginning
@@ -172,11 +172,21 @@ bom_t enc_detect_bom(apr_file_t* f) {
     if(status != APR_SUCCESS) {
         return bom_unknown;
     }
-    for(size_t i = 0; BOM[i].length; i++) {
-        if(nbytes >= BOM[i].length && memcmp(bom_signature, BOM[i].signature, BOM[i].length) == 0) {
-            apr_offset = (apr_off_t) BOM[i].length;
-            apr_file_seek(f, APR_SET, &apr_offset);  // Leave file position to just after BOM
-            return BOM[i].bom;
+
+    size_t offset = 0;
+    bom_t result = enc_detect_bom_memory(bom_signature, nbytes, &offset);
+
+    apr_offset = (apr_off_t)offset;
+    apr_file_seek(f, APR_SET, &apr_offset);  // Leave file position to just after BOM
+
+    return result;
+}
+
+bom_t enc_detect_bom_memory(const unsigned char* buffer, size_t len, size_t* offset) {
+    for(size_t i = 0; boms[i].length; i++) {
+        if(len >= boms[i].length && memcmp(buffer, boms[i].signature, boms[i].length) == 0) {
+            *offset = boms[i].length;
+            return boms[i].bom;
         }
     }
     return bom_unknown;
