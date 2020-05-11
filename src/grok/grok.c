@@ -220,7 +220,8 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     }
 
     int len = 2 * 0xFFF * sizeof(char);
-    char* buffer = (char*) apr_pcalloc(main_pool, len);
+    char* buffer = (char*) apr_pcalloc(main_pool, len + 2 * sizeof(char));
+    char* allocated_buffer = buffer;
 
     bom_t encoding = bom_unknown;
 
@@ -238,6 +239,8 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     do {
         apr_pool_t* p = bend_init(main_pool);
 
+        // it maybe shifted by bom encoder. so wind it back
+        buffer = allocated_buffer;
         status = apr_file_gets(buffer, len, file_handle);
 
         if(path == NULL && status != APR_EOF) {
