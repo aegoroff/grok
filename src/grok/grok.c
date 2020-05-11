@@ -169,7 +169,7 @@ void main_compile_pattern_file(const char* p) {
 }
 
 void main_compile_lib(struct arg_file* files) {
-    if (files->count == 0) {
+    if(files->count == 0) {
         main_compile_pattern_file("*.patterns");
     } else {
         for(size_t i = 0; i < files->count; i++) {
@@ -202,15 +202,30 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     main_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
-    apr_status_t status = apr_file_open(&file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
+    apr_status_t status = APR_SUCCESS;
+
+    bom_t encoding = bom_unknown;
+
+    if(path != NULL) {
+        status = apr_file_open(&file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
+    } else {
+        status = apr_file_open_stdin(&file_handle, main_pool);
+    }
+
     if(status != APR_SUCCESS) {
-        lib_printf("cannot open file %s\n", path);
+        if(path == NULL) {
+            lib_printf("cannot open stdin\n");
+        } else {
+            lib_printf("cannot open file %s\n", path);
+        }
         return;
     }
 
-    bom_t encoding = enc_detect_bom(file_handle);
+    if(path != NULL) {
+        encoding = enc_detect_bom(file_handle);
+    }
 
-    if (encoding == bom_utf16le || encoding == bom_utf16be || encoding == bom_utf32be) {
+    if(encoding == bom_utf16le || encoding == bom_utf16be || encoding == bom_utf32be) {
         lib_printf("unsupported file encoding %s\n", enc_get_encoding_name(encoding));
         return;
     }
@@ -222,9 +237,6 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     do {
         apr_pool_t* p = bend_init(main_pool);
         status = apr_file_gets(buffer, len, file_handle);
-        if (lineno == 1) {
-            // Skip BOM if any
-        }
 
         const BOOL matched = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
@@ -250,12 +262,12 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
 
                 apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
 
-                if (v != NULL && strlen(v)) {
+                if(v != NULL && strlen(v)) {
                     ++count_not_empty_properties;
                 }
             }
 
-            if (count_not_empty_properties) {
+            if(count_not_empty_properties) {
                 // Second cycle - not good but without additional memory allocation
                 lib_printf("\n  Meta properties found:\n");
                 for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
@@ -264,7 +276,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
 
                     apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
 
-                    if (v != NULL && strlen(v)) {
+                    if(v != NULL && strlen(v)) {
                         lib_printf("\t%s: %s\n", k, v);
                     }
                 }
