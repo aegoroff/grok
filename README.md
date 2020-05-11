@@ -14,11 +14,16 @@ grok.exe [-hi] -s <string> -m <string> [-p <file>]...
 
 grok.exe [-hi] -f <file> -m <string> [-p <file>]...
 
+grok.exe [-hi] -m <string> [-p <file>]...
+
   -h, --help                print this help and exit
   -i, --info                dont work like grep i.e. output matched string with
                             additional info
   -s, --string=<string>     string to match
-  -f, --file=<file>         full path to file to read data from
+  -f, --file=<file>         full path to file to read data from. If not set and
+                            string option not set too data read from stdin
   -m, --macro=<string>      pattern macros to build regexp
-  -p, --patterns=<file>     one or more pattern files. You can also use wildcards like path\*.patterns
+  -p, --patterns=<file>     one or more pattern files. You can also use wildcards
+                            like path\*.patterns. If not set, current directory
+                            used to search all *.patterns files
 ``` 
