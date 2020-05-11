@@ -27,6 +27,8 @@ typedef enum {
     bom_utf32be = 4
 } bom_t;
 
+#define BOM_MAX_LEN 5
+
 /*!
  * IMPORTANT: Memory allocated for result must be freed up by caller
  */
@@ -55,6 +57,7 @@ char* enc_from_unicode_to_utf8(const wchar_t* from, apr_pool_t* pool);
 BOOL enc_is_valid_utf8(const char* str);
 
 bom_t enc_detect_bom(apr_file_t* f);
+bom_t enc_detect_bom_memory(const unsigned char* buffer, size_t len, size_t* offset);
 
 const char* enc_get_encoding_name(bom_t bom);
 

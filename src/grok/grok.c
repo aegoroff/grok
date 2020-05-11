@@ -219,20 +219,40 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
         return;
     }
 
-    bom_t encoding = enc_detect_bom(file_handle);
+    int len = 2 * 0xFFF * sizeof(char);
+    char* buffer = (char*) apr_pcalloc(main_pool, len);
+
+    size_t first_line_offset = 0;
+    BOOL line_read = FALSE;
+
+    bom_t encoding;
+
+    if(path == NULL) {
+        // stdin
+        apr_file_gets(buffer, len, file_handle);
+        encoding = enc_detect_bom_memory(buffer, BOM_MAX_LEN, &first_line_offset);
+        buffer += first_line_offset;
+        line_read = TRUE;
+    } else {
+        // real file
+        encoding = enc_detect_bom(file_handle);
+    }
 
     if(encoding == bom_utf16le || encoding == bom_utf16be || encoding == bom_utf32be) {
         lib_printf("unsupported file encoding %s\n", enc_get_encoding_name(encoding));
         return;
     }
 
-    int len = 2 * 0xFFF * sizeof(char);
-    char* buffer = (char*) apr_pcalloc(main_pool, len);
-
     long long lineno = 1;
     do {
         apr_pool_t* p = bend_init(main_pool);
-        status = apr_file_gets(buffer, len, file_handle);
+
+        // stdin case first line
+        if (!line_read) {
+            status = apr_file_gets(buffer, len, file_handle);
+        }
+
+        line_read = FALSE;
 
         const BOOL matched = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
