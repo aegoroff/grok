@@ -73,12 +73,6 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
     pcre2_match_data* match_data = pcre2_match_data_create_from_pattern(re, NULL);
 
     int flags = PCRE2_NOTEMPTY;
-    if(!strchr(subject, '^')) {
-        flags |= PCRE2_NOTBOL;
-    }
-    if(!strchr(subject, '$')) {
-        flags |= PCRE2_NOTEOL;
-    }
 
     int rc = pcre2_match(
         re, /* the compiled pattern */
