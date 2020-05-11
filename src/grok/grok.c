@@ -204,8 +204,6 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     apr_file_t* file_handle = NULL;
     apr_status_t status = APR_SUCCESS;
 
-    bom_t encoding = bom_unknown;
-
     if(path != NULL) {
         status = apr_file_open(&file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
     } else {
@@ -221,9 +219,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
         return;
     }
 
-    if(path != NULL) {
-        encoding = enc_detect_bom(file_handle);
-    }
+    bom_t encoding = enc_detect_bom(file_handle);
 
     if(encoding == bom_utf16le || encoding == bom_utf16be || encoding == bom_utf32be) {
         lib_printf("unsupported file encoding %s\n", enc_get_encoding_name(encoding));
