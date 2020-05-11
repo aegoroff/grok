@@ -49,6 +49,8 @@ void main_compile_pattern_file(const char* p);
 
 BOOL main_try_compile_as_wildcard(const char* pattern);
 
+wchar_t* main_char_to_wchar(char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
+
 static apr_pool_t* main_pool;
 
 int main(int argc, const char* const argv[]) {
@@ -224,13 +226,14 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     char* allocated_buffer = buffer;
 
     bom_t encoding = bom_unknown;
+    bom_t current_encoding = encoding;
 
     if(path != NULL) {
         // real file
         encoding = enc_detect_bom(file_handle);
     }
 
-    if(encoding == bom_utf16le || encoding == bom_utf16be || encoding == bom_utf32be) {
+    if(encoding == bom_utf32be) {
         lib_printf("unsupported file encoding %s\n", enc_get_encoding_name(encoding));
         return;
     }
@@ -248,6 +251,16 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
             size_t line_offset = 0;
             encoding = enc_detect_bom_memory(buffer, BOM_MAX_LEN, &line_offset);
             buffer += line_offset;
+            if(encoding != bom_unknown) {
+                current_encoding = encoding;
+            } else {
+                encoding = current_encoding;
+            }
+        }
+
+        if(encoding == bom_utf16le || encoding == bom_utf16be) {
+            wchar_t* wide_buffer = main_char_to_wchar(buffer, len, encoding, p);
+            buffer = enc_from_unicode_to_utf8(wide_buffer, p);
         }
 
         const BOOL matched = bend_match_re(pattern, buffer);
@@ -255,7 +268,9 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
             if(info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, matched ? "TRUE" : "FALSE", macro);
             } else if(matched) {
-                if(encoding == bom_utf8 || enc_is_valid_utf8(buffer)) {
+                if(encoding == bom_utf16le || encoding == bom_utf16be) {
+                    lib_printf("%s", buffer);
+                } else if(encoding == bom_utf8 || enc_is_valid_utf8(buffer)) {
                     char* utf8 = enc_from_utf8_to_ansi(buffer, p);
                     lib_printf("%s", utf8);
                 } else {
@@ -295,6 +310,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
                 lib_printf("\n\n");
             }
         }
+        memset(allocated_buffer, 0, len);
         bend_cleanup();
     } while(status == APR_SUCCESS);
 
@@ -302,4 +318,33 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     if(status != APR_SUCCESS) {
         lib_printf("file %s closing error\n", path);
     }
+}
+
+wchar_t* main_char_to_wchar(char* buffer, size_t len, bom_t encoding, apr_pool_t* p) {
+    char wide_char[2];
+    wchar_t wchar;
+    wchar_t* wide_buffer = (wchar_t*) apr_pcalloc(p, sizeof(wchar_t) * len / 2);
+    int counter = 0;
+
+    for(int i = 0; i < len; i += 2) {
+        switch(encoding) {
+            case bom_utf16le: {
+                wide_char[0] = buffer[i];
+                wide_char[1] = buffer[i + 1];
+            }
+                break;
+            default:
+            case bom_utf16be: {
+                wide_char[1] = buffer[i];
+                wide_char[0] = buffer[i + 1];
+            }
+                break;
+        }
+
+        wchar = (uint16_t) ((uint8_t) wide_char[1] << 8 | (uint8_t) wide_char[0]);
+        wide_buffer[counter] = wchar;
+        ++counter;
+    }
+    wide_buffer[counter] = '\0';
+    return wide_buffer;
 }
