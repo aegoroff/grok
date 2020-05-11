@@ -222,18 +222,9 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     int len = 2 * 0xFFF * sizeof(char);
     char* buffer = (char*) apr_pcalloc(main_pool, len);
 
-    size_t first_line_offset = 0;
-    BOOL line_read = FALSE;
+    bom_t encoding = bom_unknown;
 
-    bom_t encoding;
-
-    if(path == NULL) {
-        // stdin
-        apr_file_gets(buffer, len, file_handle);
-        encoding = enc_detect_bom_memory(buffer, BOM_MAX_LEN, &first_line_offset);
-        buffer += first_line_offset;
-        line_read = TRUE;
-    } else {
+    if(path != NULL) {
         // real file
         encoding = enc_detect_bom(file_handle);
     }
@@ -247,12 +238,14 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     do {
         apr_pool_t* p = bend_init(main_pool);
 
-        // stdin case first line
-        if (!line_read) {
-            status = apr_file_gets(buffer, len, file_handle);
-        }
+        status = apr_file_gets(buffer, len, file_handle);
 
-        line_read = FALSE;
+        if(path == NULL && status != APR_EOF) {
+            // stdin case. Detect encoding on each line because stdin can be concatenated from several files using cat
+            size_t line_offset = 0;
+            encoding = enc_detect_bom_memory(buffer, BOM_MAX_LEN, &line_offset);
+            buffer += line_offset;
+        }
 
         const BOOL matched = bend_match_re(pattern, buffer);
         if(status != APR_EOF) {
