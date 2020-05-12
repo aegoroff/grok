@@ -8,23 +8,23 @@
  * \date    \verbatim
             Creation date: 2010-03-05
             \endverbatim
- * Copyright: (c) Alexander Egorov 2015-2020
+ * Copyright: (c) Alexander Egorov 2009-2020
  */
 
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
 #ifdef WIN32
-#include <windows.h>
+#include <Windows.h>
 #else
 #include <time.h>
 #endif
 #include "lib.h"
 
- /*
-    lib_ - public members
-    prdlib_ - private members
- */
+/*
+   lib_ - public members
+   prdlib_ - private members
+*/
 
 #define BIG_FILE_FORMAT "%.2f %s (%llu %s)" // greater or equal 1 Kb
 #define SMALL_FILE_FORMAT "%llu %s" // less then 1 Kb
@@ -59,9 +59,9 @@ static char* lib_sizes[] = {
 static double lib_span = 0.0;
 
 #ifdef WIN32
-static LARGE_INTEGER lib_freq = {0};
-static LARGE_INTEGER lib_time1 = {0};
-static LARGE_INTEGER lib_time2 = {0};
+static LARGE_INTEGER lib_freq = { 0 };
+static LARGE_INTEGER lib_time1 = { 0 };
+static LARGE_INTEGER lib_time2 = { 0 };
 
 #else
 #define BILLION 1E9
@@ -77,49 +77,45 @@ uint32_t lib_get_processor_count(void) {
     return (uint32_t)sysinfo.dwNumberOfProcessors;
 #else
     return (uint32_t)sysconf( _SC_NPROCESSORS_ONLN );
-#endif 
+#endif
 }
 
 void lib_print_size(uint64_t size) {
-    lib_file_size_t normalized = lib_normalize_size(size);
+    const lib_file_size_t normalized = lib_normalize_size(size);
     lib_printf(normalized.unit ? BIG_FILE_FORMAT : SMALL_FILE_FORMAT, //-V510
                normalized.value, lib_sizes[normalized.unit], size, lib_sizes[size_unit_bytes]);
 }
 
 void lib_size_to_string(uint64_t size, char* str) {
-    lib_file_size_t normalized = lib_normalize_size(size);
+    const lib_file_size_t normalized = lib_normalize_size(size);
 
     if(str == NULL) {
         return;
     }
     lib_sprintf(str, normalized.unit ? BIG_FILE_FORMAT : SMALL_FILE_FORMAT, //-V510
-              normalized.value, lib_sizes[normalized.unit], size, lib_sizes[size_unit_bytes]);
+                normalized.value, lib_sizes[normalized.unit], size, lib_sizes[size_unit_bytes]);
 }
 
 uint32_t lib_htoi(const char* ptr, int size) {
     uint32_t value = 0;
-    char ch;
     int count = 0;
 
     if(ptr == NULL || size <= 0) {
         return value;
     }
 
-    ch = ptr[count];
+    char ch = ptr[count];
     for(;;) {
         if(ch == ' ' || ch == '\t') {
             goto nextChar;
         }
         if(ch >= '0' && ch <= '9') {
             value = (value << 4) + (ch - '0');
-        }
-        else if(ch >= 'A' && ch <= 'F') {
+        } else if(ch >= 'A' && ch <= 'F') {
             value = (value << 4) + (ch - 'A' + 10);
-        }
-        else if(ch >= 'a' && ch <= 'f') {
+        } else if(ch >= 'a' && ch <= 'f') {
             value = (value << 4) + (ch - 'a' + 10);
-        }
-        else {
+        } else {
             return value;
         }
     nextChar:
@@ -132,7 +128,7 @@ uint32_t lib_htoi(const char* ptr, int size) {
 
 void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz) {
     size_t i = 0;
-    size_t to = MIN(sz, strlen(str) / BYTE_CHARS_SIZE);
+    const size_t to = MIN(sz, strlen(str) / BYTE_CHARS_SIZE);
 
     for(; i < to; i++) {
         bytes[i] = (uint8_t)lib_htoi(str + i * BYTE_CHARS_SIZE, BYTE_CHARS_SIZE);
@@ -140,44 +136,38 @@ void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz) {
 }
 
 uint64_t prlib_ilog(uint64_t x) {
-    uint64_t y;
     uint64_t n = INT64_BITS_COUNT;
     int c = INT64_BITS_COUNT / 2;
 
     do {
-        y = x >> c;
+        const uint64_t y = x >> c;
         if(y != 0) {
             n -= c;
             x = y;
         }
         c >>= 1;
-    }
-    while(c != 0);
+    } while(c != 0);
     n -= x >> (INT64_BITS_COUNT - 1);
     return (INT64_BITS_COUNT - 1) - (n - x);
 }
 
 lib_file_size_t lib_normalize_size(uint64_t size) {
-    lib_file_size_t result = {0};
+    lib_file_size_t result = { 0 };
     result.unit = size == 0 ? size_unit_bytes : prlib_ilog(size) / prlib_ilog(BINARY_THOUSAND);
     if(result.unit == size_unit_bytes) {
         result.value.size_in_bytes = size;
-    }
-    else {
+    } else {
         result.value.size = size / pow(BINARY_THOUSAND, result.unit);
     }
+    // ReSharper disable once CppSomeObjectMembersMightNotBeInitialized
     return result;
 }
 
-#ifdef _MSC_VER
 int lib_printf(__format_string const char* format, ...) {
-#else
-int lib_printf(const char* format, ...) {
-#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
-#ifdef _MSC_VER
+#ifdef __STDC_WANT_SECURE_LIB__
     result = vfprintf_s(stdout, format, params);
 #else
     result = vfprintf(stdout, format, params);
@@ -185,15 +175,12 @@ int lib_printf(const char* format, ...) {
     va_end(params);
     return result;
 }
-#ifdef _MSC_VER
+
 int lib_fprintf(FILE* file, __format_string const char* format, ...) {
-#else
-int lib_fprintf(FILE* file, const char* format, ...) {
-#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
-#ifdef _MSC_VER
+#ifdef __STDC_WANT_SECURE_LIB__
     result = vfprintf_s(file, format, params);
 #else
     result = vfprintf(file, format, params);
@@ -202,15 +189,11 @@ int lib_fprintf(FILE* file, const char* format, ...) {
     return result;
 }
 
-#ifdef _MSC_VER
 int lib_sprintf(char* buffer, __format_string const char* format, ...) {
-#else
-int lib_sprintf(char* buffer, const char* format, ...) {
-#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
-#ifdef _MSC_VER
+#ifdef __STDC_WANT_SECURE_LIB__
     int len = _vscprintf(format, params) + 1; // _vscprintf doesn't count terminating '\0'
     result = vsprintf_s(buffer, len, format, params);
 #else
@@ -220,8 +203,23 @@ int lib_sprintf(char* buffer, const char* format, ...) {
     return result;
 }
 
+int lib_wcsprintf(wchar_t* buffer, __format_string const wchar_t* format, ...) {
+    va_list params = NULL;
+    int result;
+    va_start(params, format);
+#ifdef __STDC_WANT_SECURE_LIB__
+    const int len = _vscwprintf(format, params) + 1; // _vscwprintf doesn't count terminating '\0'
+    result = vswprintf_s(buffer, len, format, params);
+#else
+    result = vswprintf(buffer, len, format, params);
+#endif
+    va_end(params);
+    return result;
+}
+
+
 lib_time_t lib_normalize_time(double seconds) {
-    lib_time_t result = {0};
+    lib_time_t result = { 0 };
 
     result.total_seconds = seconds;
     result.years = seconds / SECONDS_PER_YEAR;
@@ -232,35 +230,37 @@ lib_time_t lib_normalize_time(double seconds) {
     double tmp = result.seconds;
     result.seconds +=
             seconds -
-            ((double)(result.years * SECONDS_PER_YEAR) + (double)(result.days * SECONDS_PER_DAY) + (double)(result.hours * SECONDS_PER_HOUR) + (double)(result.minutes * SECONDS_PER_MINUTE) + result.seconds);
+            ((double)(result.years * SECONDS_PER_YEAR) + (double)(result.days * SECONDS_PER_DAY) + (double)(result.hours
+                * SECONDS_PER_HOUR) + (double)(result.minutes * SECONDS_PER_MINUTE) + result.seconds);
     if(result.seconds > 60) {
         result.seconds = tmp; // HACK
     }
     return result;
 }
 
-void lib_time_to_string(lib_time_t time, char* str) {
+void lib_time_to_string(const lib_time_t* time, char* str) {
     if(str == NULL) {
         return;
     }
 
-    if(time.years) {
-        lib_sprintf(str, YEARS_FMT DAYS_FMT HOURS_FMT MIN_FMT SEC_FMT, time.years, time.days, time.hours, time.minutes, time.seconds);
+    if(time->years) {
+        lib_sprintf(str, YEARS_FMT DAYS_FMT HOURS_FMT MIN_FMT SEC_FMT, time->years, time->days, time->hours,
+                    time->minutes, time->seconds);
         return;
     }
-    if(time.days) {
-        lib_sprintf(str, DAYS_FMT HOURS_FMT MIN_FMT SEC_FMT, time.days, time.hours, time.minutes, time.seconds);
+    if(time->days) {
+        lib_sprintf(str, DAYS_FMT HOURS_FMT MIN_FMT SEC_FMT, time->days, time->hours, time->minutes, time->seconds);
         return;
     }
-    if(time.hours) {
-        lib_sprintf(str, HOURS_FMT MIN_FMT SEC_FMT, time.hours, time.minutes, time.seconds);
+    if(time->hours) {
+        lib_sprintf(str, HOURS_FMT MIN_FMT SEC_FMT, time->hours, time->minutes, time->seconds);
         return;
     }
-    if(time.minutes) {
-        lib_sprintf(str, MIN_FMT SEC_FMT, time.minutes, time.seconds);
+    if(time->minutes) {
+        lib_sprintf(str, MIN_FMT SEC_FMT, time->minutes, time->seconds);
         return;
     }
-    lib_sprintf(str, SEC_FMT, time.seconds);
+    lib_sprintf(str, SEC_FMT, time->seconds);
 }
 
 void lib_new_line(void) {
@@ -296,8 +296,7 @@ int lib_count_digits_in(double x) {
     do {
         ++result;
         n /= 10;
-    }
-    while(n > 0);
+    } while(n > 0);
     return result;
 }
 
@@ -309,9 +308,56 @@ const char* lib_get_file_name(const char* path) {
 
     if(filename == NULL) {
         filename = path;
-    }
-    else {
+    } else {
         filename++;
     }
     return filename;
+}
+
+char* lib_ltrim(char* str, const char* seps) {
+    size_t totrim = 0;
+
+    if(str == NULL) {
+        return str;
+    }
+
+    if(seps == NULL) {
+        seps = "\t\n\v\f\r ";
+    }
+
+    totrim = strspn(str, seps);
+    if(totrim > 0) {
+        size_t len = strlen(str);
+        if(totrim == len) {
+            str[0] = '\0';
+        } else {
+            memmove(str, str + totrim, len + 1 - totrim);
+        }
+    }
+
+    return str;
+}
+
+char* lib_rtrim(char* str, const char* seps) {
+    int i;
+
+    if(str == NULL) {
+        return str;
+    }
+
+    if(seps == NULL) {
+        seps = "\t\n\v\f\r ";
+    }
+
+    i = strlen(str) - 1;
+    while(i >= 0 && strchr(seps, str[i]) != NULL) {
+        str[i] = '\0';
+        i--;
+    }
+
+    return str;
+}
+
+char* lib_trim(char* str, const char* seps) {
+    return lib_ltrim(lib_rtrim(str, seps), seps);
 }
