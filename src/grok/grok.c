@@ -221,10 +221,6 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
         return;
     }
 
-    int len = 2 * 0xFFF * sizeof(char);
-    char* buffer = (char*) apr_pcalloc(main_pool, len + 2 * sizeof(char));
-    char* allocated_buffer = buffer;
-
     bom_t encoding = bom_unknown;
     bom_t current_encoding = encoding;
 
@@ -237,6 +233,10 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
         lib_printf("unsupported file encoding %s\n", enc_get_encoding_name(encoding));
         return;
     }
+
+    int len = 2 * 0xFFF * sizeof(char);
+    char* buffer = (char*) apr_pcalloc(main_pool, len + 2 * sizeof(char));
+    char* allocated_buffer = buffer;
 
     long long lineno = 1;
     do {
@@ -268,9 +268,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
             if(info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, matched ? "TRUE" : "FALSE", macro);
             } else if(matched) {
-                if(encoding == bom_utf16le || encoding == bom_utf16be) {
-                    lib_printf("%s", buffer);
-                } else if(encoding == bom_utf8 || enc_is_valid_utf8(buffer)) {
+                if(encoding == bom_utf8 || enc_is_valid_utf8(buffer)) {
                     char* utf8 = enc_from_utf8_to_ansi(buffer, p);
                     lib_printf("%s", utf8);
                 } else {
@@ -345,6 +343,6 @@ wchar_t* main_char_to_wchar(char* buffer, size_t len, bom_t encoding, apr_pool_t
         wide_buffer[counter] = wchar;
         ++counter;
     }
-    wide_buffer[counter] = '\0';
+    wide_buffer[counter] = L'\0';
     return wide_buffer;
 }
