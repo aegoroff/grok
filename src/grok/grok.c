@@ -258,6 +258,12 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
             }
         }
 
+        if(encoding == bom_utf16le && status != APR_EOF) {
+            // read one more zero byte from file after trailing \n to avoid conversion to BE
+            char zero;
+            apr_file_getc(&zero, file_handle);
+        }
+
         if(encoding == bom_utf16le || encoding == bom_utf16be) {
             wchar_t* wide_buffer = main_char_to_wchar(buffer, len, encoding, p);
             buffer = enc_from_unicode_to_utf8(wide_buffer, p);
