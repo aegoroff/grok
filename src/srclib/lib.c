@@ -14,7 +14,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <Windows.h>
 #else
 #include <time.h>
@@ -71,7 +71,7 @@ static struct timespec lib_finish = { 0 };
 #endif
 
 uint32_t lib_get_processor_count(void) {
-#ifdef WIN32
+#ifdef _MSC_VER
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
     return (uint32_t)sysinfo.dwNumberOfProcessors;
@@ -268,7 +268,7 @@ void lib_new_line(void) {
 }
 
 void lib_start_timer(void) {
-#ifdef WIN32
+#ifdef _MSC_VER
     QueryPerformanceFrequency(&lib_freq);
     QueryPerformanceCounter(&lib_time1);
 #else
@@ -277,7 +277,7 @@ void lib_start_timer(void) {
 }
 
 void lib_stop_timer(void) {
-#ifdef WIN32
+#ifdef _MSC_VER
     QueryPerformanceCounter(&lib_time2);
     lib_span = (double)(lib_time2.QuadPart - lib_time1.QuadPart) / (double)lib_freq.QuadPart;
 #else
