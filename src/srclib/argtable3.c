@@ -1,4 +1,4 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+﻿// This is an open source non-commercial project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 /*******************************************************************************
  * This file is part of the argtable3 library.
@@ -497,7 +497,7 @@ parse_long_options(char * const *nargv, const char *options,
 	for (i = 0; long_options[i].name; i++) {
 		/* find matching long option */
 		if (strncmp(current_argv, long_options[i].name,
-		    current_argv_len))
+		    current_argv_len) != 0)
 			continue;
 
 		if (strlen(long_options[i].name) == current_argv_len) {
@@ -1852,7 +1852,7 @@ void arg_print_errors(FILE * fp, struct arg_end * end, const char * progname)
 
 #include "argtable3.h"
 
-#ifdef WIN32
+#ifdef _MSC_VER
 # define FILESEPARATOR1 '\\'
 # define FILESEPARATOR2 '/'
 #else
@@ -2707,8 +2707,13 @@ extern "C" {
 #define TRexChar unsigned short
 #define MAX_CHAR 0xFFFF
 #define _TREXC(c) L##c
+#ifdef UNICODE
+#define trex_strlen _tcslen
+#define trex_printf _tprintf
+#else
 #define trex_strlen wcslen
 #define trex_printf wprintf
+#endif
 #else
 #define TRexChar char
 #define MAX_CHAR 0xFF
@@ -2988,9 +2993,15 @@ struct arg_rex * arg_rexn(const char * shortopts,
 #define scprintf wprintf
 #define _SC(x) L(x)
 #else
+#ifdef UNICODE
+#define scisprint _istprint
+#define scstrlen _tcslen
+#define scprintf _tprintf
+#else
 #define scisprint isprint
 #define scstrlen strlen
 #define scprintf printf
+#endif
 #define _SC(x) (x)
 #endif
 
@@ -3535,7 +3546,7 @@ TRex *trex_compile(const TRexChar *pattern,const TRexChar **error,int flags)
     if(exp == NULL) return NULL;
 	exp->_eol = exp->_bol = NULL;
 	exp->_p = pattern;
-	exp->_nallocated = (int)scstrlen(pattern) * sizeof(TRexChar);
+	exp->_nallocated = (int)(scstrlen(pattern) * sizeof(TRexChar));
 	exp->_nodes = (TRexNode *)malloc(exp->_nallocated * sizeof(TRexNode));
 	exp->_nsize = 0;
 	exp->_matches = 0;
@@ -3592,6 +3603,9 @@ void trex_free(TRex *exp)
 TRexBool trex_match(TRex* exp,const TRexChar* text)
 {
 	const TRexChar* res = NULL;
+    if(exp == NULL) {
+        return TRex_False;
+    }
 	exp->_bol = text;
 	exp->_eol = text + scstrlen(text);
 	exp->_currsubexp = 0;
@@ -4318,7 +4332,7 @@ void arg_reset(void * *argtable)
 }
 
 
-int arg_parse(int argc, char * *argv, void * *argtable)
+int arg_parse(int argc, const char* const* argv, void * *argtable)
 {
     struct arg_hdr * *table = (struct arg_hdr * *)argtable;
     struct arg_end *endtable;

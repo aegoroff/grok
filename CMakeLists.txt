@@ -10,9 +10,7 @@ set(APR_UTIL apr-util)
 set(LIBD Debug)
 set(LIBR Release)
 set(APR_X64 "$ENV{APR_HOME16}/${APR}/x64")
-set(APR_X86 "$ENV{APR_HOME16}/${APR}/x86")
 set(APR_UTIL_X64 "$ENV{APR_HOME16}/${APR_UTIL}/x64")
-set(APR_UTIL_X86 "$ENV{APR_HOME16}/${APR_UTIL}/x86")
 
 set (CMAKE_C_STANDARD 99)
 
