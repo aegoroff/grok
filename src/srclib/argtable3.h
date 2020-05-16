@@ -1,4 +1,4 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+﻿// This is an open source non-commercial project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 /*******************************************************************************
  * This file is part of the argtable3 library.
@@ -289,7 +289,7 @@ struct arg_end* arg_end(int maxerrors);
 
 /**** other functions *******************************************/
 int arg_nullcheck(void **argtable);
-int arg_parse(int argc, char **argv, void **argtable);
+int arg_parse(int argc, const char* const* argv, void **argtable);
 void arg_print_option(FILE *fp, const char *shortopts, const char *longopts, const char *datatype, const char *suffix);
 void arg_print_syntax(FILE *fp, void **argtable, const char *suffix);
 void arg_print_syntaxv(FILE *fp, void **argtable, const char *suffix);
