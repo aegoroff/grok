@@ -186,7 +186,7 @@ BOOL enc_is_valid_utf8(const char* str) {
 }
 
 bom_t enc_detect_bom(apr_file_t* f) {
-    unsigned char bom_signature[BOM_MAX_LEN];
+    char bom_signature[BOM_MAX_LEN];
     apr_off_t apr_offset = 0;
     apr_status_t status = apr_file_seek(f, APR_SET, &apr_offset); // Only file beginning
     if(status != APR_SUCCESS) {
@@ -208,7 +208,7 @@ bom_t enc_detect_bom(apr_file_t* f) {
     return result;
 }
 
-bom_t enc_detect_bom_memory(const unsigned char* buffer, size_t len, size_t* offset) {
+bom_t enc_detect_bom_memory(const char* buffer, size_t len, size_t* offset) {
     for(size_t i = 0; boms[i].length; i++) {
         if(len >= boms[i].length && memcmp(buffer, boms[i].signature, boms[i].length) == 0) {
             *offset = boms[i].length;

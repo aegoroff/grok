@@ -49,7 +49,7 @@ void main_compile_pattern_file(const char* p);
 
 BOOL main_try_compile_as_wildcard(const char* pattern);
 
-wchar_t* main_char_to_wchar(char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
+wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
 
 static apr_pool_t* main_pool;
 
@@ -324,8 +324,8 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     }
 }
 
-wchar_t* main_char_to_wchar(char* buffer, size_t len, bom_t encoding, apr_pool_t* p) {
-    char wide_char[2];
+wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p) {
+    unsigned char wide_char[2];
     wchar_t wchar;
     wchar_t* wide_buffer = (wchar_t*) apr_pcalloc(p, sizeof(wchar_t) * len / 2);
     int counter = 0;
