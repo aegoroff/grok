@@ -18,6 +18,7 @@
 #include <Windows.h>
 #else
 #include <time.h>
+#include <wchar.h>
 #endif
 #include "lib.h"
 
@@ -58,7 +59,7 @@ static char* lib_sizes[] = {
 
 static double lib_span = 0.0;
 
-#ifdef WIN32
+#ifdef _MSC_VER
 static LARGE_INTEGER lib_freq = { 0 };
 static LARGE_INTEGER lib_time1 = { 0 };
 static LARGE_INTEGER lib_time2 = { 0 };
@@ -176,7 +177,11 @@ int lib_printf(__format_string const char* format, ...) {
     return result;
 }
 
+#ifdef _MSC_VER
 int lib_fprintf(FILE* file, __format_string const char* format, ...) {
+#else
+int lib_fprintf(FILE* file, const char* format, ...) {
+#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
@@ -189,7 +194,11 @@ int lib_fprintf(FILE* file, __format_string const char* format, ...) {
     return result;
 }
 
+#ifdef _MSC_VER
 int lib_sprintf(char* buffer, __format_string const char* format, ...) {
+#else
+int lib_sprintf(char* buffer, const char* format, ...) {
+#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
@@ -203,7 +212,11 @@ int lib_sprintf(char* buffer, __format_string const char* format, ...) {
     return result;
 }
 
+#ifdef _MSC_VER
 int lib_wcsprintf(wchar_t* buffer, __format_string const wchar_t* format, ...) {
+#else
+int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...) {
+#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
