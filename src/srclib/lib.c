@@ -18,7 +18,6 @@
 #include <Windows.h>
 #else
 #include <time.h>
-#include <wchar.h>
 #include <sys/sysinfo.h>
 #endif
 #include "lib.h"

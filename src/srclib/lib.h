@@ -17,6 +17,10 @@
 #include <stdio.h>
 #include "types.h"
 
+#ifndef _MSC_VER
+#include <wchar.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
