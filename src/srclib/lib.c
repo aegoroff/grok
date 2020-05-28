@@ -228,6 +228,8 @@ int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...) {
     const int len = _vscwprintf(format, params) + 1; // _vscwprintf doesn't count terminating '\0'
     result = vswprintf_s(buffer, len, format, params);
 #else
+    FILE* printf_dummy_file = fopen("/dev/null", "wb");
+    const int len = vfwprintf(printf_dummy_file, format, params);
     result = vswprintf(buffer, len, format, params);
 #endif
     va_end(params);
