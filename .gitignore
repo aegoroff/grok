@@ -30,3 +30,4 @@ pcre-*/
 /cmake-build-release-clang-cl/
 /cmake-build-debug-clang-cl/
 /cmake-build-debug-wsl/
+/cmake-build-release-wsl/
