@@ -19,6 +19,7 @@
 #else
 #include <time.h>
 #include <wchar.h>
+#include <sys/sysinfo.h>
 #endif
 #include "lib.h"
 
@@ -77,7 +78,7 @@ uint32_t lib_get_processor_count(void) {
     GetSystemInfo(&sysinfo);
     return (uint32_t)sysinfo.dwNumberOfProcessors;
 #else
-    return (uint32_t)sysconf( _SC_NPROCESSORS_ONLN );
+    return (uint32_t)get_nprocs();
 #endif
 }
 
@@ -164,7 +165,11 @@ lib_file_size_t lib_normalize_size(uint64_t size) {
     return result;
 }
 
+#ifdef _MSC_VER
 int lib_printf(__format_string const char* format, ...) {
+#else
+int lib_printf(const char* format, ...) {
+#endif
     va_list params = NULL;
     int result;
     va_start(params, format);
