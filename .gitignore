@@ -29,3 +29,4 @@ pcre-*/
 /out/
 /cmake-build-release-clang-cl/
 /cmake-build-debug-clang-cl/
+/cmake-build-debug-wsl/
