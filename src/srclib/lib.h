@@ -106,7 +106,7 @@ extern int lib_sprintf(char* buffer, const char* format, ...);
 #ifdef __STDC_WANT_SECURE_LIB__
 int lib_wcsprintf(wchar_t* buffer, __format_string const wchar_t* format, ...);
 #else
-int lib_wcsprintf(char* buffer, const char* format, ...);
+int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...);
 #endif
 
 extern void lib_print_size(uint64_t size);
