@@ -169,7 +169,7 @@ int lib_printf(__format_string const char* format, ...) {
 #else
 int lib_printf(const char* format, ...) {
 #endif
-    va_list params = NULL;
+    va_list params;
     int result;
     va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
@@ -186,7 +186,7 @@ int lib_fprintf(FILE* file, __format_string const char* format, ...) {
 #else
 int lib_fprintf(FILE* file, const char* format, ...) {
 #endif
-    va_list params = NULL;
+    va_list params;
     int result;
     va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
@@ -203,7 +203,7 @@ int lib_sprintf(char* buffer, __format_string const char* format, ...) {
 #else
 int lib_sprintf(char* buffer, const char* format, ...) {
 #endif
-    va_list params = NULL;
+    va_list params;
     int result;
     va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
@@ -221,7 +221,7 @@ int lib_wcsprintf(wchar_t* buffer, __format_string const wchar_t* format, ...) {
 #else
 int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...) {
 #endif
-    va_list params = NULL;
+    va_list params;
     int result;
     va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
