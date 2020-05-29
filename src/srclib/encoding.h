@@ -11,8 +11,8 @@
  * Copyright: (c) Alexander Egorov 2009-2020
  */
 
-#ifndef PCTRL_ENCODING_H_
-#define PCTRL_ENCODING_H_
+#ifndef GROK_ENCODING_H_
+#define GROK_ENCODING_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -86,4 +86,4 @@ wchar_t* enc_from_code_page_to_unicode(const char* from, UINT code_page, apr_poo
 }
 #endif
 
-#endif // PCTRL_ENCODING_H_
+#endif // GROK_ENCODING_H_
