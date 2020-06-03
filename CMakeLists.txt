@@ -103,7 +103,11 @@ endif()
 
 add_executable(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
-target_link_libraries(grok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    target_link_libraries(grok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
+else()
+    target_link_libraries(grok apr-1 aprutil-1 pcre)
+endif()
 
 install(TARGETS grok DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 install(FILES ${PATTERN_FILES} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
