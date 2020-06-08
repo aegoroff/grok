@@ -9,9 +9,9 @@
  * Copyright: (c) Alexander Egorov 2015-2020
  */
 
-#ifndef HC_TYPES_H_
-#define HC_TYPES_H_
+#ifndef GROK_TYPES_H_
+#define GROK_TYPES_H_
 
 #include <stdint.h>
 
-#endif // HC_TYPES_H_
+#endif // GROK_TYPES_H_
