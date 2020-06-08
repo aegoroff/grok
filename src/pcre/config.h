@@ -1,5 +1,6 @@
 /* config.h for CMake builds */
 
+/* #undef HAVE_ATTRIBUTE_UNINITIALIZED */
 /* #undef HAVE_DIRENT_H */
 #define HAVE_INTTYPES_H 1    
 #define HAVE_STDINT_H 1                                                   
@@ -10,7 +11,10 @@
 #define HAVE_WINDOWS_H 1
 
 /* #undef HAVE_BCOPY */
+/* #undef HAVE_MEMFD_CREATE */
 #define HAVE_MEMMOVE 1
+/* #undef HAVE_SECURE_GETENV */
+#define HAVE_STRERROR 1
 
 #define PCRE2_STATIC 1
 
