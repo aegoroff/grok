@@ -109,12 +109,10 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
     apr_dir_t* d = NULL;
     apr_finfo_t info = {0};
     char* full_path = NULL; // Full path to file
-
-
 #ifdef _MSC_VER
-    char* drive = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
     char* dir = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
     char* filename = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* drive = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
     char* ext = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
     _splitpath_s(pattern,
                  drive, MAX_PATH, // Drive
@@ -125,8 +123,9 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
     full_dir_path = apr_pstrcat(main_pool, drive, dir, NULL);
     file_pattern = apr_pstrcat(main_pool, filename, ext, NULL);
 #else
-    full_dir_path = apr_pstrcat(main_pool, dirname(pattern), NULL);
-    file_pattern = apr_pstrcat(main_pool, basename(pattern), NULL);
+    char* dir = apr_pstrdup(main_pool, pattern);
+    full_dir_path = dirname(dir);
+    file_pattern = pattern + strlen(dir) + 1;
 #endif
 
     status = apr_dir_open(&d, full_dir_path, main_pool);
@@ -174,7 +173,6 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
 
 void main_compile_pattern_file(const char* p) {
     FILE* f = NULL;
-
 
 #ifdef __STDC_WANT_SECURE_LIB__
     const errno_t error = fopen_s(&f, p, "r");
