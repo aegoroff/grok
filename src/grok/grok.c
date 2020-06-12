@@ -165,6 +165,9 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
 
 void main_compile_pattern_file(const char* p) {
     FILE* f = NULL;
+
+
+#ifdef __STDC_WANT_SECURE_LIB__
     const errno_t error = fopen_s(&f, p, "r");
     if(error) {
         if(!main_try_compile_as_wildcard(p)) {
@@ -172,6 +175,16 @@ void main_compile_pattern_file(const char* p) {
         }
         return;
     }
+#else
+    f = fopen(p, "r");
+    if(f == NULL) {
+        if(!main_try_compile_as_wildcard(p)) {
+            perror(p);
+        }
+        return;
+    }
+#endif
+
     yyrestart(f);
     main_run_parsing();
     fclose(f);
