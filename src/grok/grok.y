@@ -2,7 +2,7 @@
 	#include "grok.tab.h"
 
 	extern int yylineno;
-    extern char *yytext;
+        extern char *yytext;
 
 	void yyerror(char *s, ...);
 	void lyyerror(YYLTYPE t, char *s, ...);
