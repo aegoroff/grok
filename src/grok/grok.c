@@ -19,6 +19,8 @@
 #define EXIT_FAILURE      1
 
 #include <errno.h>
+#include <stdlib.h>
+#include <libgen.h>
 #endif
 
 #include <stdio.h>
@@ -101,10 +103,6 @@ void main_run_parsing() {
 }
 
 BOOL main_try_compile_as_wildcard(const char* pattern) {
-    char* drive = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* dir = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* filename = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* ext = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
     char* full_dir_path;
     char* file_pattern;
     apr_status_t status;
@@ -112,6 +110,12 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
     apr_finfo_t info = {0};
     char* full_path = NULL; // Full path to file
 
+
+#ifdef _MSC_VER
+    char* drive = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* dir = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* filename = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* ext = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
     _splitpath_s(pattern,
                  drive, MAX_PATH, // Drive
                  dir, MAX_PATH, // Directory
@@ -120,6 +124,11 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
 
     full_dir_path = apr_pstrcat(main_pool, drive, dir, NULL);
     file_pattern = apr_pstrcat(main_pool, filename, ext, NULL);
+#else
+    full_dir_path = apr_pstrcat(main_pool, dirname(pattern), NULL);
+    file_pattern = apr_pstrcat(main_pool, basename(pattern), NULL);
+#endif
+
     status = apr_dir_open(&d, full_dir_path, main_pool);
     if(status != APR_SUCCESS) {
         return FALSE;
