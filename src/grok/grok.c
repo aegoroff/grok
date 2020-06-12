@@ -218,9 +218,13 @@ main_on_string(struct arg_file* pattern_files, const char* const macro, const ch
     if(info_mode) {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
     } else if(r) {
-        char* utf8 = enc_from_utf8_to_ansi(str, p);
+#ifdef _MSC_VER
 
+        char* utf8 = enc_from_utf8_to_ansi(str, p);
         lib_printf("%s", utf8);
+#else
+        lib_printf("%s", str);
+#endif
     }
 
     bend_cleanup();
