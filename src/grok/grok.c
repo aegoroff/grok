@@ -301,12 +301,16 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
             if(info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, matched ? "TRUE" : "FALSE", macro);
             } else if(matched) {
+#ifdef _MSC_VER
                 if(encoding == bom_utf8 || enc_is_valid_utf8(buffer)) {
                     char* utf8 = enc_from_utf8_to_ansi(buffer, p);
                     lib_printf("%s", utf8);
                 } else {
                     lib_printf("%s", buffer);
                 }
+#else
+                lib_printf("%s", buffer);
+#endif
             }
         }
 
