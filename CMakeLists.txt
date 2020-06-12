@@ -9,8 +9,14 @@ set(APR apr)
 set(APR_UTIL apr-util)
 set(LIBD Debug)
 set(LIBR Release)
-set(APR_X64 "$ENV{APR_HOME16}/${APR}/x64")
-set(APR_UTIL_X64 "$ENV{APR_HOME16}/${APR_UTIL}/x64")
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(APR_X64 "$ENV{APR_HOME16}/${APR}/x64")
+    set(APR_UTIL_X64 "$ENV{APR_HOME16}/${APR_UTIL}/x64")
+else()
+    set(APR_X64 "$ENV{APR_HOME}/APR")
+    set(APR_UTIL_X64 "$ENV{APR_HOME}APR-UTIL")
+endif()
 
 set (CMAKE_C_STANDARD 99)
 
@@ -30,17 +36,23 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(CMAKE_C_FLAGS_RELEASE  "/Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /D NDEBUG")
     set(CMAKE_C_FLAGS_DEBUG  "/Zc:wchar_t /Zc:inline /MTd /Od /RTC1")
 else()
-    set(CMAKE_CXX_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps")
-    set(CMAKE_CXX_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps")
-	set(CMAKE_C_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps")
-    set(CMAKE_C_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps")
+    set(CMAKE_CXX_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -pthread")
+    set(CMAKE_CXX_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -pthread")
+	set(CMAKE_C_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -save-temps -pthread")
+    set(CMAKE_C_FLAGS_DEBUG  "-march=corei7-avx -Wall -mtune=corei7-avx -mfpmath=both -save-temps -pthread")
 endif()
 
 include_directories(${SRC}/${LIB})
 include_directories(${SRC}/${PCRE})
 include_directories(${SRC}/${GROK})
-include_directories($ENV{APR_HOME16}/${APR}/include)
-include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    include_directories($ENV{APR_HOME16}/${APR}/include)
+    include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
+else()
+    include_directories($ENV{APR_HOME}/APR/include/apr-1)
+    include_directories($ENV{APR_HOME}/APR-UTIL/include/apr-1)
+endif()
 
 add_definitions( -DPCRE2_STATIC )
 add_definitions( -DPCRE2_CODE_UNIT_WIDTH=8 )
@@ -89,24 +101,49 @@ SET(PCRE_SOURCE_FILES
 
 add_library(pcre STATIC ${PCRE_SOURCE_FILES})
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    link_directories(
-            "${APR_X64}/${LIBD}"
-            "${APR_UTIL_X64}/${LIBD}"
-    )
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        link_directories(
+                "${APR_X64}/${LIBD}"
+                "${APR_UTIL_X64}/${LIBD}"
+        )
+    else()
+        link_directories(
+                "${APR_X64}/${LIBR}"
+                "${APR_UTIL_X64}/${LIBR}"
+        )
+    endif()
 else()
     link_directories(
-            "${APR_X64}/${LIBR}"
-            "${APR_UTIL_X64}/${LIBR}"
+                "$ENV{APR_HOME}/APR/lib/"
+                "$ENV{APR_HOME}/APR-UTIL/lib/"
     )
+endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    add_custom_target(create_flex
+            COMMAND win_flex.exe --wincompat --outfile="grok.flex.c" grok.lex
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+    add_custom_target(create_bison
+            COMMAND win_bison.exe --output="grok.tab.c" -dy grok.y
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+else()
+    add_custom_target(create_flex
+                      COMMAND flex --outfile="grok.flex.c" grok.lex
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+    add_custom_target(create_bison
+                      COMMAND bison --output="grok.tab.c" -dy grok.y
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
 endif()
 
 add_executable(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+add_dependencies(grok create_bison create_flex)
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     target_link_libraries(grok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
 else()
-    target_link_libraries(grok apr-1 aprutil-1 pcre)
+    target_link_libraries(grok m libapr-1.a libaprutil-1.a pcre)
 endif()
 
 install(TARGETS grok DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)

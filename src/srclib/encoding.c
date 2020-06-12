@@ -18,6 +18,15 @@
 
 #ifndef _MSC_VER
 #include <stdlib.h>
+
+#define CP_ACP                    0           // default to ANSI code page
+#define CP_OEMCP                  1           // default to OEM  code page
+#define CP_MACCP                  2           // default to MAC  code page
+#define CP_THREAD_ACP             3           // current thread's ANSI code page
+#define CP_SYMBOL                 42          // SYMBOL translations
+
+#define CP_UTF7                   65000       // UTF-7 translation
+#define CP_UTF8                   65001       // UTF-8 translation
 #endif
 
 typedef struct bom_def {
@@ -113,7 +122,7 @@ wchar_t* enc_from_code_page_to_unicode(const char* from, UINT code_page, apr_poo
 #else
     wchar_t* result = NULL;
     size_t length_wide = mbstowcs(NULL, from, 0);
-    result = (wchar_t*)apr_pcalloc(pool, length_wide + 1, sizeof(wchar_t));
+    result = (wchar_t*)apr_pcalloc(pool, (length_wide + 1) * sizeof(wchar_t));
     mbstowcs(result, from, length_wide + 1);
     return result;
 #endif
@@ -251,7 +260,7 @@ char* prenc_from_unicode_to_code_page(const wchar_t* from, UINT code_page, apr_p
 #else
     char* result = NULL;
     size_t length_ansi = wcstombs(NULL, from, 0);
-    result = (char*)apr_pcalloc(pool, length_ansi + 1, sizeof(char));
+    result = (char*)apr_pcalloc(pool, (length_ansi + 1) * sizeof(char));
     wcstombs(result, from, length_ansi + 1);
     return result;
 #endif
