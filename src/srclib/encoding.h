@@ -31,6 +31,11 @@ typedef enum {
 
 #define BOM_MAX_LEN 5
 
+#ifndef _MSC_VER
+typedef int BOOL;
+typedef unsigned int        UINT;
+#endif
+
 /*!
  * IMPORTANT: Memory allocated for result must be freed up by caller
  */
@@ -75,12 +80,12 @@ const char* enc_get_encoding_name(bom_t bom);
  */
 char* enc_decode_utf8_ansi(const char* from, UINT from_code_page, UINT to_code_page, apr_pool_t* pool);
 
+#endif
+
 /*!
 * IMPORTANT: Memory allocated for result must be freed up by caller
 */
 wchar_t* enc_from_code_page_to_unicode(const char* from, UINT code_page, apr_pool_t* pool);
-
-#endif
 
 #ifdef __cplusplus
 }

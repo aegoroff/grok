@@ -14,6 +14,15 @@
 
 #define PCRE2_CODE_UNIT_WIDTH 8
 
+#ifndef _MSC_VER
+#define MAX_PATH          260
+#define EXIT_FAILURE      1
+
+#include <errno.h>
+#include <stdlib.h>
+#include <libgen.h>
+#endif
+
 #include <stdio.h>
 #include <locale.h>
 #include "apr.h"
@@ -94,10 +103,6 @@ void main_run_parsing() {
 }
 
 BOOL main_try_compile_as_wildcard(const char* pattern) {
-    char* drive = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* dir = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* filename = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* ext = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
     char* full_dir_path;
     char* file_pattern;
     apr_status_t status;
@@ -105,6 +110,12 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
     apr_finfo_t info = {0};
     char* full_path = NULL; // Full path to file
 
+
+#ifdef _MSC_VER
+    char* drive = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* dir = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* filename = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
+    char* ext = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
     _splitpath_s(pattern,
                  drive, MAX_PATH, // Drive
                  dir, MAX_PATH, // Directory
@@ -113,6 +124,11 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
 
     full_dir_path = apr_pstrcat(main_pool, drive, dir, NULL);
     file_pattern = apr_pstrcat(main_pool, filename, ext, NULL);
+#else
+    full_dir_path = apr_pstrcat(main_pool, dirname(pattern), NULL);
+    file_pattern = apr_pstrcat(main_pool, basename(pattern), NULL);
+#endif
+
     status = apr_dir_open(&d, full_dir_path, main_pool);
     if(status != APR_SUCCESS) {
         return FALSE;
@@ -158,6 +174,9 @@ BOOL main_try_compile_as_wildcard(const char* pattern) {
 
 void main_compile_pattern_file(const char* p) {
     FILE* f = NULL;
+
+
+#ifdef __STDC_WANT_SECURE_LIB__
     const errno_t error = fopen_s(&f, p, "r");
     if(error) {
         if(!main_try_compile_as_wildcard(p)) {
@@ -165,6 +184,16 @@ void main_compile_pattern_file(const char* p) {
         }
         return;
     }
+#else
+    f = fopen(p, "r");
+    if(f == NULL) {
+        if(!main_try_compile_as_wildcard(p)) {
+            perror(p);
+        }
+        return;
+    }
+#endif
+
     yyrestart(f);
     main_run_parsing();
     fclose(f);

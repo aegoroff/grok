@@ -16,7 +16,9 @@
 
 #include <apr_hash.h>
 
-//apr_hash_t*
+#ifndef _MSC_VER
+typedef int BOOL;
+#endif
 
 typedef struct pattern {
     char* regex;
