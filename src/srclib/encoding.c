@@ -17,6 +17,7 @@
 #include "encoding.h"
 
 #ifndef _MSC_VER
+
 #include <stdlib.h>
 
 #define CP_ACP                    0           // default to ANSI code page
@@ -38,17 +39,17 @@ typedef struct bom_def {
 static char* prenc_from_unicode_to_code_page(const wchar_t* from, UINT code_page, apr_pool_t* pool);
 
 static const char* enc_bom_names[] = {
-    "Unknown", "UTF-8", "UTF-16 (LE)", "UTF-16 (BE)", "UTF-32 (BE)",
+        "Unknown", "UTF-8", "UTF-16 (LE)", "UTF-16 (BE)", "UTF-32 (BE)",
 };
 
 static bom_def_t boms[] = {
-    // Various UTF encodings
-    { bom_utf8, 3, { 0xEF, 0xBB, 0xBF } },          // UTF8
-    { bom_utf16le, 2, { 0xFF, 0xFE } },             // UTF16LE
-    { bom_utf16be, 2, { 0xFE, 0xFF } },             // UTF16BE
-    { bom_utf32be, 4, { 0x00, 0x00, 0xFE, 0xFF } }, // UTF32BE
-    // Add others as desired.  https://en.wikipedia.org/wiki/Byte_order_mark
-    { bom_unknown, 0, { 0 } }
+        // Various UTF encodings
+        {bom_utf8,    3, {0xEF, 0xBB, 0xBF}},          // UTF8
+        {bom_utf16le, 2, {0xFF, 0xFE}},             // UTF16LE
+        {bom_utf16be, 2, {0xFE, 0xFF}},             // UTF16BE
+        {bom_utf32be, 4, {0x00, 0x00, 0xFE, 0xFF}}, // UTF32BE
+        // Add others as desired.  https://en.wikipedia.org/wiki/Byte_order_mark
+        {bom_unknown, 0, {0}}
 };
 
 const char* enc_get_encoding_name(bom_t bom) {
@@ -122,7 +123,7 @@ wchar_t* enc_from_code_page_to_unicode(const char* from, UINT code_page, apr_poo
 #else
     wchar_t* result = NULL;
     size_t length_wide = mbstowcs(NULL, from, 0);
-    result = (wchar_t*)apr_pcalloc(pool, (length_wide + 1) * sizeof(wchar_t));
+    result = (wchar_t*) apr_pcalloc(pool, (length_wide + 1) * sizeof(wchar_t));
     mbstowcs(result, from, length_wide + 1);
     return result;
 #endif
@@ -147,7 +148,7 @@ BOOL enc_is_valid_utf8(const char* str) {
         return FALSE;
     }
 
-    const unsigned char* bytes = (const unsigned char*)str;
+    const unsigned char* bytes = (const unsigned char*) str;
     unsigned int cp;
     int num;
 
@@ -182,11 +183,11 @@ BOOL enc_is_valid_utf8(const char* str) {
         }
 
         if((cp > 0x10FFFF) ||
-            ((cp >= 0xD800) && (cp <= 0xDFFF)) ||
-            ((cp <= 0x007F) && (num != 1)) ||
-            ((cp >= 0x0080) && (cp <= 0x07FF) && (num != 2)) ||
-            ((cp >= 0x0800) && (cp <= 0xFFFF) && (num != 3)) ||
-            ((cp >= 0x10000) && (cp <= 0x1FFFFF) && (num != 4))) {
+           ((cp >= 0xD800) && (cp <= 0xDFFF)) ||
+           ((cp <= 0x007F) && (num != 1)) ||
+           ((cp >= 0x0080) && (cp <= 0x07FF) && (num != 2)) ||
+           ((cp >= 0x0800) && (cp <= 0xFFFF) && (num != 3)) ||
+           ((cp >= 0x10000) && (cp <= 0x1FFFFF) && (num != 4))) {
             return FALSE;
         }
     }
@@ -211,7 +212,7 @@ bom_t enc_detect_bom(apr_file_t* f) {
     size_t offset = 0;
     bom_t result = enc_detect_bom_memory(bom_signature, nbytes, &offset);
 
-    apr_offset = (apr_off_t)offset;
+    apr_offset = (apr_off_t) offset;
     apr_file_seek(f, APR_SET, &apr_offset); // Leave file position to just after BOM
 
     return result;
@@ -260,7 +261,7 @@ char* prenc_from_unicode_to_code_page(const wchar_t* from, UINT code_page, apr_p
 #else
     char* result = NULL;
     size_t length_ansi = wcstombs(NULL, from, 0);
-    result = (char*)apr_pcalloc(pool, (length_ansi + 1) * sizeof(char));
+    result = (char*) apr_pcalloc(pool, (length_ansi + 1) * sizeof(char));
     wcstombs(result, from, length_ansi + 1);
     return result;
 #endif

@@ -14,12 +14,16 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
+
 #ifdef _MSC_VER
 #include <Windows.h>
 #else
+
 #include <time.h>
 #include <sys/sysinfo.h>
+
 #endif
+
 #include "lib.h"
 
 /*
@@ -44,17 +48,17 @@
 static uint64_t prlib_ilog(uint64_t x);
 
 static char* lib_sizes[] = {
-    "bytes",
-    "Kb",
-    "Mb",
-    "Gb",
-    "Tb",
-    "Pb",
-    "Eb",
-    "Zb",
-    "Yb",
-    "Bb",
-    "GPb"
+        "bytes",
+        "Kb",
+        "Mb",
+        "Gb",
+        "Tb",
+        "Pb",
+        "Eb",
+        "Zb",
+        "Yb",
+        "Bb",
+        "GPb"
 };
 
 static double lib_span = 0.0;
@@ -67,8 +71,8 @@ static LARGE_INTEGER lib_time2 = { 0 };
 #else
 #define BILLION 1E9
 
-static struct timespec lib_start = { 0 };
-static struct timespec lib_finish = { 0 };
+static struct timespec lib_start = {0};
+static struct timespec lib_finish = {0};
 #endif
 
 uint32_t lib_get_processor_count(void) {
@@ -77,7 +81,7 @@ uint32_t lib_get_processor_count(void) {
     GetSystemInfo(&sysinfo);
     return (uint32_t)sysinfo.dwNumberOfProcessors;
 #else
-    return (uint32_t)get_nprocs();
+    return (uint32_t) get_nprocs();
 #endif
 }
 
@@ -119,7 +123,7 @@ uint32_t lib_htoi(const char* ptr, int size) {
         } else {
             return value;
         }
-    nextChar:
+        nextChar:
         if(++count >= size) {
             return value;
         }
@@ -132,7 +136,7 @@ void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz) {
     const size_t to = MIN(sz, strlen(str) / BYTE_CHARS_SIZE);
 
     for(; i < to; i++) {
-        bytes[i] = (uint8_t)lib_htoi(str + i * BYTE_CHARS_SIZE, BYTE_CHARS_SIZE);
+        bytes[i] = (uint8_t) lib_htoi(str + i * BYTE_CHARS_SIZE, BYTE_CHARS_SIZE);
     }
 }
 
@@ -153,7 +157,7 @@ uint64_t prlib_ilog(uint64_t x) {
 }
 
 lib_file_size_t lib_normalize_size(uint64_t size) {
-    lib_file_size_t result = { 0 };
+    lib_file_size_t result = {0};
     result.unit = size == 0 ? size_unit_bytes : prlib_ilog(size) / prlib_ilog(BINARY_THOUSAND);
     if(result.unit == size_unit_bytes) {
         result.value.size_in_bytes = size;
@@ -167,6 +171,7 @@ lib_file_size_t lib_normalize_size(uint64_t size) {
 #ifdef _MSC_VER
 int lib_printf(__format_string const char* format, ...) {
 #else
+
 int lib_printf(const char* format, ...) {
 #endif
     va_list params;
@@ -184,6 +189,7 @@ int lib_printf(const char* format, ...) {
 #ifdef _MSC_VER
 int lib_fprintf(FILE* file, __format_string const char* format, ...) {
 #else
+
 int lib_fprintf(FILE* file, const char* format, ...) {
 #endif
     va_list params;
@@ -201,6 +207,7 @@ int lib_fprintf(FILE* file, const char* format, ...) {
 #ifdef _MSC_VER
 int lib_sprintf(char* buffer, __format_string const char* format, ...) {
 #else
+
 int lib_sprintf(char* buffer, const char* format, ...) {
 #endif
     va_list params;
@@ -219,6 +226,7 @@ int lib_sprintf(char* buffer, const char* format, ...) {
 #ifdef _MSC_VER
 int lib_wcsprintf(wchar_t* buffer, __format_string const wchar_t* format, ...) {
 #else
+
 int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...) {
 #endif
     va_list params;
@@ -238,19 +246,20 @@ int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...) {
 
 
 lib_time_t lib_normalize_time(double seconds) {
-    lib_time_t result = { 0 };
+    lib_time_t result = {0};
 
     result.total_seconds = seconds;
     result.years = seconds / SECONDS_PER_YEAR;
-    result.days = ((uint64_t)seconds % SECONDS_PER_YEAR) / SECONDS_PER_DAY;
-    result.hours = (((uint64_t)seconds % SECONDS_PER_YEAR) % SECONDS_PER_DAY) / SECONDS_PER_HOUR;
-    result.minutes = ((uint64_t)seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
-    result.seconds = ((uint64_t)seconds % SECONDS_PER_HOUR) % SECONDS_PER_MINUTE;
+    result.days = ((uint64_t) seconds % SECONDS_PER_YEAR) / SECONDS_PER_DAY;
+    result.hours = (((uint64_t) seconds % SECONDS_PER_YEAR) % SECONDS_PER_DAY) / SECONDS_PER_HOUR;
+    result.minutes = ((uint64_t) seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
+    result.seconds = ((uint64_t) seconds % SECONDS_PER_HOUR) % SECONDS_PER_MINUTE;
     double tmp = result.seconds;
     result.seconds +=
             seconds -
-            ((double)(result.years * SECONDS_PER_YEAR) + (double)(result.days * SECONDS_PER_DAY) + (double)(result.hours
-                * SECONDS_PER_HOUR) + (double)(result.minutes * SECONDS_PER_MINUTE) + result.seconds);
+            ((double) (result.years * SECONDS_PER_YEAR) + (double) (result.days * SECONDS_PER_DAY) +
+             (double) (result.hours
+                       * SECONDS_PER_HOUR) + (double) (result.minutes * SECONDS_PER_MINUTE) + result.seconds);
     if(result.seconds > 60) {
         result.seconds = tmp; // HACK
     }
@@ -301,7 +310,7 @@ void lib_stop_timer(void) {
     lib_span = (double)(lib_time2.QuadPart - lib_time1.QuadPart) / (double)lib_freq.QuadPart;
 #else
     clock_gettime(CLOCK_REALTIME, &lib_finish);
-    lib_span = ( lib_finish.tv_sec - lib_start.tv_sec ) + ( lib_finish.tv_nsec - lib_start.tv_nsec ) / BILLION;
+    lib_span = (lib_finish.tv_sec - lib_start.tv_sec) + (lib_finish.tv_nsec - lib_start.tv_nsec) / BILLION;
 #endif
 }
 

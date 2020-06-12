@@ -18,7 +18,9 @@
 #include "types.h"
 
 #ifndef _MSC_VER
+
 #include <wchar.h>
+
 #endif
 
 #ifdef __cplusplus
@@ -92,25 +94,33 @@ typedef struct lib_time {
 #ifdef __STDC_WANT_SECURE_LIB__
 extern int lib_printf(__format_string const char* format, ...);
 #else
+
 extern int lib_printf(const char* format, ...);
+
 #endif
 
 #ifdef __STDC_WANT_SECURE_LIB__
 extern int lib_fprintf(FILE* file, __format_string const char* format, ...);
 #else
+
 extern int lib_fprintf(FILE* file, const char* format, ...);
+
 #endif
 
 #ifdef __STDC_WANT_SECURE_LIB__
 extern int lib_sprintf(char* buffer, __format_string const char* format, ...);
 #else
+
 extern int lib_sprintf(char* buffer, const char* format, ...);
+
 #endif
 
 #ifdef __STDC_WANT_SECURE_LIB__
 int lib_wcsprintf(wchar_t* buffer, __format_string const wchar_t* format, ...);
 #else
+
 int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...);
+
 #endif
 
 extern void lib_print_size(uint64_t size);
@@ -130,17 +140,29 @@ extern void lib_new_line(void);
 extern lib_time_t lib_normalize_time(double seconds);
 
 extern void lib_start_timer(void);
+
 extern void lib_stop_timer(void);
+
 extern lib_time_t lib_read_elapsed_time(void);
+
 extern void lib_size_to_string(uint64_t size, char* str);
+
 extern void lib_time_to_string(const lib_time_t* time, char* str);
+
 extern void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz);
+
 extern uint32_t lib_htoi(const char* ptr, int size);
+
 extern uint32_t lib_get_processor_count(void);
+
 extern int lib_count_digits_in(double x);
+
 extern const char* lib_get_file_name(const char* path);
+
 extern char* lib_ltrim(char* str, const char* seps);
+
 extern char* lib_rtrim(char* str, const char* seps);
+
 extern char* lib_trim(char* str, const char* seps);
 
 #ifdef __cplusplus
