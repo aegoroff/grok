@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <libgen.h>
+
 #endif
 
 #include <stdio.h>
@@ -234,7 +235,7 @@ void
 main_on_file(struct arg_file* pattern_files, const char* const macro, const char* const path, const int info_mode) {
     main_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
-    apr_file_t * file_handle = NULL;
+    apr_file_t* file_handle = NULL;
     apr_status_t status = APR_SUCCESS;
 
     if(path != NULL) {
@@ -271,7 +272,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
 
     long long lineno = 1;
     do {
-        apr_pool_t * p = bend_init(main_pool);
+        apr_pool_t* p = bend_init(main_pool);
 
         // it maybe shifted by bom encoder. so wind it back
         buffer = allocated_buffer;
