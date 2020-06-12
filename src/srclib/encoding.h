@@ -33,7 +33,7 @@ typedef enum {
 
 #ifndef _MSC_VER
 typedef int BOOL;
-typedef unsigned int        UINT;
+typedef unsigned int UINT;
 #endif
 
 /*!
@@ -69,6 +69,7 @@ char* enc_from_unicode_to_utf8(const wchar_t* from, apr_pool_t* pool);
 BOOL enc_is_valid_utf8(const char* str);
 
 bom_t enc_detect_bom(apr_file_t* f);
+
 bom_t enc_detect_bom_memory(const char* buffer, size_t len, size_t* offset);
 
 const char* enc_get_encoding_name(bom_t bom);

@@ -35,11 +35,15 @@ typedef struct macro {
 void fend_init(apr_pool_t* pool);
 
 void fend_on_definition();
+
 void fend_on_definition_end(char* key);
 
 void fend_on_literal(char* str);
+
 void fend_on_grok(macro_t* str);
+
 macro_t* fend_on_macro(char* name, char* prop);
+
 apr_array_header_t* fend_get_pattern(const char* def);
 
 char* fend_strdup(char* str);

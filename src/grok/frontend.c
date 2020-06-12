@@ -47,9 +47,9 @@ void fend_on_definition() {
 void fend_on_definition_end(char* key) {
     apr_array_header_t* parts = apr_array_make(fend_pool, fend_composition->nelts, sizeof(info_t*));
     for(size_t i = 0; i < fend_composition->nelts; i++) {
-        *(info_t**)apr_array_push(parts) = ((info_t**)fend_composition->elts)[i];
+        *(info_t**) apr_array_push(parts) = ((info_t**) fend_composition->elts)[i];
     }
-    apr_hash_set(fend_definition, (const char*)key, APR_HASH_KEY_STRING, parts);
+    apr_hash_set(fend_definition, (const char*) key, APR_HASH_KEY_STRING, parts);
 }
 
 void fend_on_literal(char* str) {
@@ -61,18 +61,18 @@ void fend_on_grok(macro_t* macro) {
 }
 
 macro_t* fend_on_macro(char* name, char* prop) {
-    macro_t* result = (macro_t*)apr_pcalloc(fend_pool, sizeof(macro_t));
+    macro_t* result = (macro_t*) apr_pcalloc(fend_pool, sizeof(macro_t));
     result->name = name;
     result->property = prop;
     return result;
 }
 
 void prfend_add_part(char* data, char* reference, part_t type) {
-    info_t* result = (info_t*)apr_pcalloc(fend_pool, sizeof(info_t));
+    info_t* result = (info_t*) apr_pcalloc(fend_pool, sizeof(info_t));
     result->type = type;
     result->data = data;
     result->reference = reference;
-    *(info_t**)apr_array_push(fend_composition) = result;
+    *(info_t**) apr_array_push(fend_composition) = result;
 }
 
 apr_array_header_t* fend_get_pattern(const char* def) {
