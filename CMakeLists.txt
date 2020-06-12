@@ -114,7 +114,12 @@ else()
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    add_executable(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
+    add_custom_target(create_flex
+            COMMAND win_flex.exe --wincompat --outfile="grok.flex.c" grok.lex
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+    add_custom_target(create_bison
+            COMMAND win_bison.exe --output="grok.tab.c" -dy grok.y
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
 else()
     add_custom_target(create_flex
                       COMMAND flex --outfile="grok.flex.c" grok.lex
@@ -122,11 +127,11 @@ else()
     add_custom_target(create_bison
                       COMMAND bison --output="grok.tab.c" -dy grok.y
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
-
-    add_executable(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
-
-    add_dependencies(grok create_bison create_flex)
 endif()
+
+add_executable(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
+
+add_dependencies(grok create_bison create_flex)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     target_link_libraries(grok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
