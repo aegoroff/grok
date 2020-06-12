@@ -14,6 +14,13 @@
 
 #define PCRE2_CODE_UNIT_WIDTH 8
 
+#ifndef _MSC_VER
+#define MAX_PATH          260
+#define EXIT_FAILURE      1
+
+#include <errno.h>
+#endif
+
 #include <stdio.h>
 #include <locale.h>
 #include "apr.h"
