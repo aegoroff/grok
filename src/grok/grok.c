@@ -30,7 +30,7 @@
 #include "apr_file_io.h"
 #include "apr_file_info.h"
 #include "apr_fnmatch.h"
-#include "compile/grok.tab.h"
+#include "generated/grok.tab.h"
 #include "backend.h"
 #include "encoding.h"
 #include <apr_errno.h>
