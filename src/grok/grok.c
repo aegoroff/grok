@@ -215,13 +215,7 @@ main_on_string(struct arg_file* pattern_files, const char* const macro, const ch
     if(info_mode) {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
     } else if(r) {
-#ifdef _MSC_VER
-
-        char* utf8 = enc_from_utf8_to_ansi(str, p);
-        lib_printf("%s", utf8);
-#else
-        lib_printf("%s", str);
-#endif
+        main_output_line(str, bom_utf8, p);
     }
 
     bend_cleanup();
@@ -377,14 +371,11 @@ wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_
 }
 
 void main_output_line(const char* str, bom_t encoding, apr_pool_t* p) {
+    const char* s = str;
 #ifdef _MSC_VER
     if(encoding == bom_utf8 || enc_is_valid_utf8(str)) {
-        char* utf8 = enc_from_utf8_to_ansi(str, p);
-        lib_printf("%s", utf8);
-    } else {
-        lib_printf("%s", str);
+        s = enc_from_utf8_to_ansi(str, p);
     }
-#else
-    lib_printf("%s", str);
 #endif
+    lib_printf("%s", s);
 }
