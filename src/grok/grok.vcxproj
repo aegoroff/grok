@@ -178,7 +178,7 @@
     <ClInclude Include="..\srclib\lib.h" />
     <ClInclude Include="backend.h" />
     <ClInclude Include="configuration.h" />
-    <ClInclude Include="grok.tab.h" />
+    <ClInclude Include="generated\grok.tab.h" />
     <ClInclude Include="frontend.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="targetver.h" />
@@ -191,8 +191,8 @@
     <ClCompile Include="backend.c" />
     <ClCompile Include="configuration.c" />
     <ClCompile Include="grok.c" />
-    <ClCompile Include="grok.flex.c" />
-    <ClCompile Include="grok.tab.c" />
+    <ClCompile Include="generated\grok.flex.c" />
+    <ClCompile Include="generated\grok.tab.c" />
     <ClCompile Include="frontend.c" />
   </ItemGroup>
   <ItemGroup>
@@ -210,10 +210,10 @@
       <Cpp Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</Cpp>
       <Debug Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</Debug>
       <Debug Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</Debug>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).flex.c</OutputFile>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).flex.c</OutputFile>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).flex.c</OutputFile>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).flex.c</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">generated\%(Filename).flex.c</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">generated\%(Filename).flex.c</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">generated\%(Filename).flex.c</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">generated\%(Filename).flex.c</OutputFile>
     </Flex>
     <Bison Include="grok.y">
       <FileType>Document</FileType>
@@ -223,10 +223,10 @@
       <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Verbose>
       <Warnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">all</Warnings>
       <Warnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">all</Warnings>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).tab.c</OutputFile>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).tab.c</OutputFile>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).tab.c</OutputFile>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).tab.c</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">generated\%(Filename).tab.c</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">generated\%(Filename).tab.c</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">generated\%(Filename).tab.c</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">generated\%(Filename).tab.c</OutputFile>
       <Debug Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</Debug>
       <Debug Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</Debug>
       <Verbose Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</Verbose>
