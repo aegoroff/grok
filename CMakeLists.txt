@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 project(grok)
 
 set(SRC src)
+set(GCOMPILE compile)
 set(GROK grok)
 set(LIB srclib)
 set(PCRE pcre)
@@ -65,7 +66,16 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 add_definitions( -D__STDC_VERSION__=199901L )
 endif()
 
-file(GLOB GROK_SOURCE_FILES "${SRC}/${GROK}/*.c")
+SET(GROK_SOURCE_FILES
+        "${SRC}/${GROK}/backend.c"
+        "${SRC}/${GROK}/configuration.c"
+        "${SRC}/${GROK}/frontend.c"
+        "${SRC}/${GROK}/grok.c"
+        "${SRC}/${GROK}/grok.c"
+        "${SRC}/${GROK}/${GCOMPILE}/grok.flex.c"
+        "${SRC}/${GROK}/${GCOMPILE}/grok.tab.c"
+)
+
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
 
@@ -122,18 +132,18 @@ endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     add_custom_target(create_flex
-            COMMAND win_flex.exe --wincompat --outfile="grok.flex.c" grok.lex
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+            COMMAND win_flex.exe --wincompat --outfile="${GCOMPILE}/grok.flex.c" grok.lex
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
     add_custom_target(create_bison
-            COMMAND win_bison.exe --output="grok.tab.c" -dy grok.y
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+            COMMAND win_bison.exe --output="${GCOMPILE}/grok.tab.c" -dy grok.y
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 else()
     add_custom_target(create_flex
-                      COMMAND flex --outfile="grok.flex.c" grok.lex
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+                      COMMAND flex --outfile="${GCOMPILE}/grok.flex.c" grok.lex
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
     add_custom_target(create_bison
-                      COMMAND bison --output="grok.tab.c" -dy grok.y
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+                      COMMAND bison --output="${GCOMPILE}/grok.tab.c" -dy grok.y
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 endif()
 
 add_executable(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
