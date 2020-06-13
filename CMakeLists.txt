@@ -131,10 +131,10 @@ endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     add_custom_target(create_flex
-            COMMAND win_flex.exe --wincompat --outfile="${GEN}/grok.flex.c" grok.lex
+            COMMAND win_flex.exe --wincompat --outfile="${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}/grok.flex.c" grok.lex
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
     add_custom_target(create_bison
-            COMMAND win_bison.exe --output="${GEN}/grok.tab.c" -dy grok.y
+            COMMAND win_bison.exe --output="${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}/grok.tab.c" -dy grok.y
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 else()
     add_custom_target(create_flex
