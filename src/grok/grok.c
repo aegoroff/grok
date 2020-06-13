@@ -15,7 +15,6 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 
 #ifndef _MSC_VER
-#define MAX_PATH          260
 #define EXIT_FAILURE      1
 
 #include <errno.h>
@@ -30,7 +29,7 @@
 #include "apr_file_io.h"
 #include "apr_file_info.h"
 #include "apr_fnmatch.h"
-#include "grok.tab.h"
+#include "generated/grok.tab.h"
 #include "backend.h"
 #include "encoding.h"
 #include <apr_errno.h>
@@ -60,6 +59,8 @@ void main_compile_pattern_file(const char* p);
 BOOL main_try_compile_as_wildcard(const char* pattern);
 
 wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
+
+void main_output_line(const char* str, bom_t encoding, apr_pool_t* p);
 
 static apr_pool_t* main_pool;
 
@@ -177,21 +178,16 @@ void main_compile_pattern_file(const char* p) {
 
 #ifdef __STDC_WANT_SECURE_LIB__
     const errno_t error = fopen_s(&f, p, "r");
+#else
+    f = fopen(p, "r");
+    int error = f == NULL;
+#endif
     if(error) {
         if(!main_try_compile_as_wildcard(p)) {
             perror(p);
         }
         return;
     }
-#else
-    f = fopen(p, "r");
-    if(f == NULL) {
-        if(!main_try_compile_as_wildcard(p)) {
-            perror(p);
-        }
-        return;
-    }
-#endif
 
     yyrestart(f);
     main_run_parsing();
@@ -219,13 +215,7 @@ main_on_string(struct arg_file* pattern_files, const char* const macro, const ch
     if(info_mode) {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
     } else if(r) {
-#ifdef _MSC_VER
-
-        char* utf8 = enc_from_utf8_to_ansi(str, p);
-        lib_printf("%s", utf8);
-#else
-        lib_printf("%s", str);
-#endif
+        main_output_line(str, bom_utf8, p);
     }
 
     bend_cleanup();
@@ -306,16 +296,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
             if(info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, matched ? "TRUE" : "FALSE", macro);
             } else if(matched) {
-#ifdef _MSC_VER
-                if(encoding == bom_utf8 || enc_is_valid_utf8(buffer)) {
-                    char* utf8 = enc_from_utf8_to_ansi(buffer, p);
-                    lib_printf("%s", utf8);
-                } else {
-                    lib_printf("%s", buffer);
-                }
-#else
-                lib_printf("%s", buffer);
-#endif
+                main_output_line(buffer, encoding, p);
             }
         }
 
@@ -387,4 +368,14 @@ wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_
     }
     wide_buffer[counter] = L'\0';
     return wide_buffer;
+}
+
+void main_output_line(const char* str, bom_t encoding, apr_pool_t* p) {
+    const char* s = str;
+#ifdef _MSC_VER
+    if(encoding == bom_utf8 || enc_is_valid_utf8(str)) {
+        s = enc_from_utf8_to_ansi(str, p);
+    }
+#endif
+    lib_printf("%s", s);
 }
