@@ -76,7 +76,6 @@ SET(GROK_SOURCE_FILES
 
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
-file(GLOB GROK_GENERATED_FILES CONFIGURE_DEPENDS *.c "${SRC}/${GROK}/${GEN}/*.c")
 
 SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_auto_possess.c
@@ -138,20 +137,21 @@ else()
     set(BISON bison --output="${GEN}/grok.tab.c" -dy grok.y)
 endif()
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}
+add_custom_target(create_flex
         COMMAND ${FLEX}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
+add_custom_target(create_bison
         COMMAND ${BISON}
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/grok.lex;${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/grok.y
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}
-        )
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 
-add_custom_target(generate_parser ALL
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}
+SET(GROK_GENERATED_FILES
+        "${SRC}/${GROK}/${GEN}/grok.flex.c"
+        "${SRC}/${GROK}/${GEN}/grok.tab.c"
         )
 
 add_executable(grok ${GROK_SOURCE_FILES} ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
 
-add_dependencies(grok generate_parser)
+add_dependencies(grok create_bison create_flex)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     target_link_libraries(grok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)

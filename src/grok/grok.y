@@ -131,9 +131,8 @@ void yyerror(char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	if(yylloc.first_line){
+	if(yylloc.first_line)
 		lib_fprintf(stderr, "%d.%d-%d.%d: error: ", yylloc.first_line, yylloc.first_column, yylloc.last_line, yylloc.last_column);
-	}
 #ifdef __STDC_WANT_SECURE_LIB__
     vfprintf_s(stderr, s, ap);
 #else
