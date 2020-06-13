@@ -178,21 +178,16 @@ void main_compile_pattern_file(const char* p) {
 
 #ifdef __STDC_WANT_SECURE_LIB__
     const errno_t error = fopen_s(&f, p, "r");
+#else
+    f = fopen(p, "r");
+    int error = f == NULL;
+#endif
     if(error) {
         if(!main_try_compile_as_wildcard(p)) {
             perror(p);
         }
         return;
     }
-#else
-    f = fopen(p, "r");
-    if(f == NULL) {
-        if(!main_try_compile_as_wildcard(p)) {
-            perror(p);
-        }
-        return;
-    }
-#endif
 
     yyrestart(f);
     main_run_parsing();
