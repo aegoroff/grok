@@ -72,10 +72,9 @@ SET(GROK_SOURCE_FILES
         "${SRC}/${GROK}/frontend.c"
         "${SRC}/${GROK}/grok.c"
         "${SRC}/${GROK}/grok.c"
-        "${SRC}/${GROK}/${GEN}/grok.flex.c"
-        "${SRC}/${GROK}/${GEN}/grok.tab.c"
 )
 
+file(GLOB GEN_SOURCE_FILES  "${SRC}/${GROK}/${GEN}/*.c")
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
 
@@ -146,7 +145,7 @@ else()
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 endif()
 
-add_executable(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
+add_executable(grok ${GROK_SOURCE_FILES} ${GEN_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
 add_dependencies(grok create_bison create_flex)
 
