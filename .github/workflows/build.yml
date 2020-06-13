@@ -16,6 +16,10 @@ jobs:
     - name: Create generated dir
       run: |
         mkdir ${{ github.workspace }}/src/grok/generated
+    - name: flex and bison
+      run: |
+        win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
+        win_bison.exe --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
     - uses: ilammy/msvc-dev-cmd@v1
     - name: Build
       uses: lukka/run-cmake@v2
