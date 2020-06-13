@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 project(grok)
 
 set(SRC src)
+set(GEN generated)
 set(GROK grok)
 set(LIB srclib)
 set(PCRE pcre)
@@ -37,9 +38,9 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(CMAKE_C_FLAGS_DEBUG  "/Zc:wchar_t /Zc:inline /MTd /Od /RTC1")
 else()
     set(CMAKE_CXX_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -pthread")
-    set(CMAKE_CXX_FLAGS_DEBUG  "-march=corei7-avx -Wall -ggdb -mtune=corei7-avx -mfpmath=both -pthread")
+    set(CMAKE_CXX_FLAGS_DEBUG  "-march=corei7-avx -Wall -Og -ggdb -mtune=corei7-avx -mfpmath=both -pthread")
 	set(CMAKE_C_FLAGS_RELEASE  "-march=corei7-avx -Wall -Ofast -mtune=corei7-avx -mfpmath=both -pthread")
-    set(CMAKE_C_FLAGS_DEBUG  "-march=corei7-avx -Wall -ggdb -mtune=corei7-avx -mfpmath=both -pthread")
+    set(CMAKE_C_FLAGS_DEBUG  "-march=corei7-avx -Wall -Og -ggdb -mtune=corei7-avx -mfpmath=both -pthread")
 endif()
 
 include_directories(${SRC}/${LIB})
@@ -65,7 +66,14 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 add_definitions( -D__STDC_VERSION__=199901L )
 endif()
 
-file(GLOB GROK_SOURCE_FILES "${SRC}/${GROK}/*.c")
+SET(GROK_SOURCE_FILES
+        "${SRC}/${GROK}/backend.c"
+        "${SRC}/${GROK}/configuration.c"
+        "${SRC}/${GROK}/frontend.c"
+        "${SRC}/${GROK}/grok.c"
+        "${SRC}/${GROK}/grok.c"
+)
+
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
 
@@ -120,23 +128,28 @@ else()
     )
 endif()
 
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    add_custom_target(create_flex
-            COMMAND win_flex.exe --wincompat --outfile="grok.flex.c" grok.lex
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
-    add_custom_target(create_bison
-            COMMAND win_bison.exe --output="grok.tab.c" -dy grok.y
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+    set(FLEX win_flex.exe --wincompat --outfile="${GEN}/grok.flex.c" grok.lex)
+    set(BISON win_bison.exe --output="${GEN}/grok.tab.c" -dy grok.y)
 else()
-    add_custom_target(create_flex
-                      COMMAND flex --outfile="grok.flex.c" grok.lex
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
-    add_custom_target(create_bison
-                      COMMAND bison --output="grok.tab.c" -dy grok.y
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/grok)
+    set(FLEX flex --fast --outfile="${GEN}/grok.flex.c" grok.lex)
+    set(BISON bison --output="${GEN}/grok.tab.c" -dy grok.y)
 endif()
 
-add_executable(grok ${GROK_SOURCE_FILES} ${LIB_SOURCE_FILES})
+add_custom_target(create_flex
+        COMMAND ${FLEX}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
+add_custom_target(create_bison
+        COMMAND ${BISON}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
+
+SET(GROK_GENERATED_FILES
+        "${SRC}/${GROK}/${GEN}/grok.flex.c"
+        "${SRC}/${GROK}/${GEN}/grok.tab.c"
+        )
+
+add_executable(grok ${GROK_SOURCE_FILES} ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
 
 add_dependencies(grok create_bison create_flex)
 
