@@ -105,8 +105,8 @@ void main_run_parsing() {
 }
 
 BOOL main_try_compile_as_wildcard(const char* pattern) {
-    char* full_dir_path;
-    char* file_pattern;
+    const char* full_dir_path;
+    const char* file_pattern;
     apr_status_t status;
     apr_dir_t* d = NULL;
     apr_finfo_t info = {0};
