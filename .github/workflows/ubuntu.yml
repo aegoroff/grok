@@ -1,0 +1,38 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create generated dir
+      run: |
+        mkdir ${{ github.workspace }}/src/grok/generated
+    - name: flex and bison
+      run: |
+        flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
+        bison --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
+    - name: Build
+      uses: lukka/run-cmake@v2
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtBasic
+        cmakeListsTxtPath: ${{ github.workspace }}/CMakeLists.txt
+        cmakeBuildType: Release
+        buildWithCMakeArgs: "-- -m"
+        buildDirectory: ${{ runner.temp }}/build
+        buildWithCMake: true
+    - name: Install
+      run: |
+        cmake --install ${{ runner.temp }}/build
+    - uses: actions/upload-artifact@v2
+      with:
+        name: grok
+        path: ${{ github.workspace }}/bin/*.*
