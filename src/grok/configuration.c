@@ -107,7 +107,7 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     if(nerrorsS == 0) {
         ctx->on_string(patternsS, macroS->sval[0], string->sval[0], infoS->count > 0);
     } else if(nerrorsF == 0) {
-        ctx->on_file(patternsS, macroF->sval[0], file->filename[0], infoF->count > 0);
+        ctx->on_file(patternsF, macroF->sval[0], file->filename[0], infoF->count > 0);
     } else if(nerrorsI == 0) {
         ctx->on_file(patternsI, macroI->sval[0], NULL, infoI->count > 0);
     } else {
