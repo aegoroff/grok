@@ -37,4 +37,4 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: grok
-        path: ${{ github.workspace }}/bin/*.*
+        path: ${{ github.workspace }}/bin/*
