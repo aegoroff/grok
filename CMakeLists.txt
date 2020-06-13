@@ -129,25 +129,22 @@ else()
     )
 endif()
 
-if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}")
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN})
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(FLEX win_flex.exe --wincompat --outfile="${GEN}/grok.flex.c" grok.lex)
+    set(BISON win_bison.exe --output="${GEN}/grok.tab.c" -dy grok.y)
+else()
+    set(FLEX flex --outfile="${GEN}/grok.flex.c" grok.lex)
+    set(BISON bison --output="${GEN}/grok.tab.c" -dy grok.y)
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    add_custom_target(create_flex
-            COMMAND win_flex.exe --wincompat --outfile="${GEN}/grok.flex.c" grok.lex
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
-    add_custom_target(create_bison
-            COMMAND win_bison.exe --output="${GEN}/grok.tab.c" -dy grok.y
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
-else()
-    add_custom_target(create_flex
-                      COMMAND flex --outfile="${GEN}/grok.flex.c" grok.lex
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
-    add_custom_target(create_bison
-                      COMMAND bison --output="${GEN}/grok.tab.c" -dy grok.y
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
-endif()
+add_custom_target(create_flex ALL
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}
+        COMMAND ${FLEX}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
+add_custom_target(create_bison ALL
+        COMMAND ${BISON}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 
 add_executable(grok ${GROK_SOURCE_FILES} ${GEN_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
