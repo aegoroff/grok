@@ -74,7 +74,6 @@ SET(GROK_SOURCE_FILES
         "${SRC}/${GROK}/grok.c"
 )
 
-file(GLOB GEN_SOURCE_FILES  "${SRC}/${GROK}/${GEN}/*.c")
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
 
@@ -129,22 +128,28 @@ else()
     )
 endif()
 
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(FLEX win_flex.exe --wincompat --outfile="${GEN}/grok.flex.c" grok.lex)
     set(BISON win_bison.exe --output="${GEN}/grok.tab.c" -dy grok.y)
 else()
-    set(FLEX flex --full --outfile="${GEN}/grok.flex.c" grok.lex)
+    set(FLEX flex --fast --outfile="${GEN}/grok.flex.c" grok.lex)
     set(BISON bison --output="${GEN}/grok.tab.c" -dy grok.y)
 endif()
 
-add_custom_target(create_flex ALL
+add_custom_target(create_flex
         COMMAND ${FLEX}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
-add_custom_target(create_bison ALL
+add_custom_target(create_bison
         COMMAND ${BISON}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 
-add_executable(grok ${GROK_SOURCE_FILES} ${GEN_SOURCE_FILES} ${LIB_SOURCE_FILES})
+SET(GROK_GENERATED_FILES
+        "${SRC}/${GROK}/${GEN}/grok.flex.c"
+        "${SRC}/${GROK}/${GEN}/grok.tab.c"
+        )
+
+add_executable(grok ${GROK_SOURCE_FILES} ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
 
 add_dependencies(grok create_bison create_flex)
 
