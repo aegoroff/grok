@@ -16,13 +16,14 @@ jobs:
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: lukka/run-cmake@v2
       with:
-        cmakeGenerator: VS16Win64
-        cmakeListsOrSettingsJson: CMakeListsTxtBasic
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: ${{ github.workspace }}/CMakeLists.txt
         cmakeBuildType: Release
-        buildWithCMakeArgs: "--config Release -- -m"
+        buildWithCMakeArgs: "--config Release -- -v"
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true
+        useVcpkgToolchainFile: true
+        cmakeAppendedArgs: '-G"Visual Studio 16 2019" -Ax64'
     - name: Install
       run: |
         cmake --install ${{ runner.temp }}/build
