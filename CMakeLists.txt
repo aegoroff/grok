@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 project(grok)
 
 set(SRC src)
-set(GCOMPILE compile)
+set(GEN generated)
 set(GROK grok)
 set(LIB srclib)
 set(PCRE pcre)
@@ -72,8 +72,8 @@ SET(GROK_SOURCE_FILES
         "${SRC}/${GROK}/frontend.c"
         "${SRC}/${GROK}/grok.c"
         "${SRC}/${GROK}/grok.c"
-        "${SRC}/${GROK}/${GCOMPILE}/grok.flex.c"
-        "${SRC}/${GROK}/${GCOMPILE}/grok.tab.c"
+        "${SRC}/${GROK}/${GEN}/grok.flex.c"
+        "${SRC}/${GROK}/${GEN}/grok.tab.c"
 )
 
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
@@ -132,17 +132,17 @@ endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     add_custom_target(create_flex
-            COMMAND win_flex.exe --wincompat --outfile="${GCOMPILE}/grok.flex.c" grok.lex
+            COMMAND win_flex.exe --wincompat --outfile="${GEN}/grok.flex.c" grok.lex
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
     add_custom_target(create_bison
-            COMMAND win_bison.exe --output="${GCOMPILE}/grok.tab.c" -dy grok.y
+            COMMAND win_bison.exe --output="${GEN}/grok.tab.c" -dy grok.y
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 else()
     add_custom_target(create_flex
-                      COMMAND flex --outfile="${GCOMPILE}/grok.flex.c" grok.lex
+                      COMMAND flex --outfile="${GEN}/grok.flex.c" grok.lex
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
     add_custom_target(create_bison
-                      COMMAND bison --output="${GCOMPILE}/grok.tab.c" -dy grok.y
+                      COMMAND bison --output="${GEN}/grok.tab.c" -dy grok.y
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 endif()
 
