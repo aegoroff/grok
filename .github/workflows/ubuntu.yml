@@ -30,7 +30,7 @@ jobs:
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true
       env:
-        APR_HOME: /usr/local/apr/
+        APR_HOME: /usr/local/
     - name: Install
       run: |
         cmake --install ${{ runner.temp }}/build

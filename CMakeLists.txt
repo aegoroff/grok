@@ -51,8 +51,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STRE
     include_directories($ENV{APR_HOME16}/${APR}/include)
     include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
 else()
-    include_directories($ENV{APR_HOME}/APR/include/apr-1)
-    include_directories($ENV{APR_HOME}/APR-UTIL/include/apr-1)
+    include_directories($ENV{APR_HOME}/apr/include/apr-1)
+    include_directories($ENV{APR_HOME}/apr-util/include/apr-1)
 endif()
 
 add_definitions( -DPCRE2_STATIC )
@@ -123,8 +123,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STRE
     endif()
 else()
     link_directories(
-                "$ENV{APR_HOME}/APR/lib/"
-                "$ENV{APR_HOME}/APR-UTIL/lib/"
+                "$ENV{APR_HOME}/apr/lib/"
+                "$ENV{APR_HOME}/apr-util/lib/"
     )
 endif()
 
