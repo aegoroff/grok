@@ -14,6 +14,10 @@
 
 #include <apr_tables.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum part {
     part_literal,
     part_reference
@@ -45,6 +49,10 @@ macro_t* fend_on_macro(char* name, char* prop);
 apr_array_header_t* fend_get_pattern(const char* def);
 
 char* fend_strdup(char* str);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GROK_FRONTEND_H_
 
