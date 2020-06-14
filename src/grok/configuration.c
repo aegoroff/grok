@@ -89,10 +89,10 @@ void conf_configure_app(configuration_ctx_t* ctx) {
         goto cleanup;
     }
 
-    int nerrors = arg_parse(ctx->argc, (const char* const *) ctx->argv, argtable);
-    int nerrorsF = arg_parse(ctx->argc, (const char* const *) ctx->argv, argtableF);
-    int nerrorsS = arg_parse(ctx->argc, (const char* const *) ctx->argv, argtableS);
-    int nerrorsI = arg_parse(ctx->argc, (const char* const *) ctx->argv, argtableI);
+    int nerrors = arg_parse(ctx->argc, ctx->argv, argtable);
+    int nerrorsF = arg_parse(ctx->argc, ctx->argv, argtableF);
+    int nerrorsS = arg_parse(ctx->argc, ctx->argv, argtableS);
+    int nerrorsI = arg_parse(ctx->argc, ctx->argv, argtableI);
 
     if(nerrors > 0 || help->count > 0) {
         prconf_print_syntax(argtable, argtableS, argtableF, argtableI);
