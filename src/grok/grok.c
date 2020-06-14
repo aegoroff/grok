@@ -25,6 +25,8 @@
 #include "apr_file_io.h"
 #include "apr_file_info.h"
 
+#include "lib.h"
+#include "frontend.h"
 #include "backend.h"
 #include "encoding.h"
 #include "pattern.h"
