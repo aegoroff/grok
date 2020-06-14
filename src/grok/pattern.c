@@ -20,20 +20,24 @@
 
 #ifndef _MSC_VER
 typedef int BOOL;
+
 #include <errno.h>
 #include <stdlib.h>
 #include <libgen.h>
+
 #endif
 
 apr_pool_t* patt_pool = NULL;
 
 // Forwards
+
 extern void yyrestart(FILE* input_file);
 
 BOOL prpatt_try_compile_as_wildcard(const char* pattern);
 
 void prpatt_run_parsing();
 
+// Implementation
 
 void patt_init(apr_pool_t* pool) {
     patt_pool = pool;
