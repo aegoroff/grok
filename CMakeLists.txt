@@ -72,7 +72,7 @@ SET(GROK_SOURCE_FILES
         "${SRC}/${GROK}/frontend.c"
         "${SRC}/${GROK}/grok.c"
         "${SRC}/${GROK}/grok.c"
-)
+        "${SRC}/${GROK}/pattern.c")
 
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
