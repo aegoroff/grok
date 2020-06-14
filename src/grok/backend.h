@@ -18,6 +18,10 @@
 typedef int BOOL;
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct pattern {
     char* regex;
     apr_hash_t* properties;
@@ -30,6 +34,10 @@ void bend_cleanup();
 BOOL bend_match_re(pattern_t* pattern, const char* subject);
 
 pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GROK_BACKEND_H_
 
