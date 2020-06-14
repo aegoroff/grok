@@ -11,9 +11,7 @@
 
 
 #include <stdio.h>
-#include <stdlib.h>
 #include "frontend.h"
-#include "apr.h"
 #include "apr_tables.h"
 #include "apr_pools.h"
 #include "apr_strings.h"

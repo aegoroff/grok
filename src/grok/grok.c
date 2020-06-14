@@ -1,5 +1,5 @@
 /*!
- * \brief   The file contains compiler driver
+ * \brief   The file contains application startup code
  * \author  \verbatim
             Created by: Alexander Egorov
             \endverbatim
@@ -17,19 +17,17 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <libgen.h>
 
 #endif
 
-#include <stdio.h>
 #include <locale.h>
 #include "apr.h"
 #include "apr_file_io.h"
 #include "apr_file_info.h"
-#include "apr_fnmatch.h"
-#include "generated/grok.tab.h"
+
 #include "backend.h"
 #include "encoding.h"
+#include "pattern.h"
 #include <apr_errno.h>
 #include <apr_general.h>
 #include "argtable3.h"
@@ -41,20 +39,11 @@
     main_ - public members
  */
 
-// Forwards
-extern void yyrestart(FILE* input_file);
-
-void main_run_parsing();
-
 void main_compile_lib(struct arg_file* files);
 
 void main_on_string(struct arg_file* pattern_files, const char* macro, const char* str, int info_mode);
 
 void main_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode);
-
-void main_compile_pattern_file(const char* p);
-
-BOOL main_try_compile_as_wildcard(const char* pattern);
 
 wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
 
@@ -96,109 +85,14 @@ int main(int argc, const char* const argv[]) {
     return 0;
 }
 
-void main_run_parsing() {
-    if(yyparse()) {
-        lib_printf("Parse failed\n");
-    }
-}
-
-BOOL main_try_compile_as_wildcard(const char* pattern) {
-    const char* full_dir_path;
-    const char* file_pattern;
-    apr_status_t status;
-    apr_dir_t* d = NULL;
-    apr_finfo_t info = {0};
-    char* full_path = NULL; // Full path to file
-#ifdef _MSC_VER
-    char* dir = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* filename = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* drive = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    char* ext = (char*) apr_pcalloc(main_pool, sizeof(char) * MAX_PATH);
-    _splitpath_s(pattern,
-                 drive, MAX_PATH, // Drive
-                 dir, MAX_PATH, // Directory
-                 filename, MAX_PATH, // Filename
-                 ext, MAX_PATH); // Extension
-
-    full_dir_path = apr_pstrcat(main_pool, drive, dir, NULL);
-    file_pattern = apr_pstrcat(main_pool, filename, ext, NULL);
-#else
-    char* dir = apr_pstrdup(main_pool, pattern);
-    full_dir_path = dirname(dir);
-    file_pattern = pattern + strlen(dir) + 1;
-#endif
-
-    status = apr_dir_open(&d, full_dir_path, main_pool);
-    if(status != APR_SUCCESS) {
-        return FALSE;
-    }
-    for(;;) {
-        status = apr_dir_read(&info, APR_FINFO_NAME | APR_FINFO_MIN, d);
-        if(APR_STATUS_IS_ENOENT(status)) { // Finish reading directory
-            break;
-        }
-
-        if(info.name == NULL) { // to avoid access violation
-            continue;
-        }
-
-        if(status != APR_SUCCESS || info.filetype != APR_REG) {
-            continue;
-        }
-
-        if(apr_fnmatch(file_pattern, info.name, APR_FNM_CASE_BLIND) != APR_SUCCESS) {
-            continue;
-        }
-
-        status = apr_filepath_merge(&full_path,
-                                    full_dir_path,
-                                    info.name,
-                                    APR_FILEPATH_NATIVE,
-                                    main_pool);
-
-        if(status != APR_SUCCESS) {
-            continue;
-        }
-
-        main_compile_pattern_file(full_path);
-    }
-
-    status = apr_dir_close(d);
-    if(status != APR_SUCCESS) {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-void main_compile_pattern_file(const char* p) {
-    FILE* f = NULL;
-
-#ifdef __STDC_WANT_SECURE_LIB__
-    const errno_t error = fopen_s(&f, p, "r");
-#else
-    f = fopen(p, "r");
-    int error = f == NULL;
-#endif
-    if(error) {
-        if(!main_try_compile_as_wildcard(p)) {
-            perror(p);
-        }
-        return;
-    }
-
-    yyrestart(f);
-    main_run_parsing();
-    fclose(f);
-}
-
 void main_compile_lib(struct arg_file* files) {
+    patt_init(main_pool);
     if(files->count == 0) {
-        main_compile_pattern_file("*.patterns");
+        patt_compile_pattern_file("*.patterns");
     } else {
         for(size_t i = 0; i < files->count; i++) {
             const char* p = files->filename[i];
-            main_compile_pattern_file(p);
+            patt_compile_pattern_file(p);
         }
     }
 }
