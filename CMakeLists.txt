@@ -130,7 +130,7 @@ endif()
 
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(FLEX win_flex.exe --wincompat --outfile="${GEN}/grok.flex.c" grok.lex)
+    set(FLEX win_flex.exe --fast --wincompat --outfile="${GEN}/grok.flex.c" grok.lex)
     set(BISON win_bison.exe --output="${GEN}/grok.tab.c" -dy grok.y)
 else()
     set(FLEX flex --fast --outfile="${GEN}/grok.flex.c" grok.lex)
