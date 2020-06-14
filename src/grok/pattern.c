@@ -52,6 +52,11 @@ void patt_compile_pattern_file(const char* p) {
         if(!prpatt_try_compile_as_wildcard(p)) {
             perror(p);
         }
+#ifdef __STDC_WANT_SECURE_LIB__
+        if (f != NULL) {
+            fclose(f);
+        }
+#endif
         return;
     }
 
