@@ -18,7 +18,7 @@
 #else
 
 #include <time.h>
-#ifndef __OSX__
+#ifndef __APPLE_CC__
 #include <sys/sysinfo.h>
 #else
 #include <zconf.h>
@@ -81,7 +81,7 @@ uint32_t lib_get_processor_count(void) {
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
     return (uint32_t)sysinfo.dwNumberOfProcessors;
-#elif __OSX__
+#elif __APPLE_CC__
     return (uint32_t) sysconf(_SC_NPROCESSORS_ONLN);
 #else
     return (uint32_t) get_nprocs();
