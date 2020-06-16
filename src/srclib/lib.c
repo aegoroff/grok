@@ -18,10 +18,10 @@
 #else
 
 #include <time.h>
-#ifndef __APPLE_CC__
-#include <sys/sysinfo.h>
-#else
+#ifdef __APPLE_CC__
 #include <zconf.h>
+#else
+#include <sys/sysinfo.h>
 #endif
 #endif
 
