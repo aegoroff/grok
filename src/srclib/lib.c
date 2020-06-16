@@ -18,7 +18,7 @@
 #else
 
 #include <time.h>
-#ifndef __DARWIN_C_LEVEL
+#ifndef __OSX__
 #include <sys/sysinfo.h>
 #else
 #include <zconf.h>
@@ -81,7 +81,7 @@ uint32_t lib_get_processor_count(void) {
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
     return (uint32_t)sysinfo.dwNumberOfProcessors;
-#elif __DARWIN_C_LEVEL
+#elif __OSX__
     return (uint32_t) sysconf(_SC_NPROCESSORS_ONLN);
 #else
     return (uint32_t) get_nprocs();
