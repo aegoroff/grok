@@ -37,21 +37,17 @@
 #include <dbg_helpers.h>
 #include <apr_strings.h>
 
-/*
-    main_ - public members
- */
+void grok_compile_lib(struct arg_file* files);
 
-void main_compile_lib(struct arg_file* files);
+void grok_on_string(struct arg_file* pattern_files, const char* macro, const char* str, int info_mode);
 
-void main_on_string(struct arg_file* pattern_files, const char* macro, const char* str, int info_mode);
+void grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode);
 
-void main_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode);
+wchar_t* grok_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
 
-wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
+void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p);
 
-void main_output_line(const char* str, bom_t encoding, apr_pool_t* p);
-
-apr_status_t main_open_file(const char* path, apr_file_t** file_handle);
+apr_status_t grok_open_file(const char* path, apr_file_t** file_handle);
 
 static apr_pool_t* main_pool;
 
@@ -80,8 +76,8 @@ int main(int argc, const char* const argv[]) {
     configuration_ctx_t* configuration = (configuration_ctx_t*) apr_pcalloc(main_pool, sizeof(configuration_ctx_t));
     configuration->argc = argc;
     configuration->argv = argv;
-    configuration->on_string = &main_on_string;
-    configuration->on_file = &main_on_file;
+    configuration->on_string = &grok_on_string;
+    configuration->on_file = &grok_on_file;
 
     conf_configure_app(configuration);
 
@@ -89,7 +85,7 @@ int main(int argc, const char* const argv[]) {
     return 0;
 }
 
-void main_compile_lib(struct arg_file* files) {
+void grok_compile_lib(struct arg_file* files) {
     patt_init(main_pool);
     if(files->count == 0) {
         patt_compile_pattern_file("*.patterns");
@@ -102,8 +98,8 @@ void main_compile_lib(struct arg_file* files) {
 }
 
 void
-main_on_string(struct arg_file* pattern_files, const char* const macro, const char* const str, const int info_mode) {
-    main_compile_lib(pattern_files);
+grok_on_string(struct arg_file* pattern_files, const char* macro, const char* str, int info_mode) {
+    grok_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_pool_t* p = bend_init(main_pool);
     const BOOL r = bend_match_re(pattern, str);
@@ -111,20 +107,20 @@ main_on_string(struct arg_file* pattern_files, const char* const macro, const ch
     if(info_mode) {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
     } else if(r) {
-        main_output_line(str, bom_utf8, p);
+        grok_output_line(str, bom_utf8, p);
     }
 
     bend_cleanup();
 }
 
 void
-main_on_file(struct arg_file* pattern_files, const char* const macro, const char* const path, const int info_mode) {
-    main_compile_lib(pattern_files);
+grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode) {
+    grok_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
     apr_status_t status = APR_SUCCESS;
 
-    status = main_open_file(path, &file_handle);
+    status = grok_open_file(path, &file_handle);
 
     if(status != APR_SUCCESS) {
         return;
@@ -174,7 +170,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
         }
 
         if(encoding == bom_utf16le || encoding == bom_utf16be) {
-            wchar_t* wide_buffer = main_char_to_wchar(buffer, len, encoding, p);
+            wchar_t* wide_buffer = grok_char_to_wchar(buffer, len, encoding, p);
             buffer = enc_from_unicode_to_utf8(wide_buffer, p);
         }
 
@@ -183,7 +179,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
             if(info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, matched ? "TRUE" : "FALSE", macro);
             } else if(matched) {
-                main_output_line(buffer, encoding, p);
+                grok_output_line(buffer, encoding, p);
             }
         }
 
@@ -228,7 +224,7 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     }
 }
 
-apr_status_t main_open_file(const char* path, apr_file_t** file_handle) {
+apr_status_t grok_open_file(const char* path, apr_file_t** file_handle) {
     apr_status_t status = APR_SUCCESS;
     if(path != NULL) {
         (status) = apr_file_open(file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
@@ -246,7 +242,7 @@ apr_status_t main_open_file(const char* path, apr_file_t** file_handle) {
     return status;
 }
 
-wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p) {
+wchar_t* grok_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p) {
     unsigned char wide_char[2];
     wchar_t wchar;
     wchar_t* wide_buffer = (wchar_t*) apr_pcalloc(p, sizeof(wchar_t) * len / 2);
@@ -275,7 +271,7 @@ wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_
     return wide_buffer;
 }
 
-void main_output_line(const char* str, bom_t encoding, apr_pool_t* p) {
+void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p) {
     const char* s = str;
 #ifdef _MSC_VER
     if(encoding == bom_utf8 || enc_is_valid_utf8(str)) {
