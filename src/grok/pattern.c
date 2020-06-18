@@ -92,7 +92,11 @@ BOOL prpatt_try_compile_as_wildcard(const char* pattern) {
 #else
     char* dir = apr_pstrdup(patt_pool, pattern);
     full_dir_path = dirname(dir);
+#ifdef __APPLE_CC__
+    file_pattern = basename(dir);
+#else
     file_pattern = pattern + strlen(dir) + 1;
+#endif
 #endif
 
     status = apr_dir_open(&d, full_dir_path, patt_pool);
