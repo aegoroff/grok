@@ -51,6 +51,8 @@ wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_
 
 void main_output_line(const char* str, bom_t encoding, apr_pool_t* p);
 
+apr_status_t main_open_file(const char* path, apr_file_t** file_handle);
+
 static apr_pool_t* main_pool;
 
 int main(int argc, const char* const argv[]) {
@@ -122,18 +124,9 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     apr_file_t* file_handle = NULL;
     apr_status_t status = APR_SUCCESS;
 
-    if(path != NULL) {
-        status = apr_file_open(&file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
-    } else {
-        status = apr_file_open_stdin(&file_handle, main_pool);
-    }
+    status = main_open_file(path, &file_handle);
 
     if(status != APR_SUCCESS) {
-        if(path == NULL) {
-            lib_printf("cannot open stdin\n");
-        } else {
-            lib_printf("cannot open file %s\n", path);
-        }
         return;
     }
 
@@ -233,6 +226,24 @@ main_on_file(struct arg_file* pattern_files, const char* const macro, const char
     if(status != APR_SUCCESS) {
         lib_printf("file %s closing error\n", path);
     }
+}
+
+apr_status_t main_open_file(const char* path, apr_file_t** file_handle) {
+    apr_status_t status = APR_SUCCESS;
+    if(path != NULL) {
+        (status) = apr_file_open(file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
+    } else {
+        (status) = apr_file_open_stdin(file_handle, main_pool);
+    }
+
+    if(status != APR_SUCCESS) {
+        if(path == NULL) {
+            lib_printf("cannot open stdin\n");
+        } else {
+            lib_printf("cannot open file %s\n", path);
+        }
+    }
+    return status;
 }
 
 wchar_t* main_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p) {
