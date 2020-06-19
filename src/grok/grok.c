@@ -20,6 +20,12 @@
 
 #endif
 
+#ifdef __APPLE_CC__
+
+#include <mach-o/dyld.h>
+
+#endif
+
 #include <locale.h>
 #include "apr.h"
 #include "apr_file_io.h"
@@ -49,6 +55,8 @@ void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p);
 
 apr_status_t grok_open_file(const char* path, apr_file_t** file_handle);
 
+const char* grok_get_executable_path(apr_pool_t* pool);
+
 static apr_pool_t* main_pool;
 static const char* grok_base_dir;
 
@@ -74,8 +82,10 @@ int main(int argc, const char* const argv[]) {
     apr_pool_create(&main_pool, NULL);
     fend_init(main_pool);
 
+    const char* exe = grok_get_executable_path(main_pool);
+
     const char* exe_file_name;
-    patt_split_path(argv[0], &grok_base_dir, &exe_file_name, main_pool);
+    patt_split_path(exe, &grok_base_dir, &exe_file_name, main_pool);
 
     configuration_ctx_t* configuration = (configuration_ctx_t*) apr_pcalloc(main_pool, sizeof(configuration_ctx_t));
     configuration->argc = argc;
@@ -92,7 +102,17 @@ int main(int argc, const char* const argv[]) {
 void grok_compile_lib(struct arg_file* files) {
     patt_init(main_pool);
     if(files->count == 0) {
-        const char* patterns_path = apr_pstrcat(main_pool, grok_base_dir, "*.patterns", NULL);
+        char* patterns_path = NULL;
+
+        apr_status_t status = apr_filepath_merge(&patterns_path,
+                                                 grok_base_dir,
+                                                 "*.patterns",
+                                                 APR_FILEPATH_NATIVE,
+                                                 main_pool);
+        if(status != APR_SUCCESS) {
+            return;
+        }
+
         patt_compile_pattern_file(patterns_path);
     } else {
         for(size_t i = 0; i < files->count; i++) {
@@ -282,4 +302,24 @@ void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p) {
     }
 #endif
     lib_printf("%s", s);
+}
+
+const char* grok_get_executable_path(apr_pool_t* pool) {
+#ifdef _MSC_VER
+    char* buf = (char*) apr_pcalloc(pool, MAX_PATH);
+    DWORD result = GetModuleFileNameA(NULL, buf, MAX_PATH);
+
+    return buf;
+#elif __APPLE_CC__
+    uint32_t size = 4096;
+    char* buf = (char*) apr_pcalloc(pool, size);
+
+    int result = _NSGetExecutablePath(buf, &size);
+    if(result == -1) {
+        // TODO: realloc
+    }
+    return buf;
+#else
+    return NULL;
+#endif
 }
