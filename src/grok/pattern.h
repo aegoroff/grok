@@ -22,6 +22,8 @@ void patt_init(apr_pool_t* pool);
 
 void patt_compile_pattern_file(const char* p);
 
+void patt_split_path(const char* path, const char** dir, const char** file, apr_pool_t* pool);
+
 #ifdef __cplusplus
 }
 #endif

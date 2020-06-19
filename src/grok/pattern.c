@@ -69,6 +69,31 @@ void patt_compile_pattern_file(const char* p) {
     fclose(f);
 }
 
+void patt_split_path(const char* path, const char** d, const char** f, apr_pool_t* pool) {
+#ifdef _MSC_VER
+    char* dir = (char*) apr_pcalloc(pool, sizeof(char) * MAX_PATH);
+    char* filename = (char*) apr_pcalloc(pool, sizeof(char) * MAX_PATH);
+    char* drive = (char*) apr_pcalloc(pool, sizeof(char) * MAX_PATH);
+    char* ext = (char*) apr_pcalloc(pool, sizeof(char) * MAX_PATH);
+    _splitpath_s(path,
+                 drive, MAX_PATH, // Drive
+                 dir, MAX_PATH, // Directory
+                 filename, MAX_PATH, // Filename
+                 ext, MAX_PATH); // Extension
+
+    *d = apr_pstrcat(pool, drive, dir, NULL);
+    *f = apr_pstrcat(pool, filename, ext, NULL);
+#else
+    char* dir = apr_pstrdup(pool, path);
+    *d = dirname(dir);
+#ifdef __APPLE_CC__
+    *f = basename(dir);
+#else
+    *f = path + strlen(dir) + 1;
+#endif
+#endif
+}
+
 BOOL prpatt_try_compile_as_wildcard(const char* pattern) {
     const char* full_dir_path;
     const char* file_pattern;
@@ -76,28 +101,8 @@ BOOL prpatt_try_compile_as_wildcard(const char* pattern) {
     apr_dir_t* d = NULL;
     apr_finfo_t info = {0};
     char* full_path = NULL; // Full path to file
-#ifdef _MSC_VER
-    char* dir = (char*) apr_pcalloc(patt_pool, sizeof(char) * MAX_PATH);
-    char* filename = (char*) apr_pcalloc(patt_pool, sizeof(char) * MAX_PATH);
-    char* drive = (char*) apr_pcalloc(patt_pool, sizeof(char) * MAX_PATH);
-    char* ext = (char*) apr_pcalloc(patt_pool, sizeof(char) * MAX_PATH);
-    _splitpath_s(pattern,
-                 drive, MAX_PATH, // Drive
-                 dir, MAX_PATH, // Directory
-                 filename, MAX_PATH, // Filename
-                 ext, MAX_PATH); // Extension
 
-    full_dir_path = apr_pstrcat(patt_pool, drive, dir, NULL);
-    file_pattern = apr_pstrcat(patt_pool, filename, ext, NULL);
-#else
-    char* dir = apr_pstrdup(patt_pool, pattern);
-    full_dir_path = dirname(dir);
-#ifdef __APPLE_CC__
-    file_pattern = basename(dir);
-#else
-    file_pattern = pattern + strlen(dir) + 1;
-#endif
-#endif
+    patt_split_path(pattern, &full_dir_path, &file_pattern, patt_pool);
 
     status = apr_dir_open(&d, full_dir_path, patt_pool);
     if(status != APR_SUCCESS) {

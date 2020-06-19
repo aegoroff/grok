@@ -97,8 +97,7 @@ void grok_compile_lib(struct arg_file* files) {
     }
 }
 
-void
-grok_on_string(struct arg_file* pattern_files, const char* macro, const char* str, int info_mode) {
+void grok_on_string(struct arg_file* pattern_files, const char* macro, const char* str, int info_mode) {
     grok_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_pool_t* p = bend_init(main_pool);
@@ -113,8 +112,7 @@ grok_on_string(struct arg_file* pattern_files, const char* macro, const char* st
     bend_cleanup();
 }
 
-void
-grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode) {
+void grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode) {
     grok_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_file_t* file_handle = NULL;
