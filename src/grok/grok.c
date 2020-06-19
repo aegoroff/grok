@@ -50,6 +50,7 @@ void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p);
 apr_status_t grok_open_file(const char* path, apr_file_t** file_handle);
 
 static apr_pool_t* main_pool;
+static const char* grok_base_dir;
 
 int main(int argc, const char* const argv[]) {
 
@@ -73,6 +74,9 @@ int main(int argc, const char* const argv[]) {
     apr_pool_create(&main_pool, NULL);
     fend_init(main_pool);
 
+    const char* exe_file_name;
+    patt_split_path(argv[0], &grok_base_dir, &exe_file_name, main_pool);
+
     configuration_ctx_t* configuration = (configuration_ctx_t*) apr_pcalloc(main_pool, sizeof(configuration_ctx_t));
     configuration->argc = argc;
     configuration->argv = argv;
@@ -88,7 +92,8 @@ int main(int argc, const char* const argv[]) {
 void grok_compile_lib(struct arg_file* files) {
     patt_init(main_pool);
     if(files->count == 0) {
-        patt_compile_pattern_file("*.patterns");
+        const char* patterns_path = apr_pstrcat(main_pool, grok_base_dir, "*.patterns", NULL);
+        patt_compile_pattern_file(patterns_path);
     } else {
         for(size_t i = 0; i < files->count; i++) {
             const char* p = files->filename[i];
