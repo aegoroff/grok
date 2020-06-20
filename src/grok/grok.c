@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #endif
 
@@ -305,21 +306,17 @@ void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p) {
 }
 
 const char* grok_get_executable_path(apr_pool_t* pool) {
-#ifdef _MSC_VER
-    char* buf = (char*) apr_pcalloc(pool, MAX_PATH);
-    DWORD result = GetModuleFileNameA(NULL, buf, MAX_PATH);
-
-    return buf;
-#elif __APPLE_CC__
     uint32_t size = 4096;
     char* buf = (char*) apr_pcalloc(pool, size);
-
+#ifdef _MSC_VER
+    DWORD result = GetModuleFileNameA(NULL, buf, size);
+#elif __APPLE_CC__
     int result = _NSGetExecutablePath(buf, &size);
     if(result == -1) {
         // TODO: realloc
     }
-    return buf;
 #else
-    return NULL;
+    ssize_t result = readlink("/proc/self/exe", buf, size);
 #endif
+    return buf;
 }
