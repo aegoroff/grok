@@ -306,7 +306,7 @@ void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p) {
 }
 
 const char* grok_get_executable_path(apr_pool_t* pool) {
-    uint32_t size = 8191;
+    uint32_t size = 2047;
     // +1 needed buffer to be null terminated
     char* buf = (char*) apr_pcalloc(pool, size + 1);
 #ifdef _MSC_VER
@@ -317,10 +317,16 @@ const char* grok_get_executable_path(apr_pool_t* pool) {
         // TODO: realloc
     }
 #elif __APPLE_CC__
-    int result = _NSGetExecutablePath(buf, &size);
-    if(result == -1) {
-        // TODO: realloc
-    }
+    int result = 0;
+    do {
+        result = _NSGetExecutablePath(buf, &size);
+        if(result == -1) {
+            // if the buffer is not large enough, and * bufsize is set to the
+            //     size required.
+            buf = (char*) apr_pcalloc(pool, size + 1);
+        }
+    } while(result == -1);
+
 #else
     ssize_t result = readlink("/proc/self/exe", buf, size);
     if (result >= size) {
