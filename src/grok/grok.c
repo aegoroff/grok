@@ -309,29 +309,37 @@ const char* grok_get_executable_path(apr_pool_t* pool) {
     uint32_t size = 2047;
     // +1 needed buffer to be null terminated
     char* buf = (char*) apr_pcalloc(pool, size + 1);
-#ifdef _MSC_VER
-    DWORD result = GetModuleFileNameA(NULL, buf, size);
-    DWORD lastError = GetLastError();
-    if(result == size
-       && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS)) {
-        // TODO: realloc
-    }
-#elif __APPLE_CC__
-    int result = 0;
+    int do_realloc = 1;
     do {
-        result = _NSGetExecutablePath(buf, &size);
-        if(result == -1) {
+#ifdef _MSC_VER
+        DWORD result = GetModuleFileNameA(NULL, buf, size);
+        DWORD lastError = GetLastError();
+
+        do_realloc = result == size
+           && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS);
+
+        if(do_realloc) {
+            size *= 2;
+            buf = (char*) apr_pcalloc(pool, size + 1);
+        }
+#elif __APPLE_CC__
+        int result = _NSGetExecutablePath(buf, &size);
+        do_realloc = result == -1;
+        if(do_realloc) {
             // if the buffer is not large enough, and * bufsize is set to the
             //     size required.
             buf = (char*) apr_pcalloc(pool, size + 1);
         }
-    } while(result == -1);
-
 #else
-    ssize_t result = readlink("/proc/self/exe", buf, size);
-    if (result >= size) {
-        // TODO: realloc
-    }
+        ssize_t result = readlink("/proc/self/exe", buf, size);
+
+        do_realloc = result >= size;
+
+        if(do_realloc) {
+            size *= 2;
+            buf = (char*) apr_pcalloc(pool, size + 1);
+        }
 #endif
+    } while(do_realloc);
     return buf;
 }
