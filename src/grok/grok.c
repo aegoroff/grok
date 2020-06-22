@@ -316,7 +316,7 @@ const char* grok_get_executable_path(apr_pool_t* pool) {
         DWORD lastError = GetLastError();
 
         do_realloc = result == size
-           && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS);
+                     && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS);
 
         if(do_realloc) {
             size *= 2;
