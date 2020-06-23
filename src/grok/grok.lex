@@ -19,7 +19,6 @@
     }
 %}
 
-%option noyywrap 
 %option yylineno
 
 COMMA   ","
