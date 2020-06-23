@@ -39,6 +39,9 @@ void prpatt_run_parsing();
 
 // Implementation
 
+// Lex wart implementation
+int yywrap(void) { return 1; }
+
 void patt_init(apr_pool_t* pool) {
     patt_pool = pool;
 }
