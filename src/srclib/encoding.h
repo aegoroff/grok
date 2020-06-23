@@ -29,6 +29,7 @@ typedef enum {
 
 #define BOM_MAX_LEN 5
 
+#ifndef _MSC_VER
 #ifndef _BOOL
 #define _BOOL
 typedef int BOOL;
@@ -37,6 +38,7 @@ typedef int BOOL;
 #ifndef _UINT
 #define _UINT
 typedef unsigned int UINT;
+#endif
 #endif
 
 /*!
