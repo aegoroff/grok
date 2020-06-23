@@ -14,7 +14,8 @@
 
 #include <apr_hash.h>
 
-#ifndef _MSC_VER
+#ifndef _BOOL
+#define _BOOL
 typedef int BOOL;
 #endif
 
