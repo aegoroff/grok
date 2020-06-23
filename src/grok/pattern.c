@@ -19,7 +19,10 @@
 #include "pattern.h"
 
 #ifndef _MSC_VER
+#ifndef _BOOL
+#define _BOOL
 typedef int BOOL;
+#endif
 
 #include <errno.h>
 #include <stdlib.h>
