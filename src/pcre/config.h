@@ -8,7 +8,10 @@
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 /* #undef HAVE_UNISTD_H */
+
+#ifdef _MSC_VER
 #define HAVE_WINDOWS_H 1
+#endif
 
 /* #undef HAVE_BCOPY */
 /* #undef HAVE_MEMFD_CREATE */
