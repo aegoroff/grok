@@ -266,7 +266,14 @@ apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
         if(cur + 2 >= *len) {
             apr_size_t new_len = 2 * (*len);
             char* nb = (char*) apr_pcalloc(main_pool, new_len);
+#ifdef __STDC_WANT_SECURE_LIB__
+            const errno_t err = memcpy_s(nb, new_len, *str, cur);
+            if (err) {
+                lib_fprintf(stderr, "memcpy_s() in grok_read_line failed: %i\n", err);
+            }
+#else
             memcpy(nb, *str, cur);
+#endif
             *str = nb;
             *len = new_len;
         }
