@@ -56,7 +56,7 @@ void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p);
 
 apr_status_t grok_open_file(const char* path, apr_file_t** file_handle);
 
-apr_status_t grok_read_line(char* str, apr_size_t* len, apr_file_t* f);
+apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f);
 
 const char* grok_get_executable_path(apr_pool_t* pool);
 
@@ -175,7 +175,12 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
 
         // it maybe shifted by bom encoder. so wind it back
         buffer = allocated_buffer;
-        status = grok_read_line(buffer, &len, file_handle);
+        status = grok_read_line(&buffer, &len, file_handle);
+
+        // It may occur on realloc if line is too long
+        if(buffer != allocated_buffer) {
+            allocated_buffer = buffer;
+        }
 
         if(path == NULL && status != APR_EOF) {
             // stdin case. Detect encoding on each line because stdin can be concatenated from several files using cat
@@ -250,7 +255,7 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
     }
 }
 
-apr_status_t grok_read_line(char* str, apr_size_t* len, apr_file_t* f) {
+apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
     size_t cur = 0;
     while(1) {
         char c;
@@ -261,12 +266,12 @@ apr_status_t grok_read_line(char* str, apr_size_t* len, apr_file_t* f) {
         if(cur + 2 >= *len) {
             apr_size_t new_len = 2 * (*len);
             char* nb = (char*) apr_pcalloc(main_pool, new_len);
-            memcpy(nb, str, cur);
-            str = nb;
+            memcpy(nb, *str, cur);
+            *str = nb;
             *len = new_len;
         }
 
-        str[cur] = c;
+        (*str)[cur] = c;
         ++cur;
 
         if(c == '\n') {
