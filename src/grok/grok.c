@@ -56,6 +56,8 @@ void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p);
 
 apr_status_t grok_open_file(const char* path, apr_file_t** file_handle);
 
+apr_status_t grok_read_line(char* str, apr_size_t* len, apr_file_t* f);
+
 const char* grok_get_executable_path(apr_pool_t* pool);
 
 static apr_pool_t* main_pool;
@@ -138,8 +140,6 @@ void grok_on_string(struct arg_file* pattern_files, const char* macro, const cha
     bend_cleanup();
 }
 
-apr_status_t grok_get_line(char* str, apr_size_t* len, apr_file_t* f);
-
 void grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode) {
     grok_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
@@ -175,7 +175,7 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
 
         // it maybe shifted by bom encoder. so wind it back
         buffer = allocated_buffer;
-        status = grok_get_line(buffer, &len, file_handle);
+        status = grok_read_line(buffer, &len, file_handle);
 
         if(path == NULL && status != APR_EOF) {
             // stdin case. Detect encoding on each line because stdin can be concatenated from several files using cat
@@ -250,7 +250,7 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
     }
 }
 
-apr_status_t grok_get_line(char* str, apr_size_t* len, apr_file_t* f) {
+apr_status_t grok_read_line(char* str, apr_size_t* len, apr_file_t* f) {
     size_t cur = 0;
     while(true) {
         char c;
