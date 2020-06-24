@@ -20,6 +20,8 @@
 %}
 
 %option yylineno
+%option nounput
+%option noinput
 
 COMMA   ","
 DOT     "."
