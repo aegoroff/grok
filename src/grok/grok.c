@@ -138,6 +138,8 @@ void grok_on_string(struct arg_file* pattern_files, const char* macro, const cha
     bend_cleanup();
 }
 
+apr_status_t grok_get_line(char* str, apr_size_t* len, apr_file_t* f);
+
 void grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode) {
     grok_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
@@ -163,8 +165,8 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
         return;
     }
 
-    int len = 2 * 0xFFF * sizeof(char);
-    char* buffer = (char*) apr_pcalloc(main_pool, len + 2 * sizeof(char));
+    apr_size_t len = 4096;
+    char* buffer = (char*) apr_pcalloc(main_pool, len);
     char* allocated_buffer = buffer;
 
     long long lineno = 1;
@@ -173,7 +175,7 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
 
         // it maybe shifted by bom encoder. so wind it back
         buffer = allocated_buffer;
-        status = apr_file_gets(buffer, len, file_handle);
+        status = grok_get_line(buffer, &len, file_handle);
 
         if(path == NULL && status != APR_EOF) {
             // stdin case. Detect encoding on each line because stdin can be concatenated from several files using cat
@@ -246,6 +248,33 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
     if(status != APR_SUCCESS) {
         lib_printf("file %s closing error\n", path);
     }
+}
+
+apr_status_t grok_get_line(char* str, apr_size_t* len, apr_file_t* f) {
+    size_t cur = 0;
+    while(true) {
+        char c;
+        apr_status_t status = apr_file_getc(&c, f);
+        if(status != APR_SUCCESS) {
+            return status;
+        }
+        if(cur + 2 >= *len) {
+            apr_size_t new_len = 2 * (*len);
+            char* nb = (char*) apr_pcalloc(main_pool, new_len);
+            memcpy(nb, str, cur);
+            str = nb;
+            *len = new_len;
+        }
+
+        str[cur] = c;
+        ++cur;
+
+        if(c == '\n') {
+            break;
+        }
+    }
+
+    return APR_SUCCESS;
 }
 
 apr_status_t grok_open_file(const char* path, apr_file_t** file_handle) {
