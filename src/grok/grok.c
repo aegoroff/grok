@@ -252,7 +252,7 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
 
 apr_status_t grok_read_line(char* str, apr_size_t* len, apr_file_t* f) {
     size_t cur = 0;
-    while(true) {
+    while(1) {
         char c;
         apr_status_t status = apr_file_getc(&c, f);
         if(status != APR_SUCCESS) {
