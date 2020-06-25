@@ -20,31 +20,30 @@
 #define DUMP_FUNCTION "MiniDumpWriteDump"
 #define UNHANDLED_EXCEPTION_OCCURRED " An unhandled exception occurred. "
 
- /*
-    dbg_ - public members
-    prdbg_ - private members
- */
+/*
+   dbg_ - public members
+   prdbg_ - private members
+*/
 
 void prdbg_print_win32_error(const char* message);
 
-LONG WINAPI dbg_top_level_filter(struct _EXCEPTION_POINTERS* p_exception_info)
-{
+LONG WINAPI dbg_top_level_filter(struct _EXCEPTION_POINTERS* p_exception_info) {
     LONG result = EXCEPTION_CONTINUE_SEARCH;    // finalize process in standard way by default
     HMODULE hDll = NULL;
-    MINIDUMP_EXCEPTION_INFORMATION exInfo = { 0 };
+    MINIDUMP_EXCEPTION_INFORMATION exInfo = {0};
     BOOL isOK = FALSE;
     MINIDUMPWRITEDUMP pfnDump = NULL;
     HANDLE hFile = NULL;
 
     hDll = LoadLibraryA(DBG_HELP_DLL);
 
-    if (hDll == NULL) {
+    if(hDll == NULL) {
         prdbg_print_win32_error(" Cannot load dll " DBG_HELP_DLL);
         return result;
     }
     // get func address
-    pfnDump = (MINIDUMPWRITEDUMP)GetProcAddress(hDll, DUMP_FUNCTION);
-    if (!pfnDump) {
+    pfnDump = (MINIDUMPWRITEDUMP) GetProcAddress(hDll, DUMP_FUNCTION);
+    if(!pfnDump) {
         prdbg_print_win32_error(" Cannot get address of " DUMP_FUNCTION " function");
         return result;
     }
@@ -57,7 +56,7 @@ LONG WINAPI dbg_top_level_filter(struct _EXCEPTION_POINTERS* p_exception_info)
                         FILE_ATTRIBUTE_NORMAL,
                         NULL);
 
-    if (hFile == INVALID_HANDLE_VALUE) {
+    if(hFile == INVALID_HANDLE_VALUE) {
         prdbg_print_win32_error(UNHANDLED_EXCEPTION_OCCURRED "Error on creating dump file: " DUMP_FILE_NAME);
         return result;
     }
@@ -69,7 +68,7 @@ LONG WINAPI dbg_top_level_filter(struct _EXCEPTION_POINTERS* p_exception_info)
     // Write pDumpFile
     isOK = pfnDump(GetCurrentProcess(),
                    GetCurrentProcessId(), hFile, MiniDumpNormal, &exInfo, NULL, NULL);
-    if (isOK) {
+    if(isOK) {
         printf_s(UNHANDLED_EXCEPTION_OCCURRED "Dump saved to: %s", DUMP_FILE_NAME);
         result = EXCEPTION_EXECUTE_HANDLER;
     } else {
@@ -79,20 +78,22 @@ LONG WINAPI dbg_top_level_filter(struct _EXCEPTION_POINTERS* p_exception_info)
     return result;
 }
 
-void prdbg_print_win32_error(const char* message)
-{
+void prdbg_print_win32_error(const char* message) {
     DWORD errorCode = 0;
     void* buffer = NULL;
 
-    __try {
+    __try
+    {
         errorCode = GetLastError();
         FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS |
                        FORMAT_MESSAGE_MAX_WIDTH_MASK | FORMAT_MESSAGE_ALLOCATE_BUFFER,
                        NULL, errorCode, MAKELANGID(LANG_NEUTRAL,
-                                                   SUBLANG_DEFAULT), (char*)&buffer, 0, NULL);
-        printf_s("%s. Windows error %#x: %s", message, errorCode, (char*)buffer);
-    } __finally {
-        if (buffer != NULL) {
+                                                   SUBLANG_DEFAULT), (char*) &buffer, 0, NULL);
+        printf_s("%s. Windows error %#x: %s", message, errorCode, (char*) buffer);
+    }
+    __finally
+    {
+        if(buffer != NULL) {
             LocalFree(buffer);
         }
     }
