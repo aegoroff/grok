@@ -14,14 +14,19 @@
 #include <math.h>
 
 #ifdef _MSC_VER
+
 #include <Windows.h>
+
 #else
 
 #include <time.h>
+
 #ifdef __APPLE_CC__
 #include <zconf.h>
 #else
+
 #include <sys/sysinfo.h>
+
 #endif
 #endif
 
@@ -65,9 +70,9 @@ static char* lib_sizes[] = {
 static double lib_span = 0.0;
 
 #ifdef _MSC_VER
-static LARGE_INTEGER lib_freq = { 0 };
-static LARGE_INTEGER lib_time1 = { 0 };
-static LARGE_INTEGER lib_time2 = { 0 };
+static LARGE_INTEGER lib_freq = {0};
+static LARGE_INTEGER lib_time1 = {0};
+static LARGE_INTEGER lib_time2 = {0};
 
 #else
 #define BILLION 1E9
@@ -80,7 +85,7 @@ uint32_t lib_get_processor_count(void) {
 #ifdef _MSC_VER
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
-    return (uint32_t)sysinfo.dwNumberOfProcessors;
+    return (uint32_t) sysinfo.dwNumberOfProcessors;
 #elif __APPLE_CC__
     return (uint32_t) sysconf(_SC_NPROCESSORS_ONLN);
 #else
@@ -172,6 +177,7 @@ lib_file_size_t lib_normalize_size(uint64_t size) {
 }
 
 #ifdef _MSC_VER
+
 int lib_printf(__format_string const char* format, ...) {
 #else
 
@@ -190,6 +196,7 @@ int lib_printf(const char* format, ...) {
 }
 
 #ifdef _MSC_VER
+
 int lib_fprintf(FILE* file, __format_string const char* format, ...) {
 #else
 
@@ -208,6 +215,7 @@ int lib_fprintf(FILE* file, const char* format, ...) {
 }
 
 #ifdef _MSC_VER
+
 int lib_sprintf(char* buffer, __format_string const char* format, ...) {
 #else
 
@@ -227,6 +235,7 @@ int lib_sprintf(char* buffer, const char* format, ...) {
 }
 
 #ifdef _MSC_VER
+
 int lib_wcsprintf(wchar_t* buffer, __format_string const wchar_t* format, ...) {
 #else
 
@@ -310,7 +319,7 @@ void lib_start_timer(void) {
 void lib_stop_timer(void) {
 #ifdef _MSC_VER
     QueryPerformanceCounter(&lib_time2);
-    lib_span = (double)(lib_time2.QuadPart - lib_time1.QuadPart) / (double)lib_freq.QuadPart;
+    lib_span = (double) (lib_time2.QuadPart - lib_time1.QuadPart) / (double) lib_freq.QuadPart;
 #else
     clock_gettime(CLOCK_REALTIME, &lib_finish);
     lib_span = (lib_finish.tv_sec - lib_start.tv_sec) + (lib_finish.tv_nsec - lib_start.tv_nsec) / BILLION;

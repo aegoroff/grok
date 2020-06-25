@@ -63,7 +63,7 @@ void patt_compile_pattern_file(const char* p) {
             perror(p);
         }
 #ifdef __STDC_WANT_SECURE_LIB__
-        if (f != NULL) {
+        if(f != NULL) {
             fclose(f);
         }
 #endif
