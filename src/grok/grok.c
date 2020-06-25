@@ -268,7 +268,7 @@ apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
             char* nb = (char*) apr_pcalloc(main_pool, new_len);
 #ifdef __STDC_WANT_SECURE_LIB__
             const errno_t err = memcpy_s(nb, new_len, *str, cur);
-            if (err) {
+            if(err) {
                 lib_fprintf(stderr, "memcpy_s() in grok_read_line failed: %i\n", err);
             }
 #else
