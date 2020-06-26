@@ -28,3 +28,4 @@ pcre-*/
 /src/grok/grok.aps
 /out/
 /cmake-build-*/
+bin/
