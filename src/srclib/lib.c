@@ -22,7 +22,9 @@
 #include <time.h>
 
 #ifdef __APPLE_CC__
+
 #include <zconf.h>
+
 #else
 
 #include <sys/sysinfo.h>
