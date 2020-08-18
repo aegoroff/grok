@@ -118,6 +118,7 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     arg_freetable(argtableS, sizeof(argtableS) / sizeof(argtableS[0]));
     arg_freetable(argtableF, sizeof(argtableF) / sizeof(argtableF[0]));
+    arg_freetable(argtableI, sizeof(argtableI) / sizeof(argtableI[0]));
 }
 
 void prconf_print_copyright(void) {
