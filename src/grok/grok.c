@@ -41,8 +41,9 @@
 #include <apr_general.h>
 #include "argtable3.h"
 #include "configuration.h"
+#ifdef _MSC_VER
 #include <dbg_helpers.h>
-#include <apr_strings.h>
+#endif
 
 void grok_compile_lib(struct arg_file* files);
 
