@@ -21,6 +21,8 @@ jobs:
         win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
         win_bison.exe --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
     - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        toolset: 14.28.29333
     - name: Build
       uses: lukka/run-cmake@v3
       with:
