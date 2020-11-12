@@ -112,6 +112,7 @@ void conf_configure_app(configuration_ctx_t* ctx) {
         prconf_print_syntax(argtable, argtableS, argtableF, argtableI);
         arg_print_errors(stdout, endF, PROGRAM_NAME);
         arg_print_errors(stdout, endS, PROGRAM_NAME);
+        arg_print_errors(stdout, endI, PROGRAM_NAME);
     }
 
     cleanup:
