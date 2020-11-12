@@ -23,7 +23,7 @@ jobs:
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
       with:
-        vs-version: '[16.8)'
+        vs-version: '[16.8]'
     - uses: ilammy/msvc-dev-cmd@v1.4.1
     - name: Build
       uses: lukka/run-cmake@v3
