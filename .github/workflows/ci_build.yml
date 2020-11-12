@@ -20,6 +20,10 @@ jobs:
       run: |
         win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
         win_bison.exe --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      with:
+        vs-version: '[16.8)'
     - uses: ilammy/msvc-dev-cmd@v1.4.1
     - name: Build
       uses: lukka/run-cmake@v3
