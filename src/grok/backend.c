@@ -130,7 +130,7 @@ pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool) {
                 // named pattern case handling
                 if(current->reference != NULL) {
                     char* reference = current->reference;
-                    // duplicate properties elimnation
+                    // duplicate properties elimination
                     const char* result = apr_hash_get(used_properties, reference, APR_HASH_KEY_STRING);
                     if(result != NULL) {
                         reference = apr_pstrcat(local_pool, current->data, "_", reference, NULL);
@@ -148,7 +148,7 @@ pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool) {
                     trail_paren->data = ")";
                     *(info_t**) apr_array_push(stack) = trail_paren;
                 }
-                // childs in reverse order
+                // children in reverse order
                 apr_array_header_t* childs = fend_get_pattern(current->data);
                 for(int j = childs->nelts - 1; j >= 0; j--) {
                     *(info_t**) apr_array_push(stack) = ((info_t**) childs->elts)[j];
