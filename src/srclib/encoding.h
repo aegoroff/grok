@@ -16,6 +16,7 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include "apr_pools.h"
 #include "apr_file_io.h"
 
@@ -30,10 +31,6 @@ typedef enum {
 #define BOM_MAX_LEN 5
 
 #ifndef _MSC_VER
-#ifndef _BOOL
-#define _BOOL
-typedef int BOOL;
-#endif
 
 #ifndef _UINT
 #define _UINT
@@ -71,7 +68,7 @@ char* enc_from_unicode_to_ansi(const wchar_t* from, apr_pool_t* pool);
  */
 char* enc_from_unicode_to_utf8(const wchar_t* from, apr_pool_t* pool);
 
-BOOL enc_is_valid_utf8(const char* str);
+bool enc_is_valid_utf8(const char* str);
 
 bom_t enc_detect_bom(apr_file_t* f);
 

@@ -141,9 +141,9 @@ char* enc_from_unicode_to_utf8(const wchar_t* from, apr_pool_t* pool) {
     return prenc_from_unicode_to_code_page(from, CP_UTF8, pool);
 }
 
-BOOL enc_is_valid_utf8(const char* str) {
+bool enc_is_valid_utf8(const char* str) {
     if(!str) {
-        return FALSE;
+        return false;
     }
 
     const unsigned char* bytes = (const unsigned char*) str;
@@ -190,7 +190,7 @@ BOOL enc_is_valid_utf8(const char* str) {
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 bom_t enc_detect_bom(apr_file_t* f) {

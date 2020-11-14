@@ -12,14 +12,8 @@
 #ifndef GROK_BACKEND_H_
 #define GROK_BACKEND_H_
 
+#include <stdbool.h>
 #include <apr_hash.h>
-
-#ifndef _MSC_VER
-#ifndef _BOOL
-#define _BOOL
-typedef int BOOL;
-#endif
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +28,7 @@ apr_pool_t* bend_init(apr_pool_t* pool);
 
 void bend_cleanup();
 
-BOOL bend_match_re(pattern_t* pattern, const char* subject);
+bool bend_match_re(pattern_t* pattern, const char* subject);
 
 pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool);
 

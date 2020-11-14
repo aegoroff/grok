@@ -19,13 +19,10 @@
 #include "pattern.h"
 
 #ifndef _MSC_VER
-#ifndef _BOOL
-#define _BOOL
-typedef int BOOL;
-#endif
 
 #include <errno.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <libgen.h>
 
 #endif
@@ -36,7 +33,7 @@ apr_pool_t* patt_pool = NULL;
 
 extern void yyrestart(FILE* input_file);
 
-BOOL prpatt_try_compile_as_wildcard(const char* pattern);
+bool prpatt_try_compile_as_wildcard(const char* pattern);
 
 void prpatt_run_parsing();
 
@@ -100,7 +97,7 @@ void patt_split_path(const char* path, const char** d, const char** f, apr_pool_
 #endif
 }
 
-BOOL prpatt_try_compile_as_wildcard(const char* pattern) {
+bool prpatt_try_compile_as_wildcard(const char* pattern) {
     const char* full_dir_path;
     const char* file_pattern;
     apr_status_t status;
@@ -112,7 +109,7 @@ BOOL prpatt_try_compile_as_wildcard(const char* pattern) {
 
     status = apr_dir_open(&d, full_dir_path, patt_pool);
     if(status != APR_SUCCESS) {
-        return FALSE;
+        return false;
     }
     for(;;) {
         status = apr_dir_read(&info, APR_FINFO_NAME | APR_FINFO_MIN, d);
@@ -150,7 +147,7 @@ BOOL prpatt_try_compile_as_wildcard(const char* pattern) {
         return FALSE;
     }
 
-    return TRUE;
+    return true;
 }
 
 void prpatt_run_parsing() {
