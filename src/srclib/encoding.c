@@ -168,13 +168,13 @@ bool enc_is_valid_utf8(const char* str) {
             cp = (*bytes & 0x07U);
             num = 4;
         } else {
-            return FALSE;
+            return false;
         }
 
         bytes += 1;
         for(int i = 1; i < num; ++i) {
             if((*bytes & 0xC0U) != 0x80) {
-                return FALSE;
+                return false;
             }
             cp = (cp << 6U) | (*bytes & 0x3FU);
             bytes += 1;
@@ -186,7 +186,7 @@ bool enc_is_valid_utf8(const char* str) {
            ((cp >= 0x0080) && (cp <= 0x07FF) && (num != 2)) ||
            ((cp >= 0x0800) && (cp <= 0xFFFF) && (num != 3)) ||
            ((cp >= 0x10000) && (cp <= 0x1FFFFF) && (num != 4))) {
-            return FALSE;
+            return false;
         }
     }
 
