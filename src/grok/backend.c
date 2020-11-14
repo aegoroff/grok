@@ -44,12 +44,12 @@ void bend_cleanup() {
     apr_pool_destroy(bend_pool);
 }
 
-BOOL bend_match_re(pattern_t* pattern, const char* subject) {
+bool bend_match_re(pattern_t* pattern, const char* subject) {
     int errornumber = 0;
     size_t erroroffset = 0;
 
     if(pattern == NULL) {
-        return FALSE;
+        return false;
     }
 
     pcre2_code* re = pcre2_compile(
@@ -81,7 +81,7 @@ BOOL bend_match_re(pattern_t* pattern, const char* subject) {
             match_data, /* block for storing the result */
             NULL); /* use default match context */
 
-    BOOL result = rc > 0;
+    bool result = rc > 0;
     if(!result) {
         goto cleanup;
     }
