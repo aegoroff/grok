@@ -144,7 +144,7 @@ bool prpatt_try_compile_as_wildcard(const char* pattern) {
 
     status = apr_dir_close(d);
     if(status != APR_SUCCESS) {
-        return FALSE;
+        return false;
     }
 
     return true;
