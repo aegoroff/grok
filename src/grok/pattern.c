@@ -18,11 +18,11 @@
 #include "generated/grok.tab.h"
 #include "pattern.h"
 
+#include <stdbool.h>
 #ifndef _MSC_VER
 
 #include <errno.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <libgen.h>
 
 #endif
