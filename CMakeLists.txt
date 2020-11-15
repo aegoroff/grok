@@ -19,8 +19,6 @@ else()
     set(APR_UTIL_X64 "$ENV{APR_HOME}APR-UTIL")
 endif()
 
-set (CMAKE_C_STANDARD 99)
-
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE  "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /W3 /utf-8 /validate-charset /sdl /std:c11 /D NDEBUG")
     set(CMAKE_CXX_FLAGS_DEBUG  "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MTd /Od /Zi /W3 /utf-8 /validate-charset /sdl /std:c11 /RTC1")
