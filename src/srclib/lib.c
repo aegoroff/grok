@@ -125,11 +125,11 @@ uint32_t lib_htoi(const char* ptr, int size) {
             goto nextChar;
         }
         if(ch >= '0' && ch <= '9') {
-            value = (value << 4) + (ch - '0');
+            value = (value << 4U) + (ch - '0');
         } else if(ch >= 'A' && ch <= 'F') {
-            value = (value << 4) + (ch - 'A' + 10);
+            value = (value << 4U) + (ch - 'A' + 10);
         } else if(ch >= 'a' && ch <= 'f') {
-            value = (value << 4) + (ch - 'a' + 10);
+            value = (value << 4U) + (ch - 'a' + 10);
         } else {
             return value;
         }
@@ -152,7 +152,7 @@ void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz) {
 
 uint64_t prlib_ilog(uint64_t x) {
     uint64_t n = INT64_BITS_COUNT;
-    int c = INT64_BITS_COUNT / 2;
+    uint32_t c = INT64_BITS_COUNT / 2;
 
     do {
         const uint64_t y = x >> c;
@@ -160,9 +160,9 @@ uint64_t prlib_ilog(uint64_t x) {
             n -= c;
             x = y;
         }
-        c >>= 1;
+        c >>= 1U;
     } while(c != 0);
-    n -= x >> (INT64_BITS_COUNT - 1);
+    n -= x >> (INT64_BITS_COUNT - 1U);
     return (INT64_BITS_COUNT - 1) - (n - x);
 }
 
