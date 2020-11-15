@@ -381,8 +381,6 @@ char* lib_ltrim(char* str, const char* seps) {
 }
 
 char* lib_rtrim(char* str, const char* seps) {
-    int i;
-
     if(str == NULL) {
         return str;
     }
@@ -391,8 +389,8 @@ char* lib_rtrim(char* str, const char* seps) {
         seps = "\t\n\v\f\r ";
     }
 
-    i = strlen(str) - 1;
-    while(i >= 0 && strchr(seps, str[i]) != NULL) {
+    size_t i = strlen(str) - 1;
+    while(i < SIZE_MAX && strchr(seps, str[i]) != NULL) {
         str[i] = '\0';
         i--;
     }
