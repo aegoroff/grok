@@ -12,4 +12,8 @@
 #define PRODUCT_VERSION "0.2.0"
 #define PROGRAM_NAME "grok"
 #define APP_NAME "Grok regexp macro processor " PRODUCT_VERSION
+#ifdef _MSC_VER
 #define PROG_EXE PROGRAM_NAME ".exe"
+#else
+#define PROG_EXE PROGRAM_NAME
+#endif
