@@ -51,6 +51,8 @@ void grok_on_string(struct arg_file* pattern_files, const char* macro, const cha
 
 void grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode);
 
+void grok_on_template_info(struct arg_file* pattern_files, const char* const macro);
+
 wchar_t* grok_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
 
 void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p);
@@ -60,6 +62,8 @@ apr_status_t grok_open_file(const char* path, apr_file_t** file_handle);
 apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f);
 
 const char* grok_get_executable_path(apr_pool_t* pool);
+
+void grok_out_pattern(const char* name);
 
 static apr_pool_t* main_pool;
 static const char* grok_base_dir;
@@ -96,6 +100,7 @@ int main(int argc, const char* const argv[]) {
     configuration->argv = argv;
     configuration->on_string = &grok_on_string;
     configuration->on_file = &grok_on_file;
+    configuration->on_template_info = &grok_on_template_info;
 
     conf_configure_app(configuration);
 
@@ -123,6 +128,21 @@ void grok_compile_lib(struct arg_file* files) {
             const char* p = files->filename[i];
             patt_compile_pattern_file(p);
         }
+    }
+}
+
+void grok_on_template_info(struct arg_file* pattern_files, const char* const macro) {
+    grok_compile_lib(pattern_files);
+
+    if (macro != NULL && strlen(macro) > 0) {
+        pattern_t* pattern = bend_create_pattern(macro, main_pool);
+        if (pattern == NULL) {
+            lib_printf("pattern %s not found\n", macro);
+        } else {
+            lib_printf("%s\n", pattern->regex);
+        }
+    } else {
+        bend_enumerate_patterns(&grok_out_pattern);
     }
 }
 
@@ -382,4 +402,8 @@ const char* grok_get_executable_path(apr_pool_t* pool) {
 #endif
     } while(do_realloc);
     return buf;
+}
+
+void grok_out_pattern(const char* name) {
+    lib_printf("%s\n", name);
 }

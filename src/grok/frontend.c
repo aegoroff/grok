@@ -15,7 +15,6 @@
 #include "apr_tables.h"
 #include "apr_pools.h"
 #include "apr_strings.h"
-#include "apr_hash.h"
 
 #define ARRAY_INIT_SZ   256
 
@@ -78,4 +77,8 @@ apr_array_header_t* fend_get_pattern(const char* def) {
 
 char* fend_strdup(char* str) {
     return apr_pstrdup(fend_pool, str);
+}
+
+apr_hash_t* fend_get_patterns() {
+    return fend_definition;
 }
