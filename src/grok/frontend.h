@@ -13,6 +13,7 @@
 #define GROK_FRONTEND_H_
 
 #include <apr_tables.h>
+#include <apr_hash.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,6 +48,8 @@ void fend_on_grok(macro_t* str);
 macro_t* fend_on_macro(char* name, char* prop);
 
 apr_array_header_t* fend_get_pattern(const char* def);
+
+apr_hash_t* fend_get_patterns();
 
 char* fend_strdup(char* str);
 

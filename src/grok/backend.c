@@ -27,6 +27,10 @@
 static apr_pool_t* bend_pool = NULL;
 pcre2_general_context* pcre_context = NULL;
 
+int prbend_on_each_pattern(void *rec, const void *key,
+                                apr_ssize_t klen,
+                                const void *value);
+
 void* pcre_alloc(size_t size, void* memory_data) {
     return apr_palloc(bend_pool, size);
 }
@@ -168,4 +172,17 @@ pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool) {
     result->properties = used_properties;
 
     return result;
+}
+
+void bend_enumerate_patterns(void (* pfn_action)(const char*)) {
+    apr_hash_t* ht = fend_get_patterns();
+
+    apr_hash_do(&prbend_on_each_pattern, pfn_action, ht);
+}
+
+int prbend_on_each_pattern(void* rec, const void* key, apr_ssize_t klen, const void* value) {
+    void (* pfn_action)(const char*) = (void (*)(const char*))rec;
+
+    pfn_action((const char *)key);
+    return 1;
 }

@@ -47,7 +47,7 @@ extern "C" {
 #endif
 
 #define COPYRIGHT_FMT_TRAIL NEW_LINE "Copyright (C) 2019-2020 Alexander Egorov. All rights reserved." NEW_LINE NEW_LINE
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__APPLE_CC__)
 #define COPYRIGHT_FMT NEW_LINE "%s x64" COPYRIGHT_FMT_TRAIL
 #else
 #define COPYRIGHT_FMT NEW_LINE "%s x86" COPYRIGHT_FMT_TRAIL

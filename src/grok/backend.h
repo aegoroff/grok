@@ -32,6 +32,8 @@ bool bend_match_re(pattern_t* pattern, const char* subject);
 
 pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool);
 
+void bend_enumerate_patterns(void (*pfn_action)(const char* name));
+
 #ifdef __cplusplus
 }
 #endif
