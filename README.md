@@ -31,3 +31,28 @@ grok.exe -t[h] [-m <string>] [-p <file>]...
                             directory used to search all *.patterns files
   -t, --template            show template(s) information
 ``` 
+**EXAMPLES**
+
+Output all possible macro names (to pass as -m parameter)
+```
+grok -t
+```
+
+Output regular expression a macro will be expanded to
+```
+grok -t -m UNIXPATH
+```
+This will output
+```
+(?>/(?>[\w_%!$@:.,-]+|\\.)*)+
+```
+
+Output first log messages lines from system.log
+```
+grok -m SYSLOGBASE -f /var/log/system.log
+```
+
+Same as above but input from stdin
+```
+cat /var/log/system.log | grok -m SYSLOGBASE
+```
