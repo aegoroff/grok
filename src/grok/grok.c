@@ -142,7 +142,9 @@ void grok_on_template_info(struct arg_file* pattern_files, const char* const mac
             lib_printf("%s\n", pattern->regex);
         }
     } else {
+        bend_init(main_pool);
         bend_enumerate_patterns(&grok_out_pattern);
+        bend_cleanup();
     }
 }
 
