@@ -177,19 +177,19 @@ pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool) {
 
 void bend_enumerate_patterns(void (* pfn_action)(const char*)) {
     apr_hash_t* ht = fend_get_patterns();
-    apr_array_header_t* list = apr_array_make(bend_pool, COMPOSE_INIT_SZ, sizeof(char*));
+    apr_array_header_t* list = apr_array_make(bend_pool, COMPOSE_INIT_SZ, sizeof(const char*));
     apr_hash_do(&prbend_on_each_pattern, list, ht);
 
     sort_quicksort_strings(list, 0, list->nelts - 1);
 
     for(size_t i = 0; i < list->nelts; i++) {
-        char* macro = ((char**) list->elts)[i];
+        const char* macro = ((const char**) list->elts)[i];
         pfn_action(macro);
     }
 }
 
 int prbend_on_each_pattern(void* rec, const void* key, apr_ssize_t klen, const void* value) {
     apr_array_header_t* list = (apr_array_header_t*) rec;
-    *(char**) apr_array_push(list) = (char*) key;
+    *(const char**) apr_array_push(list) = (const char*) key;
     return 1;
 }
