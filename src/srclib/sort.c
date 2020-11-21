@@ -13,18 +13,18 @@
 #include "sort.h"
 
 int prsort_partition(apr_array_header_t* array, int start, int end) {
-    char* temp;//swap helper
-    int marker = start;//divides left and right subarrays
+    char* temp;
+    int marker = start;
     for(int i = start; i <= end; i++) {
-        if(apr_strnatcmp(((char**) array->elts)[i], ((char**) array->elts)[end]) < 0) //array[end] is pivot
-        {
-            temp = ((char**) array->elts)[marker]; // swap
+        //array[end] is pivot
+        if(apr_strnatcmp(((char**) array->elts)[i], ((char**) array->elts)[end]) < 0) {
+            temp = ((char**) array->elts)[marker];
             ((char**) array->elts)[marker] = ((char**) array->elts)[i];
             ((char**) array->elts)[i] = temp;
             marker += 1;
         }
     }
-    //put pivot(array[end]) between left and right subarrays
+
     temp = ((char**) array->elts)[marker];
     ((char**) array->elts)[marker] = ((char**) array->elts)[end];
     ((char**) array->elts)[end] = temp;
