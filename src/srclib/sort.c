@@ -13,21 +13,22 @@
 #include "sort.h"
 
 int prsort_partition(apr_array_header_t* array, int start, int end) {
-    char* temp;
+    const char* temp;
     int marker = start;
+    const char** items = (const char**) array->elts;
     for(int i = start; i <= end; i++) {
         //array[end] is pivot
-        if(apr_strnatcmp(((char**) array->elts)[i], ((char**) array->elts)[end]) < 0) {
-            temp = ((char**) array->elts)[marker];
-            ((char**) array->elts)[marker] = ((char**) array->elts)[i];
-            ((char**) array->elts)[i] = temp;
+        if(apr_strnatcmp(items[i], items[end]) < 0) {
+            temp = items[marker];
+            items[marker] = items[i];
+            items[i] = temp;
             marker += 1;
         }
     }
 
-    temp = ((char**) array->elts)[marker];
-    ((char**) array->elts)[marker] = ((char**) array->elts)[end];
-    ((char**) array->elts)[end] = temp;
+    temp = items[marker];
+    items[marker] = items[end];
+    items[end] = temp;
     return marker;
 }
 
