@@ -107,8 +107,11 @@ void lib_size_to_string(uint64_t size, char* str) {
     if(str == NULL) {
         return;
     }
-    lib_sprintf(str, normalized.unit ? BIG_FILE_FORMAT : SMALL_FILE_FORMAT, //-V510
-                normalized.value, lib_sizes[normalized.unit], size, lib_sizes[size_unit_bytes]);
+    if(normalized.unit) {
+        lib_sprintf(str, BIG_FILE_FORMAT, normalized.value.size, lib_sizes[normalized.unit], size, lib_sizes[size_unit_bytes]);
+    } else {
+        lib_sprintf(str, SMALL_FILE_FORMAT, size, lib_sizes[size_unit_bytes]);
+    }
 }
 
 uint32_t lib_htoi(const char* ptr, int size) {
