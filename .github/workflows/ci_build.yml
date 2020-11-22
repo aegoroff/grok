@@ -35,7 +35,13 @@ jobs:
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true
     - name: Unit Tests
-      run: ${{ runner.temp }}/build/Release/_tst.exe
+      run: ${{ runner.temp }}/build/Release/_tst.exe -r junit -o WindowsTestsResult.xml
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1.5
+      if: always()
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        files: ${{ runner.temp }}/build/Release/*.xml
     - name: Install
       run: |
         cmake --install ${{ runner.temp }}/build
@@ -69,7 +75,13 @@ jobs:
         env:
           APR_HOME: /usr/local/
       - name: Unit Tests
-        run: ${{ runner.temp }}/build/_tst
+        run: ${{ runner.temp }}/build/_tst -r junit -o LinixTestsResult.xml
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1.5
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          files: ${{ runner.temp }}/build/*.xml
       - name: Install
         run: |
           cmake --install ${{ runner.temp }}/build
