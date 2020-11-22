@@ -75,7 +75,8 @@ SET(GROK_SOURCE_FILES
         "${SRC}/${GROK}/pattern.c")
 
 SET(TST_SOURCE_FILES
-        "${SRC}/${TST}/_tst.cpp")
+        "${SRC}/${TST}/_tst.cpp"
+        "${SRC}/${TST}/encoding.cpp")
 
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
