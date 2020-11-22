@@ -16,112 +16,118 @@
 #include "catch.hpp"
 #include "lib.h"
 
-TEST_CASE("1SymbolByte", "[htoi]") {
+TEST_CASE("parse one symbol", "[htoi]") {
     REQUIRE( lib_htoi("5", 1) == 5 );
 }
 
-TEST_CASE("2SymbolByte", "[htoi]") {
+TEST_CASE("parse max byte value", "[htoi]") {
     REQUIRE( lib_htoi("FF", 2) == 255 );
 }
 
-//TEST(Htoi, ZeroSize) {
-//    EXPECT_EQ(0, lib_htoi("FF", 0));
-//}
-//
-//TEST(Htoi, NegativeSize) {
-//    EXPECT_EQ(0, lib_htoi("FF", -1));
-//}
-//
-//TEST(Htoi, 2Bytes) {
-//    EXPECT_EQ(65518, lib_htoi("FFEE", 4));
-//}
-//
-//TEST(Htoi, TrimTest) {
-//    EXPECT_EQ(65518, lib_htoi("  FFEE", 6));
-//}
-//
-//TEST(Htoi, OnlyWhiteSpaces) {
-//    EXPECT_EQ(0, lib_htoi(" \t", 2));
-//}
-//
-//TEST(Htoi, TrimTestOfPartString) {
-//    EXPECT_EQ(255, lib_htoi("  FFEE", 4));
-//}
-//
-//TEST(Htoi, 2BytesPartString) {
-//    EXPECT_EQ(255, lib_htoi("FFFF", 2));
-//}
-//
-//TEST(Htoi, NullString) {
-//    EXPECT_EQ(0, lib_htoi(NULL, 2));
-//}
-//
-//TEST(Htoi, IncorrectStringAll) {
-//    EXPECT_EQ(0, lib_htoi("RR", 2));
-//}
-//
-//TEST(Htoi, IncorrectStringPart) {
-//    EXPECT_EQ(15, lib_htoi("FR", 2));
-//}
-//
-//TEST(Trim, NullSting) {
-//    ASSERT_STREQ(NULL, lib_trim(NULL, "'\""));
-//}
+TEST_CASE("setting zero data size", "[htoi]") {
+    REQUIRE( lib_htoi("FF", 0) == 0 );
+}
 
-TEST_CASE("StringWithoutSeps", "[trim]") {
-    std::string input = "test'";
-    auto const dst_sz = input.length() + 1;
-    auto buffer = std::vector<char>(dst_sz);
-    std::copy(input.begin(), input.end(), std::inserter(buffer, buffer.begin()));
+TEST_CASE("setting negative data size", "[htoi]") {
+    REQUIRE( lib_htoi("FF", -1) == 0 );
+}
+
+TEST_CASE("parse two bytes", "[htoi]") {
+    REQUIRE( lib_htoi("FFEE", 4) == 65518 );
+}
+
+TEST_CASE("trimming test", "[htoi]") {
+    REQUIRE( lib_htoi("  FFEE", 6) == 65518 );
+}
+
+TEST_CASE("only whitespaces test", "[htoi]") {
+    REQUIRE( lib_htoi(" \t", 2) == 0 );
+}
+
+TEST_CASE("only part of string that starts from whitespaces", "[htoi]") {
+    REQUIRE( lib_htoi("  FFEE", 4) == 255 );
+}
+
+TEST_CASE("parsing only part of two bytes string", "[htoi]") {
+    REQUIRE( lib_htoi("FFFF", 2) == 255 );
+}
+
+TEST_CASE("null string parsing", "[htoi]") {
+    REQUIRE( lib_htoi(nullptr, 2) == 0 );
+}
+
+TEST_CASE("all incorrect string parsing", "[htoi]") {
+    REQUIRE( lib_htoi("RR", 2) == 0 );
+}
+
+TEST_CASE("only part of string incorrect parsing", "[htoi]") {
+    REQUIRE( lib_htoi("FR", 2) == 15 );
+}
+
+TEST_CASE("null string trimming", "[trim]") {
+    REQUIRE( lib_trim(nullptr, "'\"") == NULL );
+}
+
+TEST_CASE("string without separators", "[trim]") {
+    const char* input = "test";
+
+    auto const dst_sz = strlen(input);
+    auto buffer = std::vector<char>(dst_sz + 1);
+    buffer.insert(buffer.begin(), input, input + dst_sz );
 
     REQUIRE( lib_trim(buffer.data(), "'\"") == std::string("test") );
 }
 
 TEST_CASE("AposString", "[trim]") {
-    std::string input = "'test'";
-    auto const dst_sz = input.length() + 1;
-    auto buffer = std::vector<char>(dst_sz);
-    std::copy(input.begin(), input.end(), std::inserter(buffer, buffer.begin()));
+    const char* input = "'test'";
+
+    auto const dst_sz = strlen(input);
+    auto buffer = std::vector<char>(dst_sz + 1);
+    buffer.insert(buffer.begin(), input, input + dst_sz );
 
     REQUIRE( lib_trim(buffer.data(), "'\"") == std::string("test") );
 }
 
 TEST_CASE("AposStringNoEnd", "[trim]") {
-    std::string input = "'test";
-    auto const dst_sz = input.length() + 1;
-    auto buffer = std::vector<char>(dst_sz);
-    std::copy(input.begin(), input.end(), std::inserter(buffer, buffer.begin()));
+    const char* input = "'test";
+
+    auto const dst_sz = strlen(input);
+    auto buffer = std::vector<char>(dst_sz + 1);
+    buffer.insert(buffer.begin(), input, input + dst_sz );
 
     REQUIRE( lib_trim(buffer.data(), "'\"") == std::string("test") );
 }
 
-//TEST(Trim, AposStringNoBegin) {
-//    const char* input = "test'";
-//    auto const dst_sz = strlen(input) + 1;
-//    auto buffer = std::vector<char>(dst_sz);
-//    strcpy_s(buffer.data(), dst_sz, input);
-//
-//    ASSERT_STREQ("test", lib_trim(buffer.data(), "'\""));
-//}
-//
-//TEST(Trim, QuoteString) {
-//    const char* input = "\"test\"";
-//    auto const dst_sz = strlen(input) + 1;
-//    auto buffer = std::vector<char>(dst_sz);
-//    strcpy_s(buffer.data(), dst_sz, input);
-//
-//    ASSERT_STREQ("test", lib_trim(buffer.data(), "'\""));
-//}
-//
-//TEST(Trim, OnlyWhitespacesString) {
-//    const char* input = "   ";
-//    auto const dst_sz = strlen(input) + 1;
-//    auto buffer = std::vector<char>(dst_sz);
-//    strcpy_s(buffer.data(), dst_sz, input);
-//
-//    ASSERT_STREQ("", lib_trim(buffer.data(), NULL));
-//}
-//
+TEST_CASE("AposStringNoBegin", "[trim]") {
+    const char* input = "test'";
+
+    auto const dst_sz = strlen(input);
+    auto buffer = std::vector<char>(dst_sz + 1);
+    buffer.insert(buffer.begin(), input, input + dst_sz );
+
+    REQUIRE( lib_trim(buffer.data(), "'\"") == std::string("test") );
+}
+
+TEST_CASE("QuoteString", "[trim]") {
+    const char* input = "\"test\"";
+
+    auto const dst_sz = strlen(input);
+    auto buffer = std::vector<char>(dst_sz + 1);
+    buffer.insert(buffer.begin(), input, input + dst_sz );
+
+    REQUIRE( lib_trim(buffer.data(), "'\"") == std::string("test") );
+}
+
+TEST_CASE("only whitespaces string", "[trim]") {
+    const char* input = "   ";
+
+    auto const dst_sz = strlen(input);
+    auto buffer = std::vector<char>(dst_sz + 1);
+    buffer.insert(buffer.begin(), input, input + dst_sz );
+
+    REQUIRE( lib_trim(buffer.data(), nullptr) == std::string("") );
+}
+
 //TEST(NormalizeSize, ZeroBytes) {
 //    const uint64_t size = 0;
 //
