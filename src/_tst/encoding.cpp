@@ -14,7 +14,7 @@
 #include "catch.hpp"
 #include "encoding.h"
 
-TEST_CASE("DetectBomUtf8", "[EncodingTest]") {
+TEST_CASE("Encoding / DetectBomUtf8") {
     // Arrange
     const char* buffer = "\xEF\xBB\xBF\xd1\x82\xd0\xb5\xd1\x81\xd1\x82";
     size_t offset = 0;
@@ -27,7 +27,7 @@ TEST_CASE("DetectBomUtf8", "[EncodingTest]") {
     REQUIRE( offset == 3 );
 }
 
-TEST_CASE("DetectBomUtf16le", "[EncodingTest]") {
+TEST_CASE("Encoding / DetectBomUtf16le") {
     // Arrange
     const char* buffer = "\xFF\xFE\x00\x00\x00\x00\x00\xd1\x81\xd1\x82";
     size_t offset = 0;
@@ -40,7 +40,7 @@ TEST_CASE("DetectBomUtf16le", "[EncodingTest]") {
     REQUIRE( offset == 2 );
 }
 
-TEST_CASE("DetectBomUtf16be", "[EncodingTest]") {
+TEST_CASE("Encoding / DetectBomUtf16be") {
     // Arrange
     const char* buffer = "\xFE\xFF\x00\x00\x00\x00\x00\xd1\x81\xd1\x82";
     size_t offset = 0;
@@ -53,7 +53,7 @@ TEST_CASE("DetectBomUtf16be", "[EncodingTest]") {
     REQUIRE( offset == 2 );
 }
 
-TEST_CASE("DetectBomUtf32be", "[EncodingTest]") {
+TEST_CASE("Encoding / DetectBomUtf32be") {
     // Arrange
     const char* buffer = "\x00\x00\xFE\xFF\x00\x00\x00\xd1\x81\xd1\x82";
     size_t offset = 0;
@@ -66,7 +66,7 @@ TEST_CASE("DetectBomUtf32be", "[EncodingTest]") {
     REQUIRE( offset == 4 );
 }
 
-TEST_CASE("DetectBomNoBom", "[EncodingTest]") {
+TEST_CASE("Encoding / DetectBomNoBom") {
     // Arrange
     const char* buffer = "\xd1\x82\xd0\xb5\xd1\x81\xd1\x82";
     size_t offset = 0;
