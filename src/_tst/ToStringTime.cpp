@@ -17,7 +17,7 @@ const size_t kBufferSize = 64;
 
 ToStringTime::ToStringTime() : BufferedTest(kBufferSize) {}
 
-TEST_CASE_METHOD(ToStringTime, "big time value that more then year") {
+TEST_CASE_METHOD(ToStringTime, "time to string / big time value that more then year") {
     const auto time = 50000001.0;
     auto result = lib_normalize_time(time);
     lib_time_to_string(&result, GetBuffer());
