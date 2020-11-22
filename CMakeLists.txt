@@ -77,7 +77,10 @@ SET(GROK_SOURCE_FILES
 SET(TST_SOURCE_FILES
         "${SRC}/${TST}/_tst.cpp"
         "${SRC}/${TST}/encoding.cpp"
-        "${SRC}/${TST}/lib_test.cpp")
+        "${SRC}/${TST}/lib_test.cpp"
+        "${SRC}/${TST}/BufferedTest.cpp"
+        "${SRC}/${TST}/SizeToString.cpp"
+        "${SRC}/${TST}/ToStringTime.cpp")
 
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
