@@ -16,6 +16,8 @@
 #include "catch.hpp"
 #include "lib.h"
 
+using namespace Catch::literals;
+
 TEST_CASE("parse one symbol", "[htoi]") {
     REQUIRE( lib_htoi("5", 1) == 5 );
 }
@@ -128,207 +130,208 @@ TEST_CASE("only whitespaces string", "[trim]") {
     REQUIRE( lib_trim(buffer.data(), nullptr) == std::string("") );
 }
 
-//TEST(NormalizeSize, ZeroBytes) {
-//    const uint64_t size = 0;
-//
-//    const auto result = lib_normalize_size(size);
-//
-//    EXPECT_EQ(result.unit, size_unit_bytes);
-//    EXPECT_EQ(result.value.size_in_bytes, size);
-//}
-//
-//TEST(NormalizeSize, Bytes) {
-//    const uint64_t size = 1023;
-//
-//    auto result = lib_normalize_size(size);
-//
-//    EXPECT_EQ(result.unit, size_unit_bytes);
-//    EXPECT_EQ(result.value.size_in_bytes, size);
-//}
-//
-//TEST(NormalizeSize, KBytesBoundary) {
-//    const uint64_t size = 1024;
-//
-//    const auto result = lib_normalize_size(size);
-//
-//    EXPECT_EQ(result.unit, size_unit_kbytes);
-//    EXPECT_EQ(result.value.size, 1.0);
-//}
-//
-//TEST(NormalizeSize, KBytes) {
-//    uint64_t size = BINARY_THOUSAND * 2;
-//
-//    const auto result = lib_normalize_size(size);
-//
-//    EXPECT_EQ(result.unit, size_unit_kbytes);
-//    EXPECT_EQ(result.value.size, 2.0);
-//}
-//
-//TEST(NormalizeSize, MBytes) {
-//    uint64_t size = BINARY_THOUSAND * BINARY_THOUSAND * 2;
-//
-//    const auto result = lib_normalize_size(size);
-//
-//    EXPECT_EQ(result.unit, size_unit_mbytes);
-//    EXPECT_EQ(result.value.size, 2.0);
-//}
-//
-//TEST(NormalizeSize, GBytes) {
-//    const auto size = BINARY_THOUSAND * BINARY_THOUSAND * BINARY_THOUSAND *
-//            static_cast<uint64_t>(4);
-//
-//    const auto result = lib_normalize_size(size);
-//
-//    EXPECT_EQ(result.unit, size_unit_gbytes);
-//    EXPECT_EQ(result.value.size, 4.0);
-//}
-//
-//TEST(NormalizeSize, TBytes) {
-//    const auto size = static_cast<uint64_t>(BINARY_THOUSAND) * BINARY_THOUSAND *
-//            BINARY_THOUSAND * BINARY_THOUSAND * 2;
-//
-//    const auto result = lib_normalize_size(size);
-//
-//    EXPECT_EQ(result.unit, size_unit_tbytes);
-//    EXPECT_EQ(result.value.size, 2.0);
-//}
-//
-//TEST(NormalizeSize, PBytes) {
-//    const auto size = static_cast<uint64_t>(BINARY_THOUSAND) * BINARY_THOUSAND *
-//            BINARY_THOUSAND * BINARY_THOUSAND * BINARY_THOUSAND * 2;
-//
-//    const auto result = lib_normalize_size(size);
-//
-//    EXPECT_EQ(result.unit, size_unit_pbytes);
-//    EXPECT_EQ(result.value.size, 2.0);
-//}
-//
-//TEST(NormalizeSize, EBytes) {
-//    const auto size = static_cast<uint64_t>(BINARY_THOUSAND) * BINARY_THOUSAND *
-//            BINARY_THOUSAND * BINARY_THOUSAND * BINARY_THOUSAND *
-//            BINARY_THOUSAND * 2;
-//
-//    const auto result = lib_normalize_size(size);
-//
-//    EXPECT_EQ(size_unit_ebytes, result.unit);
-//    EXPECT_EQ(2.0, result.value.size);
-//}
-//
-//TEST(NormalizeTime, Hours) {
-//    const auto time = 7000.0;
-//
-//    const auto result = lib_normalize_time(time);
-//
-//    EXPECT_EQ(1, result.hours);
-//    EXPECT_EQ(56, result.minutes);
-//    EXPECT_FLOAT_EQ(40.00, result.seconds);
-//}
-//
-//TEST(NormalizeTime, HoursFractial) {
-//    const auto time = 7000.51;
-//
-//    const auto result = lib_normalize_time(time);
-//
-//    EXPECT_EQ(1, result.hours);
-//    EXPECT_EQ(56, result.minutes);
-//    EXPECT_FLOAT_EQ(40.51, result.seconds);
-//}
-//
-//TEST(NormalizeTime, Minutes) {
-//    const auto time = 200.0;
-//
-//    const auto result = lib_normalize_time(time);
-//
-//    EXPECT_EQ(0, result.hours);
-//    EXPECT_EQ(3, result.minutes);
-//    EXPECT_FLOAT_EQ(20.00, result.seconds);
-//}
-//
-//TEST(NormalizeTime, Seconds) {
-//    const auto time = 50.0;
-//
-//    const auto result = lib_normalize_time(time);
-//
-//    EXPECT_EQ(0, result.hours);
-//    EXPECT_EQ(0, result.minutes);
-//    EXPECT_FLOAT_EQ(50.00, result.seconds);
-//}
-//
-//TEST(NormalizeTime, BigValue) {
-//    const auto time = 500001.0;
-//
-//    const auto result = lib_normalize_time(time);
-//
-//    EXPECT_EQ(5, result.days);
-//    EXPECT_EQ(18, result.hours);
-//    EXPECT_EQ(53, result.minutes);
-//    EXPECT_FLOAT_EQ(21.00, result.seconds);
-//}
-//
-//TEST(CountDigits, Zero) {
-//    EXPECT_EQ(1, lib_count_digits_in(0.0));
-//}
-//
-//TEST(CountDigits, One) {
-//    EXPECT_EQ(1, lib_count_digits_in(1.0));
-//}
-//
-//TEST(CountDigits, Ten) {
-//    EXPECT_EQ(2, lib_count_digits_in(10.0));
-//}
-//
-//TEST(CountDigits, N100) {
-//    EXPECT_EQ(3, lib_count_digits_in(100.0));
-//}
-//
-//TEST(CountDigits, N100F) {
-//    EXPECT_EQ(3, lib_count_digits_in(100.23423));
-//}
-//
-//TEST(CountDigits, N1000) {
-//    EXPECT_EQ(4, lib_count_digits_in(1000.0));
-//}
-//
-//TEST(CountDigits, N10000) {
-//    EXPECT_EQ(5, lib_count_digits_in(10000.0));
-//}
-//
-//TEST(CountDigits, N100000) {
-//    EXPECT_EQ(6, lib_count_digits_in(100000.0));
-//}
-//
-//TEST(CountDigits, N1000000) {
-//    EXPECT_EQ(7, lib_count_digits_in(1000000.0));
-//}
-//
-//TEST(CountDigits, N10000000) {
-//    EXPECT_EQ(8, lib_count_digits_in(10000000.0));
-//}
-//
-//TEST(CountDigits, N100000000) {
-//    EXPECT_EQ(9, lib_count_digits_in(100000000.0));
-//}
-//
-//TEST(CountDigits, N1000000000) {
-//    EXPECT_EQ(10, lib_count_digits_in(1000000000.0));
-//}
-//
-//TEST(CountDigits, N10000000000) {
-//    EXPECT_EQ(11, lib_count_digits_in(10000000000.0));
-//}
-//
-//TEST(CountDigits, N100000000000) {
-//    EXPECT_EQ(12, lib_count_digits_in(100000000000.0));
-//}
-//
-//TEST(GetFileName, Full) {
-//    ASSERT_STREQ("file.txt", lib_get_file_name("c:\\path\\file.txt"));
-//}
-//
-//TEST(GetFileName, OnlyFile) {
-//    ASSERT_STREQ("file.txt", lib_get_file_name("file.txt"));
-//}
-//
-//TEST(GetFileName, Null) {
-//    ASSERT_STREQ(NULL, lib_get_file_name(NULL));
-//}
+TEST_CASE("zero bytes", "[NormalizeSize]") {
+    const uint64_t size = 0;
+
+    const auto result = lib_normalize_size(size);
+
+    REQUIRE(result.unit == size_unit_bytes);
+    REQUIRE(result.value.size_in_bytes == size);
+}
+
+TEST_CASE("Bytes", "[NormalizeSize]")  {
+    const uint64_t size = 1023;
+
+    auto result = lib_normalize_size(size);
+
+    REQUIRE(result.unit == size_unit_bytes);
+    REQUIRE(result.value.size_in_bytes == size);
+}
+
+TEST_CASE("KBytesBoundary", "[NormalizeSize]")  {
+    const uint64_t size = 1024;
+
+    const auto result = lib_normalize_size(size);
+
+    REQUIRE(result.unit == size_unit_kbytes);
+    REQUIRE(result.value.size == 1.0);
+}
+
+TEST_CASE("KBytes", "[NormalizeSize]")  {
+    uint64_t size = BINARY_THOUSAND * 2;
+
+    const auto result = lib_normalize_size(size);
+
+    REQUIRE(result.unit == size_unit_kbytes);
+    REQUIRE(result.value.size == 2.0);
+}
+
+TEST_CASE("MBytes", "[NormalizeSize]")  {
+    uint64_t size = BINARY_THOUSAND * BINARY_THOUSAND * 2;
+
+    const auto result = lib_normalize_size(size);
+
+    REQUIRE(result.unit == size_unit_mbytes);
+    REQUIRE(result.value.size == 2.0);
+}
+
+TEST_CASE("GBytes", "[NormalizeSize]")  {
+    const auto size = BINARY_THOUSAND * BINARY_THOUSAND * BINARY_THOUSAND *
+            static_cast<uint64_t>(4);
+
+    const auto result = lib_normalize_size(size);
+
+    REQUIRE(result.unit == size_unit_gbytes);
+    REQUIRE(result.value.size == 4.0);
+}
+
+TEST_CASE("TBytes", "[NormalizeSize]")  {
+    const auto size = static_cast<uint64_t>(BINARY_THOUSAND) * BINARY_THOUSAND *
+            BINARY_THOUSAND * BINARY_THOUSAND * 2;
+
+    const auto result = lib_normalize_size(size);
+
+    REQUIRE(result.unit == size_unit_tbytes);
+    REQUIRE(result.value.size == 2.0);
+}
+
+TEST_CASE("PBytes", "[NormalizeSize]")  {
+    const auto size = static_cast<uint64_t>(BINARY_THOUSAND) * BINARY_THOUSAND *
+            BINARY_THOUSAND * BINARY_THOUSAND * BINARY_THOUSAND * 2;
+
+    const auto result = lib_normalize_size(size);
+
+    REQUIRE(result.unit == size_unit_pbytes);
+    REQUIRE(result.value.size == 2.0);
+}
+
+TEST_CASE("EBytes", "[NormalizeSize]")  {
+    const auto size = static_cast<uint64_t>(BINARY_THOUSAND) * BINARY_THOUSAND *
+            BINARY_THOUSAND * BINARY_THOUSAND * BINARY_THOUSAND *
+            BINARY_THOUSAND * 2;
+
+    const auto result = lib_normalize_size(size);
+
+    REQUIRE(result.unit == size_unit_ebytes);
+    REQUIRE(result.value.size == 2.0);
+}
+
+TEST_CASE("Hours", "[NormalizeTime]")  {
+    const auto time = 7000.0;
+
+    const auto result = lib_normalize_time(time);
+
+    REQUIRE(result.hours == 1);
+    REQUIRE(result.minutes == 56);
+    REQUIRE(result.seconds == 40.00_a);
+}
+
+TEST_CASE("HoursFractial", "[NormalizeTime]")  {
+    const auto time = 7000.51;
+
+    const auto result = lib_normalize_time(time);
+
+    REQUIRE(result.hours == 1);
+    REQUIRE(result.minutes == 56);
+    REQUIRE(result.seconds == 40.51_a);
+}
+
+TEST_CASE("Minutes", "[NormalizeTime]")  {
+    const auto time = 200.0;
+
+    const auto result = lib_normalize_time(time);
+
+    REQUIRE(result.hours == 0);
+    REQUIRE(result.minutes == 3);
+    REQUIRE(result.seconds == 20.00_a);
+}
+
+TEST_CASE("Seconds", "[NormalizeTime]")  {
+    const auto time = 50.0;
+
+    const auto result = lib_normalize_time(time);
+
+    REQUIRE(result.hours == 0);
+    REQUIRE(result.minutes == 0);
+    REQUIRE(result.seconds == 50.00_a);
+}
+
+TEST_CASE("BigValue", "[NormalizeTime]")  {
+    const auto time = 500001.0;
+
+    const auto result = lib_normalize_time(time);
+
+
+    REQUIRE(result.days == 5);
+    REQUIRE(result.hours == 18);
+    REQUIRE(result.minutes == 53);
+    REQUIRE(result.seconds == 21.00_a);
+}
+
+TEST_CASE("Zero", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(0.0) == 1);
+}
+
+TEST_CASE("One", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(1.0) == 1);
+}
+
+TEST_CASE("Ten", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(10.0) == 2);
+}
+
+TEST_CASE("N100", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(100.0) == 3);
+}
+
+TEST_CASE("N100F", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(100.23423) == 3);
+}
+
+TEST_CASE("N1000", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(1000.0) == 4);
+}
+
+TEST_CASE("N10000", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(10000.0) == 5);
+}
+
+TEST_CASE("N100000", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(100000.0) == 6);
+}
+
+TEST_CASE("N1000000", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(1000000.0) == 7);
+}
+
+TEST_CASE("N10000000", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(10000000.0) == 8);
+}
+
+TEST_CASE("N100000000", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(100000000.0) == 9);
+}
+
+TEST_CASE("N1000000000", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(1000000000.0) == 10);
+}
+
+TEST_CASE("N10000000000", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(10000000000.0) == 11);
+}
+
+TEST_CASE("N100000000000", "[CountDigits]")  {
+    REQUIRE(lib_count_digits_in(100000000000.0) == 12);
+}
+
+TEST_CASE("Full", "[GetFileName]")  {
+    REQUIRE( lib_get_file_name("c:\\path\\file.txt") == std::string("file.txt") );
+}
+
+TEST_CASE("OnlyFile", "[GetFileName]")  {
+    REQUIRE( lib_get_file_name("file.txt") == std::string("file.txt") );
+}
+
+TEST_CASE("Null", "[GetFileName]")  {
+    REQUIRE( lib_get_file_name(nullptr) == NULL );
+}
