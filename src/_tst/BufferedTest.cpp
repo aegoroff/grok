@@ -9,6 +9,7 @@
  * Copyright: (c) Alexander Egorov 2020
  */
 
+#include <cstring>
 #include "BufferedTest.h"
 
 BufferedTest::BufferedTest(size_t buffer_size) {
