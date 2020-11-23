@@ -20,22 +20,33 @@ const char* kAnsi = "\xf2\xe5\xf1\xf2";                 // тест
 const wchar_t* kUnicode = L"\x0442\x0435\x0441\x0442";  // тест
 
 TEST_CASE("enc_is_valid_utf8") {
-    // Arrange
+    SECTION("Success") {
+        // Arrange
 
-    // Act
-    bool result = enc_is_valid_utf8(kAnsi);
+        // Act
+        bool result = enc_is_valid_utf8(kUtf8);
 
-    // Assert
-    REQUIRE_FALSE(result);
+        // Assert
+        REQUIRE(result);
+    }
+
+    SECTION("Fail") {
+        // Arrange
+
+        // Act
+        bool result = enc_is_valid_utf8(kAnsi);
+
+        // Assert
+        REQUIRE_FALSE(result);
+    }
 }
 
 TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
+    // Arrange
     apr_pool_t* method_pool;
+    apr_pool_create(&method_pool, get_pool());
 
     SECTION("enc_from_unicode_to_utf8") {
-        // Arrange
-        apr_pool_create(&method_pool, get_pool());
-
         // Act
         char* result = enc_from_unicode_to_utf8(kUnicode, method_pool);
 
@@ -44,8 +55,6 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
         REQUIRE( result == std::string(kUtf8) );
         REQUIRE( enc_is_valid_utf8(result) );
 #endif
-
-        apr_pool_destroy(method_pool);
     }
 
     SECTION("enc_from_utf8_to_unicode") {
@@ -59,9 +68,29 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 #ifdef _MSC_VER
         REQUIRE( result == std::wstring(kUnicode) );
 #endif
-
-        apr_pool_destroy(method_pool);
     }
+
+    SECTION("enc_from_ansi_to_utf8") {
+        // Act
+        const char* result = enc_from_ansi_to_utf8(kAnsi, method_pool);
+
+        // Assert
+#ifdef _MSC_VER
+        REQUIRE( result == std::string(kUtf8) );
+#endif
+    }
+
+    SECTION("enc_from_unicode_to_ansi") {
+        // Act
+        const char* result = enc_from_unicode_to_ansi(kUnicode, method_pool);
+
+        // Assert
+#ifdef _MSC_VER
+        REQUIRE( result == std::string(kAnsi) );
+#endif
+    }
+
+    apr_pool_destroy(method_pool);
 }
 
 TEST_CASE("enc_detect_bom_memory") {
