@@ -1,0 +1,43 @@
+/*!
+ * \brief   The file contains unit tests
+ * \author  \verbatim
+            Created by: Alexander Egorov
+            \endverbatim
+ * \date    \verbatim
+            Creation date: 2020-11-23
+            \endverbatim
+ * Copyright: (c) Alexander Egorov 2020
+ */
+
+#ifndef GROK_APR_TEST_FIXTURE_H
+#define GROK_APR_TEST_FIXTURE_H
+
+#include <apr_pools.h>
+
+class apr_test_fixture {
+private:
+    apr_pool_t* pool_;
+public:
+    apr_test_fixture() {
+        auto argc = 1;
+
+        const char* const argv[] = {"1"};
+
+        auto status = apr_app_initialize(&argc, (const char* const**) &argv, nullptr);
+
+        if(status != APR_SUCCESS) {
+            throw status;
+        }
+        apr_pool_create(&pool_, nullptr);
+    }
+
+    ~apr_test_fixture() {
+        apr_pool_destroy(pool_);
+        apr_terminate();
+    }
+
+protected:
+    apr_pool_t* get_pool() { return pool_; }
+};
+
+#endif //GROK_APR_TEST_FIXTURE_H
