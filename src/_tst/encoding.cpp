@@ -28,7 +28,6 @@ TEST_CASE("enc_is_valid_utf8") {
     REQUIRE_FALSE(result);
 }
 
-#ifdef _MSC_VER
 TEST_CASE("encoding tests") {
     // Arrange
     apr_pool_t* pool;
@@ -52,8 +51,10 @@ TEST_CASE("encoding tests") {
         char* result = enc_from_unicode_to_utf8(kUnicode, method_pool);
 
         // Assert
+#ifdef _MSC_VER
         REQUIRE( result == std::string(kUtf8) );
         REQUIRE( enc_is_valid_utf8(result) );
+#endif
 
         apr_pool_destroy(method_pool);
     }
@@ -66,7 +67,9 @@ TEST_CASE("encoding tests") {
         const wchar_t* result = enc_from_utf8_to_unicode(kUtf8, method_pool);
 
         // Assert
+#ifdef _MSC_VER
         REQUIRE( result == std::wstring(kUnicode) );
+#endif
 
         apr_pool_destroy(method_pool);
     }
@@ -74,7 +77,6 @@ TEST_CASE("encoding tests") {
     apr_pool_destroy(pool);
     apr_terminate();
 }
-#endif
 
 TEST_CASE("enc_detect_bom_memory") {
     SECTION("Utf8") {
