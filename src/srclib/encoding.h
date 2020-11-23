@@ -14,9 +14,10 @@
 
 #ifdef __cplusplus
 extern "C" {
+#else
+#include <stdbool.h>
 #endif
 
-#include <stdbool.h>
 #include "apr_pools.h"
 #include "apr_file_io.h"
 
