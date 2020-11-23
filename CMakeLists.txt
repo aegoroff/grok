@@ -79,7 +79,8 @@ SET(TST_SOURCE_FILES
         "${SRC}/${TST}/encoding.cpp"
         "${SRC}/${TST}/lib_test.cpp"
         "${SRC}/${TST}/size_to_string.cpp"
-        "${SRC}/${TST}/time_to_string.cpp")
+        "${SRC}/${TST}/time_to_string.cpp"
+        "${SRC}/${TST}/trim_tests.cpp")
 
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")

@@ -31,7 +31,7 @@ public:
         apr_pool_create(&pool_, nullptr);
     }
 
-    ~apr_test_fixture() {
+    virtual ~apr_test_fixture() {
         apr_pool_destroy(pool_);
         apr_terminate();
     }
