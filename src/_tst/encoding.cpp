@@ -90,6 +90,16 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 #endif
     }
 
+    SECTION("enc_from_ansi_to_unicode") {
+        // Act
+        const wchar_t* result = enc_from_ansi_to_unicode(kAnsi, method_pool);
+
+        // Assert
+#ifdef _MSC_VER
+        REQUIRE( result == std::wstring(kUnicode) );
+#endif
+    }
+
     apr_pool_destroy(method_pool);
 }
 
