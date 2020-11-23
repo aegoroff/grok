@@ -142,7 +142,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.value.size_in_bytes == size);
     }
 
-    SECTION("Bytes")  {
+    SECTION("Bytes") {
         const uint64_t size = 1023;
 
         auto result = lib_normalize_size(size);
@@ -151,7 +151,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.value.size_in_bytes == size);
     }
 
-    SECTION("KBytes on boundary")  {
+    SECTION("KBytes on boundary") {
         const uint64_t size = 1024;
 
         const auto result = lib_normalize_size(size);
@@ -160,7 +160,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.value.size == 1.0);
     }
 
-    SECTION("KBytes")  {
+    SECTION("KBytes") {
         uint64_t size = BINARY_THOUSAND * 2;
 
         const auto result = lib_normalize_size(size);
@@ -169,7 +169,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.value.size == 2.0);
     }
 
-    SECTION("MBytes")  {
+    SECTION("MBytes") {
         uint64_t size = BINARY_THOUSAND * BINARY_THOUSAND * 2;
 
         const auto result = lib_normalize_size(size);
@@ -178,7 +178,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.value.size == 2.0);
     }
 
-    SECTION("GBytes")  {
+    SECTION("GBytes") {
         const auto size = BINARY_THOUSAND * BINARY_THOUSAND * BINARY_THOUSAND *
                           static_cast<uint64_t>(4);
 
@@ -188,7 +188,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.value.size == 4.0);
     }
 
-    SECTION("TBytes")  {
+    SECTION("TBytes") {
         const auto size = static_cast<uint64_t>(BINARY_THOUSAND) * BINARY_THOUSAND *
                           BINARY_THOUSAND * BINARY_THOUSAND * 2;
 
@@ -198,7 +198,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.value.size == 2.0);
     }
 
-    SECTION("PBytes")  {
+    SECTION("PBytes") {
         const auto size = static_cast<uint64_t>(BINARY_THOUSAND) * BINARY_THOUSAND *
                           BINARY_THOUSAND * BINARY_THOUSAND * BINARY_THOUSAND * 2;
 
@@ -208,7 +208,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.value.size == 2.0);
     }
 
-    SECTION("EBytes")  {
+    SECTION("EBytes") {
         const auto size = static_cast<uint64_t>(BINARY_THOUSAND) * BINARY_THOUSAND *
                           BINARY_THOUSAND * BINARY_THOUSAND * BINARY_THOUSAND *
                           BINARY_THOUSAND * 2;
@@ -219,7 +219,10 @@ TEST_CASE("normalize size") {
         REQUIRE(result.value.size == 2.0);
     }
 
-    SECTION("normalize time / Hours")  {
+}
+
+TEST_CASE("normalize time") {
+    SECTION("Hours")  {
         const auto time = 7000.0;
 
         const auto result = lib_normalize_time(time);
@@ -229,7 +232,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.seconds == 40.00_a);
     }
 
-    SECTION("normalize time / HoursFractial")  {
+    SECTION("HoursFractial")  {
         const auto time = 7000.51;
 
         const auto result = lib_normalize_time(time);
@@ -239,7 +242,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.seconds == 40.51_a);
     }
 
-    SECTION("normalize time / Minutes")  {
+    SECTION("Minutes")  {
         const auto time = 200.0;
 
         const auto result = lib_normalize_time(time);
@@ -249,7 +252,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.seconds == 20.00_a);
     }
 
-    SECTION("normalize time / Seconds")  {
+    SECTION("Seconds")  {
         const auto time = 50.0;
 
         const auto result = lib_normalize_time(time);
@@ -259,7 +262,7 @@ TEST_CASE("normalize size") {
         REQUIRE(result.seconds == 50.00_a);
     }
 
-    SECTION("normalize time / BigValue")  {
+    SECTION("BigValue")  {
         const auto time = 500001.0;
 
         const auto result = lib_normalize_time(time);
