@@ -14,7 +14,7 @@
 #include "catch.hpp"
 #include "encoding.h"
 
-TEST_CASE("encoding: detect BOM") {
+TEST_CASE("enc_detect_bom_memory") {
     SECTION("Utf8") {
         // Arrange
         const char* buffer = "\xEF\xBB\xBF\xd1\x82\xd0\xb5\xd1\x81\xd1\x82";
