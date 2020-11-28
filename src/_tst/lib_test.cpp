@@ -267,21 +267,38 @@ TEST_CASE("count digits")  {
 }
 
 SCENARIO("get file name from path") {
-    WHEN("get from full path")  {
-        THEN("return only file name with extension without dir part of path") {
-            REQUIRE(lib_get_file_name("c:\\path\\file.txt") == std::string("file.txt"));
+
+    GIVEN( "full platform specific path" ) {
+#ifdef _WIN32
+        const char* path = "c:\\path\\file.txt";
+#else
+        const char* path = "/path/file.txt";
+#endif
+
+        WHEN("lib_get_file_name") {
+            THEN("return only file name with extension without dir part of path") {
+                REQUIRE(lib_get_file_name(path) == std::string("file.txt"));
+            }
         }
     }
 
-    WHEN("get from file name")  {
-        THEN("same result as input string") {
-            REQUIRE(lib_get_file_name("file.txt") == std::string("file.txt"));
+    GIVEN( "only file name" ) {
+        const char* path = "file.txt";
+
+        WHEN("lib_get_file_name") {
+            THEN("same result as input string") {
+                REQUIRE(lib_get_file_name(path) == std::string(path));
+            }
         }
     }
 
-    WHEN("get from null string")  {
-        THEN("return null and no crash occured") {
-            REQUIRE(lib_get_file_name(nullptr) == NULL);
+    GIVEN( "null path" ) {
+        const char* path = nullptr;
+
+        WHEN("lib_get_file_name") {
+            THEN("return null and no crash occurred") {
+                REQUIRE(lib_get_file_name(path) == NULL);
+            }
         }
     }
 }
