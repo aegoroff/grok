@@ -54,9 +54,6 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
     }
 
     SECTION("enc_from_utf8_to_unicode") {
-        // Arrange
-        apr_pool_create(&method_pool, get_pool());
-
         // Act
         const wchar_t* result = enc_from_utf8_to_unicode(kUtf8, method_pool);
 
