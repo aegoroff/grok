@@ -266,16 +266,22 @@ TEST_CASE("count digits")  {
     }
 }
 
-TEST_CASE("get file name") {
-    SECTION("Full")  {
-        REQUIRE( lib_get_file_name("c:\\path\\file.txt") == std::string("file.txt") );
+SCENARIO("get file name from path") {
+    WHEN("get from full path")  {
+        THEN("return only file name with extension without dir part of path") {
+            REQUIRE(lib_get_file_name("c:\\path\\file.txt") == std::string("file.txt"));
+        }
     }
 
-    SECTION("OnlyFile")  {
-        REQUIRE( lib_get_file_name("file.txt") == std::string("file.txt") );
+    WHEN("get from file name")  {
+        THEN("same result as input string") {
+            REQUIRE(lib_get_file_name("file.txt") == std::string("file.txt"));
+        }
     }
 
-    SECTION("Null")  {
-        REQUIRE( lib_get_file_name(nullptr) == NULL );
+    WHEN("get from null string")  {
+        THEN("return null and no crash occured") {
+            REQUIRE(lib_get_file_name(nullptr) == NULL);
+        }
     }
 }
