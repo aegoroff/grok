@@ -19,25 +19,21 @@ const char* kUtf8 = "\xd1\x82\xd0\xb5\xd1\x81\xd1\x82"; // тест
 const char* kAnsi = "\xf2\xe5\xf1\xf2";                 // тест
 const wchar_t* kUnicode = L"\x0442\x0435\x0441\x0442";  // тест
 
-TEST_CASE("enc_is_valid_utf8") {
-    SECTION("Success") {
-        // Arrange
-
-        // Act
+SCENARIO("utf8 encoding validation") {
+    WHEN("input is UTF-8") {
         bool result = enc_is_valid_utf8(kUtf8);
 
-        // Assert
-        REQUIRE(result);
+        THEN("result must be true") {
+            REQUIRE(result);
+        }
     }
 
-    SECTION("Fail") {
-        // Arrange
-
-        // Act
+    WHEN("input is ANSI") {
         bool result = enc_is_valid_utf8(kAnsi);
 
-        // Assert
-        REQUIRE_FALSE(result);
+        THEN("result must be false") {
+            REQUIRE_FALSE(result);
+        }
     }
 }
 
