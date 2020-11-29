@@ -38,13 +38,10 @@ SCENARIO("utf8 encoding validation") {
 }
 
 TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
-    // Arrange
-    apr_pool_t* method_pool;
-    apr_pool_create(&method_pool, get_pool());
 
     SECTION("enc_from_unicode_to_utf8") {
         // Act
-        char* result = enc_from_unicode_to_utf8(kUnicode, method_pool);
+        char* result = enc_from_unicode_to_utf8(kUnicode, get_pool());
 
         // Assert
 #ifdef _MSC_VER
@@ -55,7 +52,7 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 
     SECTION("enc_from_utf8_to_unicode") {
         // Act
-        const wchar_t* result = enc_from_utf8_to_unicode(kUtf8, method_pool);
+        const wchar_t* result = enc_from_utf8_to_unicode(kUtf8, get_pool());
 
         // Assert
 #ifdef _MSC_VER
@@ -65,7 +62,7 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 
     SECTION("enc_from_ansi_to_utf8") {
         // Act
-        const char* result = enc_from_ansi_to_utf8(kAnsi, method_pool);
+        const char* result = enc_from_ansi_to_utf8(kAnsi, get_pool());
 
         // Assert
 #ifdef _MSC_VER
@@ -75,7 +72,7 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 
     SECTION("enc_from_unicode_to_ansi") {
         // Act
-        const char* result = enc_from_unicode_to_ansi(kUnicode, method_pool);
+        const char* result = enc_from_unicode_to_ansi(kUnicode, get_pool());
 
         // Assert
 #ifdef _MSC_VER
@@ -85,15 +82,13 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 
     SECTION("enc_from_ansi_to_unicode") {
         // Act
-        const wchar_t* result = enc_from_ansi_to_unicode(kAnsi, method_pool);
+        const wchar_t* result = enc_from_ansi_to_unicode(kAnsi, get_pool());
 
         // Assert
 #ifdef _MSC_VER
         REQUIRE( result == std::wstring(kUnicode) );
 #endif
     }
-
-    apr_pool_destroy(method_pool);
 }
 
 TEST_CASE("enc_detect_bom_memory") {
