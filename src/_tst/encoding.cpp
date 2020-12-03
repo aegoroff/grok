@@ -157,3 +157,77 @@ TEST_CASE("enc_detect_bom_memory") {
         REQUIRE( offset == 0 );
     }
 }
+
+SCENARIO("get encoding names test") {
+    GIVEN( "bom_utf8 bom" ) {
+        bom_t bom = bom_utf8;
+
+        WHEN("enc_get_encoding_name") {
+            auto result = enc_get_encoding_name(bom);
+
+            THEN("UTF-8") {
+                REQUIRE("UTF-8" == std::string(result));
+            }
+        }
+    }
+
+    GIVEN( "bom_utf16le bom" ) {
+        bom_t bom = bom_utf16le;
+
+        WHEN("enc_get_encoding_name") {
+            auto result = enc_get_encoding_name(bom);
+
+            THEN("UTF-16 (LE)") {
+                REQUIRE("UTF-16 (LE)" == std::string(result));
+            }
+        }
+    }
+
+    GIVEN( "bom_utf16be bom" ) {
+        bom_t bom = bom_utf16be;
+
+        WHEN("enc_get_encoding_name") {
+            auto result = enc_get_encoding_name(bom);
+
+            THEN("UTF-16 (BE)") {
+                REQUIRE("UTF-16 (BE)" == std::string(result));
+            }
+        }
+    }
+
+    GIVEN( "bom_utf32be bom" ) {
+        bom_t bom = bom_utf32be;
+
+        WHEN("enc_get_encoding_name") {
+            auto result = enc_get_encoding_name(bom);
+
+            THEN("UTF-32 (BE)") {
+                REQUIRE("UTF-32 (BE)" == std::string(result));
+            }
+        }
+    }
+
+    GIVEN( "bom_unknown bom" ) {
+        bom_t bom = bom_unknown;
+
+        WHEN("enc_get_encoding_name") {
+            auto result = enc_get_encoding_name(bom);
+
+            THEN("Unknown") {
+                REQUIRE("Unknown" == std::string(result));
+            }
+        }
+    }
+
+    GIVEN( "invalid bom" ) {
+        auto bom = (bom_t)-1;
+
+        WHEN("enc_get_encoding_name") {
+            auto result = enc_get_encoding_name(bom);
+
+            THEN("nullptr") {
+                REQUIRE(result == nullptr);
+            }
+        }
+    }
+}
