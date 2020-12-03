@@ -9,7 +9,7 @@
 #include <SDKDDKVer.h>
 #endif
 
-#define PRODUCT_VERSION "0.2.1"
+#define PRODUCT_VERSION "0.2.2"
 #define PROGRAM_NAME "grok"
 #define APP_NAME "Grok regexp macro processor " PRODUCT_VERSION
 #ifdef _MSC_VER
