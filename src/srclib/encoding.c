@@ -51,7 +51,7 @@ static bom_def_t boms[] = {
 };
 
 const char* enc_get_encoding_name(bom_t bom) {
-    if(bom < 0 || bom > bom_utf32be - 1) {
+    if(bom < 0 || bom > bom_utf32be) {
         return NULL;
     }
     return enc_bom_names[bom];
