@@ -302,3 +302,14 @@ SCENARIO("get file name from path") {
         }
     }
 }
+
+SCENARIO("get processors count") {
+    GIVEN( "a computer" ) {
+        WHEN("lib_get_processor_count") {
+            uint32_t proc_count = lib_get_processor_count();
+            THEN("processors count must be positive") {
+                REQUIRE(proc_count > 0);
+            }
+        }
+    }
+}
