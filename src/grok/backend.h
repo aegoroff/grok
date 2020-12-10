@@ -26,7 +26,7 @@ typedef struct pattern {
 
 apr_pool_t* bend_init(apr_pool_t* pool);
 
-void bend_cleanup();
+void bend_cleanup(void);
 
 bool bend_match_re(pattern_t* pattern, const char* subject);
 
