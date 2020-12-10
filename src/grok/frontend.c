@@ -35,7 +35,7 @@ void fend_init(apr_pool_t* p) {
     fend_definition = apr_hash_make(fend_pool);
 }
 
-void fend_on_definition() {
+void fend_on_definition(void) {
     fend_composition = apr_array_make(fend_pool, ARRAY_INIT_SZ, sizeof(info_t*));
 }
 
@@ -79,6 +79,6 @@ char* fend_strdup(char* str) {
     return apr_pstrdup(fend_pool, str);
 }
 
-apr_hash_t* fend_get_patterns() {
+apr_hash_t* fend_get_patterns(void) {
     return fend_definition;
 }

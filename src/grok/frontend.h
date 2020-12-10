@@ -37,7 +37,7 @@ typedef struct macro {
 
 void fend_init(apr_pool_t* pool);
 
-void fend_on_definition();
+void fend_on_definition(void);
 
 void fend_on_definition_end(char* key);
 
@@ -49,7 +49,7 @@ macro_t* fend_on_macro(char* name, char* prop);
 
 apr_array_header_t* fend_get_pattern(const char* def);
 
-apr_hash_t* fend_get_patterns();
+apr_hash_t* fend_get_patterns(void);
 
 char* fend_strdup(char* str);
 

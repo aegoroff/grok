@@ -44,7 +44,7 @@ apr_pool_t* bend_init(apr_pool_t* pool) {
     return bend_pool;
 }
 
-void bend_cleanup() {
+void bend_cleanup(void) {
     pcre2_general_context_free(pcre_context);
     apr_pool_destroy(bend_pool);
 }
