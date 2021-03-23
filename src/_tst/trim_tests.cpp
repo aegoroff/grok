@@ -20,7 +20,7 @@ class trim_test_fixture {
 private:
     std::vector<char> buffer_;
 public:
-    trim_test_fixture() {}
+    trim_test_fixture() = default;
 
 protected:
     void arrange(const char* input) {
