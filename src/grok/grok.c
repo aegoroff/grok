@@ -41,8 +41,11 @@
 #include <apr_general.h>
 #include "argtable3.h"
 #include "configuration.h"
+
 #ifdef _MSC_VER
+
 #include <dbg_helpers.h>
+
 #endif
 
 void grok_compile_lib(struct arg_file* files);
@@ -51,7 +54,7 @@ void grok_on_string(struct arg_file* pattern_files, const char* macro, const cha
 
 void grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode);
 
-void grok_on_template_info(struct arg_file* pattern_files, const char* const macro);
+void grok_on_template_info(struct arg_file* pattern_files, const char* macro);
 
 wchar_t* grok_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
 
@@ -134,9 +137,9 @@ void grok_compile_lib(struct arg_file* files) {
 void grok_on_template_info(struct arg_file* pattern_files, const char* const macro) {
     grok_compile_lib(pattern_files);
 
-    if (macro != NULL && strlen(macro) > 0) {
+    if(macro != NULL && strlen(macro) > 0) {
         pattern_t* pattern = bend_create_pattern(macro, main_pool);
-        if (pattern == NULL) {
+        if(pattern == NULL) {
             lib_printf("pattern %s not found\n", macro);
         } else {
             lib_printf("%s\n", pattern->regex);
