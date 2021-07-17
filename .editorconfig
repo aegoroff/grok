@@ -26,8 +26,8 @@ indent_size = 2
 [*.json]
 indent_size = 2
 
-# Dotnet code style settings:
-[*.{cs}]
+# CSharp code style settings:
+[*.cs]
 # Sort using and Import directives with System.* appearing first
 dotnet_sort_system_directives_first = true
 # Avoid "this." and "Me." if not necessary
@@ -47,8 +47,6 @@ dotnet_style_coalesce_expression = true:warning
 dotnet_style_null_propagation = true:suggestion
 dotnet_style_explicit_tuple_names = true:error
 
-# CSharp code style settings:
-[*.cs]
 # Prefer "var" everywhere
 csharp_style_var_for_built_in_types = true:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion
@@ -193,7 +191,6 @@ csharp_space_around_member_access_operator = true
 csharp_space_around_nullcoalescing_op = true
 csharp_space_around_relational_op = true
 csharp_space_around_shift_op = true
-csharp_space_before_open_square_brackets = false
 csharp_space_before_array_rank_brackets = false
 csharp_space_before_attribute_colon = false
 csharp_space_before_catch_parentheses = true
