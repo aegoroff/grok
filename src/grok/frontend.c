@@ -18,6 +18,11 @@
 
 #define ARRAY_INIT_SZ   256
 
+typedef struct macro {
+    char* name;
+    char* property;
+} macro_t;
+
 /*
     fend_ - public members
     prfend_ - private members
