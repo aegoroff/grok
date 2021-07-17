@@ -30,10 +30,7 @@ typedef struct info {
     char* reference;
 } info_t;
 
-typedef struct macro {
-    char* name;
-    char* property;
-} macro_t;
+typedef struct macro macro_t;
 
 void fend_init(apr_pool_t* pool);
 
