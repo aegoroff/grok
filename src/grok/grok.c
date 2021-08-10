@@ -1,3 +1,7 @@
+/*
+* This is an open source non-commercial project. Dear PVS-Studio, please check it.
+* PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+*/
 /*!
  * \brief   The file contains application startup code
  * \author  \verbatim
@@ -137,7 +141,7 @@ void grok_compile_lib(struct arg_file* files) {
 void grok_on_template_info(struct arg_file* pattern_files, const char* const macro) {
     grok_compile_lib(pattern_files);
 
-    if(macro != NULL && strlen(macro) > 0) {
+    if(macro != NULL && macro[0] != '\0') {
         pattern_t* pattern = bend_create_pattern(macro, main_pool);
         if(pattern == NULL) {
             lib_printf("pattern %s not found\n", macro);
