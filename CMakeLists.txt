@@ -156,16 +156,19 @@ file(GLOB GROK_GENERATED_FILES
         )
 
 add_executable(grok ${GROK_SOURCE_FILES} ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
+add_library(libgrok ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
 add_executable(_tst ${TST_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
 add_dependencies(grok generate_parser)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     target_link_libraries(grok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
+    target_link_libraries(libgrok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
     target_link_libraries(_tst ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
 else()
     target_link_libraries(grok m libapr-1.a libaprutil-1.a pcre)
     target_link_libraries(_tst m libapr-1.a libaprutil-1.a pcre)
+    target_link_libraries(libgrok m libapr-1.a libaprutil-1.a pcre)
 endif()
 
 install(TARGETS grok DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
