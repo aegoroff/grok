@@ -160,6 +160,7 @@ add_library(libgrok ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
 add_executable(_tst ${TST_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
 add_dependencies(grok generate_parser)
+add_dependencies(libgrok generate_parser)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     target_link_libraries(grok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
