@@ -56,6 +56,8 @@ jobs:
       - name: Create generated dir
         run: |
           mkdir ${{ github.workspace }}/src/grok/generated
+      - name: Install Linux packages
+        run: sudo apt update && sudo apt install -y --no-install-recommends apache2-dev libapr1-dev libaprutil1-dev
       - name: flex and bison
         run: |
           flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
