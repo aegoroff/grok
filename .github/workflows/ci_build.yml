@@ -9,7 +9,7 @@ on:
 jobs:
   build_windows:
 
-    runs-on: Windows
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -46,7 +46,7 @@ jobs:
 
   build_linux:
 
-    runs-on: Linux
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
