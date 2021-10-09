@@ -92,12 +92,13 @@ jobs:
       - name: Create generated dir
         run: |
           mkdir ${{ github.workspace }}/src/grok/generated
-      - name: install APR
+      - name: install tools and libs
         run: |
           brew install apr
           brew install apr-util
           brew install flex
           brew install bison
+          export PATH="/usr/local/opt/flex/bin:/usr/local/opt/bison/bin:$PATH"
 #      - name: flex and bison
 #        run: |
 #          flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
@@ -115,7 +116,6 @@ jobs:
           APR_HOME: /usr/local/opt/
           CMAKE_INCLUDE_PATH: /usr/local/opt/flex/include
           CMAKE_LIBRARY_PATH: /usr/local/opt/flex/lib;/usr/local/opt/bison/lib
-          PATH: /usr/local/opt/flex/bin:/usr/local/opt/bison/bin:${{ env.GITHUB_PATH }}
       - name: Unit Tests
         run: ${{ runner.temp }}/build/_tst
       - name: Install
