@@ -92,6 +92,8 @@ jobs:
       - name: Create generated dir
         run: |
           mkdir ${{ github.workspace }}/src/grok/generated
+      - name: MacPorts
+        uses: keepitsimpletech/actions/setup-macports
       - name: Install Macport
         run: |
           port version
