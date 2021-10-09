@@ -85,7 +85,7 @@ jobs:
 
   build_macos:
 
-    runs-on: macos-latest
+    runs-on: macos-11
 
     steps:
       - uses: actions/checkout@v2
@@ -94,9 +94,9 @@ jobs:
           mkdir ${{ github.workspace }}/src/grok/generated
       - name: Build APR
         run: |
-          curl -L -O https://dlcdn.apache.org//apr/apr-1.6.5.tar.gz
-          tar -xzvf apr-1.6.5.tar.gz
-          cd apr-1.6.5/
+          curl -L -O https://dlcdn.apache.org//apr/apr-1.7.0.tar.gz
+          tar -xzvf apr-1.7.0.tar.gz
+          cd apr-1.7.0/
           touch libtoolT
           ./configure
           make
