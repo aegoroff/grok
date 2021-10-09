@@ -2,7 +2,11 @@ name: CI Build
 
 on:
   push:
-    branches: [ master, develop ]
+    branches:
+      - master
+      - develop
+    tags:
+      - "v*" # Run when tag matches v*, i.e. v1.0, v20.15.10
   pull_request:
     branches: [ master ]
 
@@ -43,6 +47,7 @@ jobs:
       run: |
         cmake --install ${{ runner.temp }}/build
     - uses: actions/upload-artifact@v2
+      if: startsWith(github.ref, 'refs/tags/v')
       with:
         name: grok_windows_x64
         path: ${{ github.workspace }}/bin/*.*
@@ -79,6 +84,7 @@ jobs:
         run: |
           cmake --install ${{ runner.temp }}/build
       - uses: actions/upload-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: grok_linux_x64
           path: ${{ github.workspace }}/bin/*
@@ -120,6 +126,7 @@ jobs:
         run: |
           cmake --install ${{ runner.temp }}/build
       - uses: actions/upload-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: grok_osx_x64
           path: ${{ github.workspace }}/bin/*
