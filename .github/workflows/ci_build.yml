@@ -122,6 +122,8 @@ jobs:
           APR_HOME: /usr/local/opt/
           CMAKE_INCLUDE_PATH: /usr/local/opt/flex/include
           CMAKE_LIBRARY_PATH: /usr/local/opt/flex/lib;/usr/local/opt/bison/lib
+      - name: Unit Tests
+        run: ${{ runner.temp }}/build/_tst
       - name: Install
         run: |
           cmake --install ${{ runner.temp }}/build
