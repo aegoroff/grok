@@ -1,5 +1,8 @@
 name: CI Build
 
+env:
+  GITHUB_REF: "${{ github.ref }}"
+
 on:
   push:
     branches:
@@ -16,41 +19,41 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Install Winflexbison
-      run: |
-        choco install winflexbison
-    - name: Create generated dir
-      run: |
-        mkdir ${{ github.workspace }}/src/grok/generated
-    - name: flex and bison
-      run: |
-        win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
-        win_bison.exe --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
-      with:
-        vs-version: 16.8
-    - name: Build
-      uses: lukka/run-cmake@v3
-      with:
-        cmakeGenerator: VS16Win64
-        cmakeListsOrSettingsJson: CMakeListsTxtBasic
-        cmakeListsTxtPath: ${{ github.workspace }}/CMakeLists.txt
-        cmakeBuildType: Release
-        buildWithCMakeArgs: "-- -m"
-        buildDirectory: ${{ runner.temp }}/build
-        buildWithCMake: true
-    - name: Unit Tests
-      run: ${{ runner.temp }}/build/Release/_tst.exe
-    - name: Install
-      run: |
-        cmake --install ${{ runner.temp }}/build
-    - uses: actions/upload-artifact@v2
-      if: startsWith(github.ref, 'refs/tags/v')
-      with:
-        name: grok_windows_x64
-        path: ${{ github.workspace }}/bin/*.*
+      - uses: actions/checkout@v2
+      - name: Install Winflexbison
+        run: |
+          choco install winflexbison
+      - name: Create generated dir
+        run: |
+          mkdir ${{ github.workspace }}/src/grok/generated
+      - name: flex and bison
+        run: |
+          win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
+          win_bison.exe --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.2
+        with:
+          vs-version: 16.8
+      - name: Build
+        uses: lukka/run-cmake@v3
+        with:
+          cmakeGenerator: VS16Win64
+          cmakeListsOrSettingsJson: CMakeListsTxtBasic
+          cmakeListsTxtPath: ${{ github.workspace }}/CMakeLists.txt
+          cmakeBuildType: Release
+          buildWithCMakeArgs: "-- -m"
+          buildDirectory: ${{ runner.temp }}/build
+          buildWithCMake: true
+      - name: Unit Tests
+        run: ${{ runner.temp }}/build/Release/_tst.exe
+      - name: Install
+        run: |
+          cmake --install ${{ runner.temp }}/build
+      - uses: actions/upload-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: grok_windows_x64
+          path: ${{ github.workspace }}/bin/*.*
 
   build_linux:
 
@@ -132,3 +135,67 @@ jobs:
         with:
           name: grok_osx_x64
           path: ${{ github.workspace }}/bin/*
+
+  release:
+    name: GitHub Release
+    needs: [ build_windows, build_macos, build_linux ]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query version number
+        id: get_version
+        shell: bash
+        run: |
+          echo "using version tag ${GITHUB_REF:10}"
+          echo ::set-output name=version::"${GITHUB_REF:10}"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          release_name: ${{ steps.get_version.outputs.VERSION }}
+
+      - name: Download Linux tarball
+        uses: actions/download-artifact@v1
+        with:
+          name: grok_linux_x64
+
+      - name: Download Windows zip
+        uses: actions/download-artifact@v1
+        with:
+          name: grok_windows_x64
+
+      - name: Download MacOS zip
+        uses: actions/download-artifact@v1
+        with:
+          name: grok_osx_x64
+
+      - name: Release Linux tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./grok_linux_x64/
+          asset_content_type: application/zip
+
+      - name: Release Windows zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./grok_windows_x64/
+          asset_content_type: application/zip
+
+      - name: Release MacOS tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./grok_osx_x64/
+          asset_content_type: application/zip
