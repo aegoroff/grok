@@ -96,6 +96,8 @@ jobs:
         run: |
           brew install apr
           brew install apr-util
+          brew install flex
+          brew install bison
 #      - name: flex and bison
 #        run: |
 #          flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
