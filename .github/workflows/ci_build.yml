@@ -105,8 +105,8 @@ jobs:
           /opt/local/bin/port version
           ls -l $(which cmake)
           cmake --version
-          sudo /opt/local/bin/port -vs install apr
-          sudo /opt/local/bin/port -vs install apr-util
+          sudo /opt/local/bin/port install apr
+          sudo /opt/local/bin/port install apr-util
       - name: flex and bison
         run: |
           flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
