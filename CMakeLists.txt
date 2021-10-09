@@ -54,9 +54,11 @@ include_directories(${SRC}/${GROK})
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     include_directories($ENV{APR_HOME16}/${APR}/include)
     include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    include_directories($ENV{APR_HOME}/apr/include/apr-1)
+    include_directories($ENV{APR_HOME}/apr-util/include/apr-1)
 else()
     include_directories($ENV{APR_HOME}/include/apr-1.0)
-#    include_directories($ENV{APR_HOME}/include/apr-1)
 endif()
 
 add_definitions( -DPCRE2_STATIC )
@@ -129,13 +131,14 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STRE
                 "${APR_UTIL_X64}/${LIBR}"
         )
     endif()
-else()
-#    link_directories(
-#                "$ENV{APR_HOME}/apr/lib/"
-#                "$ENV{APR_HOME}/apr-util/lib/"
-#    )
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     link_directories(
-                "$ENV{APR_HOME}/lib/x86_64-linux-gnu/"
+        "$ENV{APR_HOME}/apr/lib/"
+        "$ENV{APR_HOME}/apr-util/lib/"
+    )
+else()
+    link_directories(
+        "$ENV{APR_HOME}/lib/x86_64-linux-gnu/"
     )
 endif()
 
