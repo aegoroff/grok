@@ -55,7 +55,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STRE
     include_directories($ENV{APR_HOME16}/${APR}/include)
     include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    include_directories($ENV{APR_HOME}/include/apr-1)
+    include_directories($ENV{APR_HOME}/apr/include/apr-1)
+    include_directories($ENV{APR_HOME}/apr-util/libexec/include/apr-1)
 else()
     include_directories($ENV{APR_HOME}/include/apr-1.0)
 endif()
@@ -132,7 +133,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STRE
     endif()
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     link_directories(
-        "$ENV{APR_HOME}/lib/"
+        "$ENV{APR_HOME}/apr/lib/"
+        "$ENV{APR_HOME}/apr-util/libexec/lib/"
     )
 else()
     link_directories(
