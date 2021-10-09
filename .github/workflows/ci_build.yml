@@ -92,9 +92,7 @@ jobs:
       - name: Create generated dir
         run: |
           mkdir ${{ github.workspace }}/src/grok/generated
-      - name: MacPorts
-        uses: keepitsimpletech/actions/setup-macports@releases/v1
-      - name: Install first Macport double-conversion using Cmake
+      - name: Install Macport
         run: |
           port version
           ls -l $(which cmake)
