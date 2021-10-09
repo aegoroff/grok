@@ -49,7 +49,7 @@ jobs:
           buildDirectory: ${{ runner.temp }}/build
           buildWithCMake: true
         env:
-          APR_HOME: ${{ github.workspace }}\APR\
+          APR_HOME16: ${{ github.workspace }}\APR\
       - name: Unit Tests
         run: ${{ runner.temp }}/build/Release/_tst.exe
       - name: Install
