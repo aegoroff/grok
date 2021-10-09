@@ -98,11 +98,6 @@ jobs:
           brew install apr-util
           brew install flex
           brew install bison
-      - name: flex and bison
-        run: |
-          export PATH="/usr/local/opt/flex/bin:/usr/local/opt/bison/bin:$PATH"
-          flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
-          bison --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
       - name: Build
         uses: lukka/run-cmake@v3
         with:
