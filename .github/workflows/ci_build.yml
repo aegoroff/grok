@@ -96,7 +96,7 @@ jobs:
         run: |
           curl -L -O https://dlcdn.apache.org//apr/apr-1.6.5.tar.gz
           tar -xzvf apr-1.6.5.tar.gz
-          cd apr-1.7.0/
+          cd apr-1.6.5/
           touch libtoolT
           ./configure
           make
