@@ -94,8 +94,8 @@ jobs:
           mkdir ${{ github.workspace }}/src/grok/generated
       - name: Build APR
         run: |
-          curl -L -O https://dlcdn.apache.org//apr/apr-1.7.0.tar.gz
-          tar -xzvf apr-1.7.0.tar.gz
+          curl -L -O https://dlcdn.apache.org//apr/apr-1.6.5.tar.gz
+          tar -xzvf apr-1.6.5.tar.gz
           cd apr-1.7.0/
           touch libtoolT
           ./configure
