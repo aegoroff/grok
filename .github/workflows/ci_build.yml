@@ -92,21 +92,20 @@ jobs:
       - name: Create generated dir
         run: |
           mkdir ${{ github.workspace }}/src/grok/generated
-      - name: MacPorts
+      - name: Build APR
         run: |
-          curl -O https://distfiles.macports.org/MacPorts/MacPorts-2.7.1.tar.bz2
-          tar xf MacPorts-2.7.1.tar.bz2
-          cd MacPorts-2.7.1/
+          curl -O https://dlcdn.apache.org//apr/apr-1.7.0.tar.bz2
+          tar xf apr-1.7.0.tar.bz2
+          cd apr-1.7.0/
           ./configure
           make
           sudo make install
-      - name: Install Macport
-        run: |
-          /opt/local/bin/port version
-          ls -l $(which cmake)
-          cmake --version
-          sudo /opt/local/bin/port install apr
-          sudo /opt/local/bin/port install apr-util
+          curl -O https://dlcdn.apache.org//apr/apr-util-1.6.1.tar.bz2
+          tar xf apr-util-1.6.1.tar.bz2
+          cd apr-util-1.6.1/
+          ./configure --with-apr=/usr/local/apr
+          make
+          sudo make install
       - name: flex and bison
         run: |
           flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
