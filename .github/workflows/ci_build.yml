@@ -102,11 +102,11 @@ jobs:
           sudo make install
       - name: Install Macport
         run: |
-          port version
+          /opt/local/bin/port version
           ls -l $(which cmake)
           cmake --version
-          sudo port -vs install apr
-          sudo port -vs install apr-util
+          sudo /opt/local/bin/port -vs install apr
+          sudo /opt/local/bin/port -vs install apr-util
       - name: flex and bison
         run: |
           flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
