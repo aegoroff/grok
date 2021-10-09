@@ -93,7 +93,13 @@ jobs:
         run: |
           mkdir ${{ github.workspace }}/src/grok/generated
       - name: MacPorts
-        uses: keepitsimpletech/actions/setup-macports
+        run: |
+          curl -O https://distfiles.macports.org/MacPorts/MacPorts-2.7.1.tar.bz2
+          tar xf MacPorts-2.7.1.tar.bz2
+          cd MacPorts-2.7.1/
+          ./configure
+          make
+          sudo make install
       - name: Install Macport
         run: |
           port version
