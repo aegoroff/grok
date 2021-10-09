@@ -72,7 +72,7 @@ jobs:
           buildDirectory: ${{ runner.temp }}/build
           buildWithCMake: true
         env:
-          APR_HOME: /usr/local/
+          APR_HOME: /usr/
       - name: Unit Tests
         run: ${{ runner.temp }}/build/_tst
       - name: Install
