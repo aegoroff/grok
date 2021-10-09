@@ -97,12 +97,14 @@ jobs:
           curl -O https://dlcdn.apache.org//apr/apr-1.7.0.tar.bz2
           tar xf apr-1.7.0.tar.bz2
           cd apr-1.7.0/
+          touch libtoolT
           ./configure
           make
           sudo make install
           curl -O https://dlcdn.apache.org//apr/apr-util-1.6.1.tar.bz2
           tar xf apr-util-1.6.1.tar.bz2
           cd apr-util-1.6.1/
+          touch libtoolT
           ./configure --with-apr=/usr/local/apr
           make
           sudo make install
