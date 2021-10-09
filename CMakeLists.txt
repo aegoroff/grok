@@ -12,61 +12,61 @@ set(APR_UTIL apr-util)
 set(LIBD Debug)
 set(LIBR Release)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(APR_X64 "$ENV{APR_HOME16}/${APR}/x64")
     set(APR_UTIL_X64 "$ENV{APR_HOME16}/${APR_UTIL}/x64")
-else ()
+else()
     set(APR_X64 "$ENV{APR_HOME}/APR")
     set(APR_UTIL_X64 "$ENV{APR_HOME}APR-UTIL")
-endif ()
+endif()
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS_RELEASE "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /W3 /utf-8 /validate-charset /sdl /std:c11 /D NDEBUG")
-    set(CMAKE_CXX_FLAGS_DEBUG "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MTd /Od /Zi /W3 /utf-8 /validate-charset /sdl /std:c11 /RTC1")
-    set(CMAKE_C_FLAGS_RELEASE "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /W3 /utf-8 /validate-charset /std:c11 /TC /sdl /D NDEBUG")
-    set(CMAKE_C_FLAGS_DEBUG "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MTd /Od /Zi /W3 /utf-8 /validate-charset /std:c11 /TC /sdl /RTC1")
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    else ()
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS_RELEASE  "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /W3 /utf-8 /validate-charset /sdl /std:c11 /D NDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG  "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MTd /Od /Zi /W3 /utf-8 /validate-charset /sdl /std:c11 /RTC1")
+    set(CMAKE_C_FLAGS_RELEASE  "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /W3 /utf-8 /validate-charset /std:c11 /TC /sdl /D NDEBUG")
+    set(CMAKE_C_FLAGS_DEBUG  "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MTd /Od /Zi /W3 /utf-8 /validate-charset /std:c11 /TC /sdl /RTC1")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    else()
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
         set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /LTCG")
-    endif ()
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS_RELEASE "/Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /D NDEBUG")
-    set(CMAKE_CXX_FLAGS_DEBUG "/Zc:wchar_t /Zc:inline /MTd /Od /Zi /RTC1")
-    set(CMAKE_C_FLAGS_RELEASE "/Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /D NDEBUG")
-    set(CMAKE_C_FLAGS_DEBUG "/Zc:wchar_t /Zc:inline /MTd /Od /Zi /RTC1")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Ofast -pthread -std=c++17")
-    set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Og -pthread -gfull -glldb -std=c++17")
-    set(CMAKE_C_FLAGS_RELEASE "-Wall -Ofast -pthread -std=c11")
-    set(CMAKE_C_FLAGS_DEBUG "-Wall -Og -pthread -gfull -glldb -std=c11")
-else ()
-    set(CMAKE_CXX_FLAGS_RELEASE "-march=haswell -Wall -Ofast -mtune=haswell -mfpmath=both -pthread -std=c++11")
-    set(CMAKE_CXX_FLAGS_DEBUG "-march=haswell -Wall -Og -ggdb -mtune=haswell -mfpmath=both -pthread -std=c++11")
-    set(CMAKE_C_FLAGS_RELEASE "-march=haswell -Wall -Ofast -mtune=haswell -mfpmath=both -pthread -std=c11")
-    set(CMAKE_C_FLAGS_DEBUG "-march=haswell -Wall -Og -ggdb -mtune=haswell -mfpmath=both -pthread -std=c11")
-endif ()
+    endif()
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS_RELEASE  "/Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /D NDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG  "/Zc:wchar_t /Zc:inline /MTd /Od /Zi /RTC1")
+    set(CMAKE_C_FLAGS_RELEASE  "/Zc:wchar_t /Zc:inline /MT /Ox /Ob2 /Oy /Oi /Ot /D NDEBUG")
+    set(CMAKE_C_FLAGS_DEBUG  "/Zc:wchar_t /Zc:inline /MTd /Od /Zi /RTC1")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    set(CMAKE_CXX_FLAGS_RELEASE  "-Wall -Ofast -pthread -std=c++17")
+    set(CMAKE_CXX_FLAGS_DEBUG  "-Wall -Og -pthread -gfull -glldb -std=c++17")
+    set(CMAKE_C_FLAGS_RELEASE  "-Wall -Ofast -pthread -std=c11")
+    set(CMAKE_C_FLAGS_DEBUG  "-Wall -Og -pthread -gfull -glldb -std=c11")
+else()
+    set(CMAKE_CXX_FLAGS_RELEASE  "-march=haswell -Wall -Ofast -mtune=haswell -mfpmath=both -pthread -std=c++11")
+    set(CMAKE_CXX_FLAGS_DEBUG  "-march=haswell -Wall -Og -ggdb -mtune=haswell -mfpmath=both -pthread -std=c++11")
+	set(CMAKE_C_FLAGS_RELEASE  "-march=haswell -Wall -Ofast -mtune=haswell -mfpmath=both -pthread -std=c11")
+    set(CMAKE_C_FLAGS_DEBUG  "-march=haswell -Wall -Og -ggdb -mtune=haswell -mfpmath=both -pthread -std=c11")
+endif()
 
 include_directories(${SRC}/${LIB})
 include_directories(${SRC}/${PCRE})
 include_directories(${SRC}/${GROK})
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     include_directories($ENV{APR_HOME16}/${APR}/include)
     include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     include_directories($ENV{APR_HOME}/apr/include/apr-1)
     include_directories($ENV{APR_HOME}/apr-util/libexec/include/apr-1)
-else ()
+else()
     include_directories($ENV{APR_HOME}/include/apr-1.0)
-endif ()
+endif()
 
-add_definitions(-DPCRE2_STATIC)
-add_definitions(-DPCRE2_CODE_UNIT_WIDTH=8)
-add_definitions(-DLINK_SIZE=2)
-add_definitions(-DHAVE_CONFIG_H)
-add_definitions(-DAPR_DECLARE_STATIC)
-add_definitions(-DAPU_DECLARE_STATIC)
+add_definitions( -DPCRE2_STATIC )
+add_definitions( -DPCRE2_CODE_UNIT_WIDTH=8 )
+add_definitions( -DLINK_SIZE=2 )
+add_definitions( -DHAVE_CONFIG_H )
+add_definitions( -DAPR_DECLARE_STATIC )
+add_definitions( -DAPU_DECLARE_STATIC )
 
 SET(GROK_SOURCE_FILES
         "${SRC}/${GROK}/backend.c"
@@ -119,50 +119,49 @@ SET(PCRE_SOURCE_FILES
 
 add_library(pcre STATIC ${PCRE_SOURCE_FILES})
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         link_directories(
                 "${APR_X64}/${LIBD}"
                 "${APR_UTIL_X64}/${LIBD}"
         )
-    else ()
+    else()
         link_directories(
                 "${APR_X64}/${LIBR}"
                 "${APR_UTIL_X64}/${LIBR}"
         )
-    endif ()
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    endif()
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     link_directories(
-            "$ENV{APR_HOME}/apr/lib/"
-            "$ENV{APR_HOME}/apr-util/libexec/lib/"
+        "$ENV{APR_HOME}/apr/lib/"
+        "$ENV{APR_HOME}/apr-util/libexec/lib/"
     )
-else ()
+else()
     link_directories(
-            "$ENV{APR_HOME}/lib/x86_64-linux-gnu/"
+        "$ENV{APR_HOME}/lib/x86_64-linux-gnu/"
     )
-endif ()
+endif()
 
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(FLEX win_flex.exe --fast --wincompat --outfile="${GEN}/grok.flex.c" grok.lex)
     set(BISON win_bison.exe --output="${GEN}/grok.tab.c" -dy grok.y)
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     set(FLEX /usr/local/opt/flex/bin/flex --fast --outfile="${GEN}/grok.flex.c" grok.lex)
     set(BISON /usr/local/opt/bison/bin/bison --output="${GEN}/grok.tab.c" -dy grok.y)
-else ()
+else()
     set(FLEX flex --fast --outfile="${GEN}/grok.flex.c" grok.lex)
     set(BISON bison --output="${GEN}/grok.tab.c" -dy grok.y)
-endif ()
+endif()
 
 add_custom_target(generate_parser
         COMMAND ${FLEX}
         COMMAND ${BISON}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}
-        )
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 
-set(GROK_GENERATED_FILES
-        "${SRC}/${GROK}/${GEN}/grok.flex.c"
-        "${SRC}/${GROK}/${GEN}/grok.tab.c"
+file(GLOB GROK_GENERATED_FILES
+        CONFIGURE_DEPENDS *.c
+        "${SRC}/${GROK}/${GEN}/*.c"
         )
 
 add_executable(grok ${GROK_SOURCE_FILES} ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
@@ -172,15 +171,15 @@ add_executable(_tst ${TST_SOURCE_FILES} ${LIB_SOURCE_FILES})
 add_dependencies(grok generate_parser)
 add_dependencies(libgrok generate_parser)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     target_link_libraries(grok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
     target_link_libraries(libgrok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
     target_link_libraries(_tst ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
-else ()
+else()
     target_link_libraries(grok m libapr-1.a libaprutil-1.a pcre)
     target_link_libraries(_tst m libapr-1.a libaprutil-1.a pcre)
     target_link_libraries(libgrok m libapr-1.a libaprutil-1.a pcre)
-endif ()
+endif()
 
 install(TARGETS grok DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 install(FILES ${PATTERN_FILES} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
