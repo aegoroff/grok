@@ -26,6 +26,10 @@ jobs:
       - name: Create generated dir
         run: |
           mkdir ${{ github.workspace }}/src/grok/generated
+      - name: Download APR
+        run: |
+          curl -O https://drive.google.com/file/d/1WeIo7YUKfouddMLVXzhAs7h9FzbRrJ75/view?usp=sharing
+          7z e apr-vs2019.zip
       - name: flex and bison
         run: |
           win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
@@ -44,6 +48,8 @@ jobs:
           buildWithCMakeArgs: "-- -m"
           buildDirectory: ${{ runner.temp }}/build
           buildWithCMake: true
+        env:
+          APR_HOME: ${{ github.workspace }}/apr-vs2019/
       - name: Unit Tests
         run: ${{ runner.temp }}/build/Release/_tst.exe
       - name: Install
