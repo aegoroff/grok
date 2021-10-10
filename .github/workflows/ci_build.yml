@@ -46,6 +46,7 @@ jobs:
         with:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: ${{ github.workspace }}\CMakeLists.txt
+          cmakeBuildType: Release
           buildWithCMakeArgs: "-- -v:n"
           buildDirectory: ${{ runner.temp }}\build
           buildWithCMake: true
