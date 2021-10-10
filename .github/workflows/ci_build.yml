@@ -55,7 +55,7 @@ jobs:
       - name: Unit Tests
         shell: cmd
         run: |
-          chcp 866
+          chcp
           ${{ runner.temp }}\build\Release\_tst.exe
       - name: Install
         run: |
