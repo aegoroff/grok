@@ -61,12 +61,8 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
     }
 
     SECTION("enc_from_ansi_to_utf8") {
-        // Arrange
-        UINT code_page = GetACP();
-        const char* s = code_page == 1251 ? kAnsi : kUtf8;
-
         // Act
-        const char* result = enc_from_ansi_to_utf8(s, get_pool());
+        const char* result = enc_from_ansi_to_utf8(kAnsi, get_pool());
 
         // Assert
 #ifdef _MSC_VER
@@ -75,26 +71,18 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
     }
 
     SECTION("enc_from_unicode_to_ansi") {
-        // Arrange
-        UINT code_page = GetACP();
-        const char* s = code_page == 1251 ? kAnsi : kUtf8;
-
         // Act
         const char* result = enc_from_unicode_to_ansi(kUnicode, get_pool());
 
         // Assert
 #ifdef _MSC_VER
-        REQUIRE( result == std::string(s) );
+        REQUIRE( result == std::string(kAnsi) );
 #endif
     }
 
     SECTION("enc_from_ansi_to_unicode") {
-        // Arrange
-        UINT code_page = GetACP();
-        const char* s = code_page == 1251 ? kAnsi : kUtf8;
-
         // Act
-        const wchar_t* result = enc_from_ansi_to_unicode(s, get_pool());
+        const wchar_t* result = enc_from_ansi_to_unicode(kAnsi, get_pool());
 
         // Assert
 #ifdef _MSC_VER
