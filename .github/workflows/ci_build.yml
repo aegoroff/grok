@@ -49,7 +49,7 @@ jobs:
           buildWithCMakeArgs: "-- -v:n"
           buildDirectory: ${{ runner.temp }}\build
           buildWithCMake: true
-          cmakeAppendedArgs: '-G"Visual Studio 16 2019" -Ax64 -DCMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION=10.0.19041.0 -DCMAKE_BUILD_TYPE=Release'
+          cmakeAppendedArgs: '-G"Visual Studio 16 2019" -Ax64 -DCMAKE_SYSTEM_VERSION=10.0.19041.0 -DCMAKE_BUILD_TYPE=Release'
         env:
           APR_HOME16: ${{ github.workspace }}\APR\
       - name: Unit Tests
