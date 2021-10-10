@@ -16,7 +16,7 @@ on:
 jobs:
   build_windows:
 
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - uses: actions/checkout@v2
@@ -37,7 +37,7 @@ jobs:
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.0.3
         with:
-          vs-version: 16.11
+          vs-version: 17.0
       - name: Build
         uses: lukka/run-cmake@v3
         with:
