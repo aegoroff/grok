@@ -54,9 +54,7 @@ jobs:
           cmakeAppendedArgs: '-DCMAKE_BUILD_TYPE=Release -G"Visual Studio 16 2019" -Ax64 -DCMAKE_SYSTEM_VERSION=10.0.19041.0'
       - name: Unit Tests
         shell: cmd
-        run: |
-          chcp 866
-          ${{ runner.temp }}\build\Release\_tst.exe
+        run: ${{ runner.temp }}\build\Release\_tst.exe
       - name: Install
         run: |
           cmake --install ${{ runner.temp }}\build
