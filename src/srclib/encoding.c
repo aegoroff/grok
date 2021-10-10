@@ -32,6 +32,10 @@
 #define CP_UTF8                   65001       // UTF-8 translation
 #endif
 
+#ifndef CODE_PAGE
+#define CODE_PAGE                    CP_ACP
+#endif
+
 typedef struct bom_def {
     bom_t bom;
     size_t length;
@@ -66,7 +70,7 @@ const char* enc_get_encoding_name(bom_t bom) {
  */
 char* enc_from_utf8_to_ansi(const char* from, apr_pool_t* pool) {
 #ifdef _MSC_VER
-    return enc_decode_utf8_ansi(from, CP_UTF8, CP_ACP, pool);
+    return enc_decode_utf8_ansi(from, CP_UTF8, CODE_PAGE, pool);
 #else
     return NULL;
 #endif
@@ -77,7 +81,7 @@ char* enc_from_utf8_to_ansi(const char* from, apr_pool_t* pool) {
  */
 char* enc_from_ansi_to_utf8(const char* from, apr_pool_t* pool) {
 #ifdef _MSC_VER
-    return enc_decode_utf8_ansi(from, CP_ACP, CP_UTF8, pool);
+    return enc_decode_utf8_ansi(from, CODE_PAGE, CP_UTF8, pool);
 #else
     return NULL;
 #endif
@@ -87,7 +91,7 @@ char* enc_from_ansi_to_utf8(const char* from, apr_pool_t* pool) {
 * IMPORTANT: Memory allocated for result must be freed up by caller
 */
 wchar_t* enc_from_ansi_to_unicode(const char* from, apr_pool_t* pool) {
-    return enc_from_code_page_to_unicode(from, CP_ACP, pool);
+    return enc_from_code_page_to_unicode(from, CODE_PAGE, pool);
 }
 
 /*!
@@ -135,7 +139,7 @@ wchar_t* enc_from_code_page_to_unicode(const char* from, UINT code_page, apr_poo
 * IMPORTANT: Memory allocated for result must be freed up by caller
 */
 char* enc_from_unicode_to_ansi(const wchar_t* from, apr_pool_t* pool) {
-    return prenc_from_unicode_to_code_page(from, CP_ACP, pool);
+    return prenc_from_unicode_to_code_page(from, CODE_PAGE, pool);
 }
 
 /*!
