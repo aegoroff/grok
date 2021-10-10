@@ -134,6 +134,7 @@ jobs:
           CMAKE_INCLUDE_PATH: /usr/local/opt/flex/include
           CMAKE_LIBRARY_PATH: /usr/local/opt/flex/lib;/usr/local/opt/bison/lib
       - name: Unit Tests
+        shell: cmd
         run: ${{ runner.temp }}/build/_tst
       - name: Install
         run: |
