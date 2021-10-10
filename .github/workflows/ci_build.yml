@@ -25,7 +25,7 @@ jobs:
           choco install winflexbison
       - name: Create generated dir
         run: |
-          mkdir ${{ github.workspace }}/src/grok/generated
+          mkdir ${{ github.workspace }}\src\grok\generated
       - name: Download APR
         run: |
           curl -L  -o apr-vs2019.zip "https://drive.google.com/uc?export=download&id=1WeIo7YUKfouddMLVXzhAs7h9FzbRrJ75"
@@ -41,18 +41,17 @@ jobs:
       - name: Build
         uses: lukka/run-cmake@v3
         with:
-#          cmakeGenerator: VS16Win64
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-          cmakeListsTxtPath: ${{ github.workspace }}/CMakeLists.txt
+          cmakeListsTxtPath: ${{ github.workspace }}\CMakeLists.txt
           cmakeBuildType: Release
           buildWithCMakeArgs: "-- -v:n"
-          buildDirectory: ${{ runner.temp }}/build
+          buildDirectory: ${{ runner.temp }}\build
           buildWithCMake: true
           cmakeAppendedArgs: '-G"Visual Studio 16 2019" -Ax64'
         env:
           APR_HOME16: ${{ github.workspace }}\APR\
       - name: Unit Tests
-        run: ${{ runner.temp }}/build/Release/_tst.exe
+        run: ${{ runner.temp }}\build\Release\_tst.exe
       - name: Install
         run: |
           cmake --install ${{ runner.temp }}/build
@@ -60,7 +59,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: grok_windows_x64
-          path: ${{ github.workspace }}/bin/*.*
+          path: ${{ github.workspace }}\bin\*.*
 
   build_linux:
 
