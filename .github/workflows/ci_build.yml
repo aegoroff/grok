@@ -62,7 +62,7 @@ jobs:
       - name: Install
         run: |
           cmake --install ${{ runner.temp }}\build
-          7z a -ttar -so -an ${{ github.workspace }}\bin | 7z a -si .\${{ env.RELEASE_DIR }}\grok_windows_x64.tar.gz
+          7z a -tzip .\${{ env.RELEASE_DIR }}\grok_windows_x64.zip ${{ github.workspace }}\bin
       - uses: actions/upload-artifact@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
@@ -103,7 +103,7 @@ jobs:
       - name: Install
         run: |
           cmake --install ${{ runner.temp }}/build
-          7z a -ttar -so -an ${{ github.workspace }}/bin | 7z a -si ./${{ env.RELEASE_DIR }}/grok_linux_x64.tar.gz
+          7z a -tgzip ./${{ env.RELEASE_DIR }}/grok_linux_x64.gz ${{ github.workspace }}/bin
       - uses: actions/upload-artifact@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
@@ -153,7 +153,7 @@ jobs:
       - name: Install
         run: |
           cmake --install ${{ runner.temp }}/build
-          7z a -ttar -so -an ${{ github.workspace }}/bin | 7z a -si ./${{ env.RELEASE_DIR }}/grok_osx_x64.tar.gz
+          7z a -tgzip ./${{ env.RELEASE_DIR }}/grok_osx_x64.gz ${{ github.workspace }}/bin
       - uses: actions/upload-artifact@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
@@ -203,9 +203,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./grok_linux_x64/grok_linux_x64.tar.gz
+          asset_path: ./grok_linux_x64/grok_linux_x64.gz
           asset_content_type: application/gzip
-          asset_name: grok_linux_x64.tar.gz
+          asset_name: grok_linux_x64.gz
 
       - name: Release Windows zip
         uses: actions/upload-release-asset@v1
@@ -213,9 +213,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./grok_windows_x64/grok_windows_x64.tar.gz
-          asset_content_type: application/gzip
-          asset_name: grok_windows_x64.tar.gz
+          asset_path: ./grok_windows_x64/grok_windows_x64.zip
+          asset_content_type: application/zip
+          asset_name: grok_windows_x64.zip
 
       - name: Release MacOS tarball
         uses: actions/upload-release-asset@v1
@@ -223,6 +223,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./grok_osx_x64/grok_osx_x64.tar.gz
+          asset_path: ./grok_osx_x64/grok_osx_x64.gz
           asset_content_type: application/gzip
-          asset_name: grok_osx_x64.tar.gz
+          asset_name: grok_osx_x64.gz
