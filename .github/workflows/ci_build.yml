@@ -34,6 +34,9 @@ jobs:
         run: |
           win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
           win_bison.exe --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
+      - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
+        with:
+          sdk-version: 19041
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.0.3
         with:
@@ -47,7 +50,7 @@ jobs:
           buildWithCMakeArgs: "-- -v:n"
           buildDirectory: ${{ runner.temp }}\build
           buildWithCMake: true
-          cmakeAppendedArgs: '-G"Visual Studio 16 2019" -Ax64'
+          cmakeAppendedArgs: '-G"Visual Studio 16 2019" -Ax64 -DCMAKE_SYSTEM_VERSION=10.0.19041.0'
         env:
           APR_HOME16: ${{ github.workspace }}\APR\
       - name: Unit Tests
