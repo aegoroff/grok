@@ -2,6 +2,7 @@ name: CI Build
 
 env:
   GITHUB_REF: "${{ github.ref }}"
+  APR_HOME16: ${{ github.workspace }}\APR\
 
 on:
   push:
@@ -29,7 +30,7 @@ jobs:
       - name: Download APR
         run: |
           curl -L  -o apr-vs2019.zip "https://drive.google.com/uc?export=download&id=1WeIo7YUKfouddMLVXzhAs7h9FzbRrJ75"
-          7z x -o${{ github.workspace }}\APR\ apr-vs2019.zip
+          7z x -o${{ env.APR_HOME16 }} apr-vs2019.zip
       - name: flex and bison
         run: |
           win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
@@ -51,8 +52,6 @@ jobs:
           buildDirectory: ${{ runner.temp }}\build
           buildWithCMake: true
           cmakeAppendedArgs: '-DCMAKE_BUILD_TYPE=Release -G"Visual Studio 16 2019" -Ax64 -DCMAKE_SYSTEM_VERSION=10.0.19041.0'
-        env:
-          APR_HOME16: ${{ github.workspace }}\APR\
       - name: Unit Tests
         run: ${{ runner.temp }}\build\Release\_tst.exe
       - name: Install
