@@ -66,7 +66,10 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 
         // Assert
 #ifdef _MSC_VER
-        REQUIRE( result == std::string(kUtf8) );
+        UINT code_page = GetACP();
+        if(code_page == 1251) {
+            REQUIRE( result == std::string(kUtf8) );
+        }
 #endif
     }
 
@@ -76,7 +79,10 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 
         // Assert
 #ifdef _MSC_VER
-        REQUIRE( result == std::string(kAnsi) );
+        UINT code_page = GetACP();
+        if(code_page == 1251) {
+            REQUIRE( result == std::string(kAnsi) );
+        }
 #endif
     }
 
@@ -86,7 +92,10 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 
         // Assert
 #ifdef _MSC_VER
-        REQUIRE( result == std::wstring(kUnicode) );
+        UINT code_page = GetACP();
+        if(code_page == 1251) {
+            REQUIRE( result == std::wstring(kUnicode) );
+        }
 #endif
     }
 }
