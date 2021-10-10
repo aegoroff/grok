@@ -190,6 +190,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./grok_linux_x64/
           asset_content_type: application/zip
+          asset_name: grok_linux_x64
 
       - name: Release Windows zip
         uses: actions/upload-release-asset@v1
@@ -199,6 +200,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./grok_windows_x64/
           asset_content_type: application/zip
+          asset_name: grok_windows_x64
 
       - name: Release MacOS tarball
         uses: actions/upload-release-asset@v1
@@ -208,3 +210,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./grok_osx_x64/
           asset_content_type: application/zip
+          asset_name: grok_osx_x64
