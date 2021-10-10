@@ -56,6 +56,7 @@ jobs:
         shell: cmd
         env:
           LC_ALL: ru_RU.UTF-8
+          LANG: ru_RU
         run: ${{ runner.temp }}\build\Release\_tst.exe
       - name: Install
         run: |
