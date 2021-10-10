@@ -70,7 +70,7 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 #ifdef _MSC_VER
         REQUIRE( (GetACP() != 1251 || result == std::string(kUtf8)) );
 #else
-        REQUIRE( result != NULL);
+        REQUIRE( result == NULL);
 #endif
     }
 
