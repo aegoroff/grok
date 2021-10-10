@@ -19,10 +19,6 @@ const char* kUtf8 = "\xd1\x82\xd0\xb5\xd1\x81\xd1\x82"; // тест
 const char* kAnsi = "\xf2\xe5\xf1\xf2";                 // тест
 const wchar_t* kUnicode = L"\x0442\x0435\x0441\x0442";  // тест
 
-#ifdef _MSC_VER
-#define CP_ACP 1251
-#endif
-
 SCENARIO("utf8 encoding validation") {
     WHEN("input is UTF-8") {
         bool result = enc_is_valid_utf8(kUtf8);
