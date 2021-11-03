@@ -73,9 +73,8 @@ jobs:
         run: |
           cmake --install ${{ runner.temp }}\build
       - name: Packaging
-        shell: bash
         run: |
-          tar -cvzf .\${{ env.RELEASE_DIR }}\${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz -C ${{ github.workspace }}\bin *
+          tar -cvzf .\${{ env.RELEASE_DIR }}\${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz -C .\bin *
       - uses: actions/upload-artifact@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
