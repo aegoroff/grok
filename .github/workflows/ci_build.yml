@@ -67,9 +67,8 @@ jobs:
         run: |
           cmake --install ${{ runner.temp }}\build
       - name: Packaging
-        shell: bash
         run: |
-          7z a -ttar -so -an ${{ github.workspace }}/bin/* | 7z a -si ./${{ env.RELEASE_DIR }}/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz
+          7z a -ttar -so -an ${{ github.workspace }}\bin\* | 7z a -si .\${{ env.RELEASE_DIR }}\${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz
       - uses: actions/upload-artifact@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
