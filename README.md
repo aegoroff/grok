@@ -35,13 +35,13 @@ grok -t[h] [-m <string>] [-p <file>]...
 **EXAMPLES**
 
 Output all possible macro names (to pass as -m parameter)
-```
-grok -t
+```shell
+$ grok -t
 ```
 
 Output regular expression a macro will be expanded to
-```
-grok -t -m UNIXPATH
+```shell
+$ grok -t -m UNIXPATH
 ```
 This will output
 ```
@@ -49,11 +49,11 @@ This will output
 ```
 
 Output first log messages lines from system.log
-```
-grok -m SYSLOGBASE -f /var/log/system.log
+```shell
+$ grok -m SYSLOGBASE -f /var/log/system.log
 ```
 
 Same as above but input from stdin
-```
-cat /var/log/system.log | grok -m SYSLOGBASE
+```shell
+$ cat /var/log/system.log | grok -m SYSLOGBASE
 ```
