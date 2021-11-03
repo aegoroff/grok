@@ -67,12 +67,15 @@ jobs:
         shell: cmd
         run: ${{ runner.temp }}\build\Release\_tst.exe
       - name: Create artifact directory
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           mkdir ${{ env.RELEASE_DIR }}
       - name: Install
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           cmake --install ${{ runner.temp }}\build
       - name: Packaging
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           tar -cvzf .\${{ env.RELEASE_DIR }}\${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz -C .\bin *
       - uses: actions/upload-artifact@v2
@@ -116,12 +119,15 @@ jobs:
       - name: Unit Tests
         run: ${{ runner.temp }}/build/_tst
       - name: Create artifact directory
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           mkdir ${{ env.RELEASE_DIR }}
       - name: Install
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           cmake --install ${{ runner.temp }}/build
       - name: Packaging
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           7z a -ttar -so -an ${{ github.workspace }}/bin/* | 7z a -si ./${{ env.RELEASE_DIR }}/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET }}.tar.gz
       - uses: actions/upload-artifact@v2
@@ -172,14 +178,18 @@ jobs:
       - name: Unit Tests
         run: ${{ runner.temp }}/build/_tst
       - name: Install p7zip (MacOS)
+        if: startsWith(github.ref, 'refs/tags/v')
         run: brew install p7zip
       - name: Create artifact directory
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           mkdir ${{ env.RELEASE_DIR }}
       - name: Install
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           cmake --install ${{ runner.temp }}/build
       - name: Packaging
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           7z a -ttar -so -an ${{ github.workspace }}/bin/* | 7z a -si ./${{ env.RELEASE_DIR }}/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_TARGET }}.tar.gz
       - uses: actions/upload-artifact@v2
