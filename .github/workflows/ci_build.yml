@@ -236,8 +236,8 @@ jobs:
           name: macos
 
       - name: Create fake Cargo.toml
-       run: |
-         cat >Cargo.toml <<EOL
+        run: |
+          cat >Cargo.toml <<EOL
 [package]
 name = "${{ env.RELEASE_BIN }}"
 version = "${{ steps.get_version.outputs.VERSION }}"
@@ -245,7 +245,7 @@ description = "Regular expressions macro engine. GROK is a tool like UNIX grep o
 authors = ["egoroff <egoroff@gmail.com>"]
 homepage = "https://github.com/aegoroff/grok"
 license = "MIT"
-         EOL
+          EOL
 
       - name: Install Rust
         run: |
