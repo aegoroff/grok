@@ -389,6 +389,14 @@ const char* grok_get_executable_path(apr_pool_t* pool) {
             //     size required.
             // size + 1 made buffer null terminated
             buf = (char*) apr_pcalloc(pool, size + 1);
+        } else {
+            char* real_path = realpath(buf, NULL);
+            if(real_path != NULL) {
+                size_t len = strlen(real_path);
+                buf = (char*) apr_pcalloc(pool, len + 1);
+                memcpy(buf, real_path, len);
+                free(real_path);
+            }
         }
 #else
 #ifdef _MSC_VER
