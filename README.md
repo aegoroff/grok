@@ -10,6 +10,34 @@ This regular expression can contain references to other groks and so on. Using g
 
 So using GROK you have to use a macro name defined in patterns instead of complex regular expression.
 
+## Install the pre-compiled binary
+
+**homebrew** (only on macOS and Linux for now):
+
+Add my tap (do it once):
+```sh
+brew tap aegoroff/tap
+```
+And then install grok:
+```sh
+brew install aegoroff/tap/grok
+```
+Update grok if already installed:
+```sh
+brew upgrade aegoroff/tap/grok
+```
+**scoop**:
+
+```sh
+scoop bucket add aegoroff https://github.com/aegoroff/scoop-bucket.git
+scoop install grok
+```
+
+**manually**:
+
+Download the pre-compiled binaries from the [releases](https://github.com/aegoroff/grok/releases) and
+copy to the desired location.
+
 **SYNTAX**:
 ```
 grok [-hi] -s <string> -m <string> [-p <file>]...
