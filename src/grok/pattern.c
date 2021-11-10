@@ -29,6 +29,12 @@
 #include <stdlib.h>
 #include <libgen.h>
 
+#ifndef __APPLE_CC__
+#include <linux/limits.h>
+#include <string.h>
+
+#endif
+
 #endif
 
 apr_pool_t* patt_pool = NULL;
@@ -96,7 +102,7 @@ void patt_split_path(const char* path, const char** d, const char** f, apr_pool_
 #ifdef __APPLE_CC__
     *f = basename(dir);
 #else
-    *f = path + strlen(dir) + 1;
+    *f = path + strnlen(dir, PATH_MAX) + 1;
 #endif
 #endif
 }
