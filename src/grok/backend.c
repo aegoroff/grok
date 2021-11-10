@@ -53,7 +53,7 @@ void bend_cleanup(void) {
     apr_pool_destroy(bend_pool);
 }
 
-bool bend_match_re(pattern_t* pattern, const char* subject) {
+bool bend_match_re(pattern_t* pattern, const char* subject, size_t buffer_sz) {
     int errornumber = 0;
     size_t erroroffset = 0;
 
@@ -84,7 +84,7 @@ bool bend_match_re(pattern_t* pattern, const char* subject) {
     int rc = pcre2_match(
             re, /* the compiled pattern */
             subject, /* the subject string */
-            strlen(subject), /* the length of the subject */
+            strnlen(subject, buffer_sz), /* the length of the subject */
             0, /* start at offset 0 in the subject */
             flags,
             match_data, /* block for storing the result */
