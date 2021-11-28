@@ -3,7 +3,7 @@ GROK
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d16744e2d18482186640ce1397d8b55)](https://app.codacy.com/manual/egoroff/grok?utm_source=github.com&utm_medium=referral&utm_content=aegoroff/grok&utm_campaign=Badge_Grade_Dashboard)
 [![CI Build](https://github.com/aegoroff/grok/actions/workflows/ci_build.yml/badge.svg)](https://github.com/aegoroff/grok/actions/workflows/ci_build.yml)
-[![](https://tokei.rs/b1/github/aegoroff/grok)](https://github.com/aegoroff/grok)
+[![](https://tokei.rs/b1/github/aegoroff/grok?category=code)](https://github.com/XAMPPRocky/tokei)
 
 GROK is a tool like UNIX grep on steroids. Ofter regular expressions become huge and vague. To resolve this situation macros or grok could be applied. Grok is a peculiar regular expression's macros name. 
 This term taken from logstash project. Macros looks like named reference to a regular expression that may be rather complex expression. 
