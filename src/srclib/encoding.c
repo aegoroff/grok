@@ -189,7 +189,7 @@ bool enc_is_valid_utf8(const char* str) {
            ((cp <= 0x007F) && (num != 1)) ||
            ((cp >= 0x0080) && (cp <= 0x07FF) && (num != 2)) ||
            ((cp >= 0x0800) && (cp <= 0xFFFF) && (num != 3)) ||
-           ((cp >= 0x10000) && (cp <= 0x1FFFFF) && (num != 4))) {
+           ((cp >= 0x10000) && (num != 4))) {
             return false;
         }
     }
