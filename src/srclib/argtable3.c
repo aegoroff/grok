@@ -5178,8 +5178,6 @@ static void arg_parse_untagged(int argc, char** argv, struct arg_hdr** table, st
         /*printf("arg_parse_untagged(): argv[%d]=\"%s\" not consumed\n",optind,argv[optind]);*/
         arg_register_error(endtable, endtable, ARG_ENOMATCH, argv[optind++]);
     }
-
-    return;
 }
 
 static void arg_parse_check(struct arg_hdr** table, struct arg_end* endtable) {
@@ -5513,7 +5511,7 @@ void arg_print_syntax_ds(arg_dstr_t ds, void** argtable, const char* suffix) {
         datatype = table[tabindex]->datatype;
         arg_cat_option(syntax, sizeof(syntax), shortopts, longopts, datatype, table[tabindex]->flag & ARG_HASOPTVALUE);
 
-        if (strlen(syntax) > 0) {
+        if (strnlen(syntax, sizeof(syntax)) > 0) {
             /* print mandatory instances of this option */
             for (i = 0; i < table[tabindex]->mincount; i++) {
                 arg_dstr_cat(ds, " ");
