@@ -4843,7 +4843,6 @@ int arg_make_syntax_err_help_msg(arg_dstr_t ds, char* name, int help, int nerror
 #include <string.h>
 
 static void arg_register_error(struct arg_end* end, void* parent, int error, const char* argval) {
-    /* printf("arg_register_error(%p,%p,%d,%s)\n",end,parent,error,argval); */
     if (end->count < end->hdr.maxcount) {
         end->error[end->count] = error;
         end->parent[end->count] = parent;
@@ -4922,7 +4921,6 @@ static struct longoptions* alloc_longoptions(struct arg_hdr** table) {
             longopts = strchr(longopts + 1, ',');
         }
     } while (!(table[tabindex++]->flag & ARG_TERMINATOR));
-    /*printf("%d long options consuming %d chars in total\n",noptions,longoptlen);*/
 
     /* allocate storage for return data structure as: */
     /* (struct longoptions) + (struct options)[noptions] + char[longoptlen] */
@@ -4946,7 +4944,6 @@ static struct longoptions* alloc_longoptions(struct arg_hdr** table) {
             *store++ = 0;
             if (*longopts == ',')
                 longopts++;
-            /*fprintf(stderr,"storestart=\"%s\"\n",storestart);*/
 
             result->options[option_index].name = storestart;
             result->options[option_index].flag = &(result->getoptval);
@@ -5759,7 +5756,7 @@ void arg_print_glossary_gnu_ds(arg_dstr_t ds, void** argtable) {
             arg_cat_optionv(syntax, sizeof(syntax), shortopts, longopts, datatype, table[tabindex]->flag & ARG_HASOPTVALUE, ", ");
 
             /* If syntax fits not into column, print glossary in new line... */
-            if (strlen(syntax) > 25) {
+            if (strnlen(syntax, sizeof(syntax)) > 25) {
                 arg_dstr_catf(ds, "  %-25s %s\n", syntax, "");
                 *syntax = '\0';
             }
