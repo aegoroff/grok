@@ -13,6 +13,15 @@
  * Copyright: (c) Alexander Egorov 2019-2020
  */
 
+#ifndef _MSC_VER
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#else
+#undef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+#endif
+
 #include <stdio.h>
 #include "apr_fnmatch.h"
 #include "apr_file_info.h"
