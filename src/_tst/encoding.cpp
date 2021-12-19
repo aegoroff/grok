@@ -47,6 +47,8 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 #ifdef _MSC_VER
         REQUIRE( result == std::string(kUtf8) );
         REQUIRE( enc_is_valid_utf8(result) );
+#else
+        REQUIRE( result != NULL);
 #endif
     }
 
