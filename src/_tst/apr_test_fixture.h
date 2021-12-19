@@ -21,6 +21,15 @@ public:
     apr_test_fixture() {
         auto argc = 1;
 
+#ifdef _MSC_VER
+        setlocale(LC_ALL, ".ACP");
+#elifdef __APPLE_CC__
+        setlocale(LC_ALL, "en_US.utf8");
+#else
+        setlocale(LC_ALL, "C.UTF-8");
+#endif
+        setlocale(LC_NUMERIC, "C");
+
         const char* const argv[] = {"1"};
 
         auto status = apr_app_initialize(&argc, (const char* const**) &argv, nullptr);

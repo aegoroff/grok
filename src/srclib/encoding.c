@@ -114,7 +114,7 @@ wchar_t* enc_from_code_page_to_unicode(const char* from, UINT code_page, apr_poo
 
     const int length_wide = MultiByteToWideChar(code_page, 0, from, multi_byte_size, NULL, 0);
     // including null terminator
-    const apr_size_t wide_buffer_size = sizeof(wchar_t) * (apr_size_t) length_wide;
+    const apr_size_t wide_buffer_size = sizeof(wchar_t) * (apr_size_t) (length_wide + 1);
     wchar_t* wide_str = (wchar_t*) apr_pcalloc(pool, wide_buffer_size);
     if(wide_str == NULL) {
         lib_printf(ALLOCATION_FAILURE_MESSAGE, wide_buffer_size, __FILE__, __LINE__);
@@ -125,8 +125,11 @@ wchar_t* enc_from_code_page_to_unicode(const char* from, UINT code_page, apr_poo
 #else
     wchar_t* result = NULL;
     size_t length_wide = mbstowcs(NULL, from, 0);
+    if (length_wide == (size_t) -1) {
+        return NULL;
+    }
     result = (wchar_t*) apr_pcalloc(pool, (length_wide + 1) * sizeof(wchar_t));
-    mbstowcs(result, from, length_wide + 1);
+    mbstowcs(result, from, length_wide);
     return result;
 #endif
 }
@@ -263,8 +266,11 @@ char* prenc_from_unicode_to_code_page(const wchar_t* from, UINT code_page, apr_p
 #else
     char* result = NULL;
     size_t length_ansi = wcstombs(NULL, from, 0);
+    if (length_ansi == (size_t) -1) {
+        return NULL;
+    }
     result = (char*) apr_pcalloc(pool, (length_ansi + 1) * sizeof(char));
-    wcstombs(result, from, length_ansi + 1);
+    wcstombs(result, from, length_ansi);
     return result;
 #endif
 }

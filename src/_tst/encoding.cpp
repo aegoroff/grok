@@ -44,12 +44,8 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
         char* result = enc_from_unicode_to_utf8(kUnicode, get_pool());
 
         // Assert
-#ifdef _MSC_VER
         REQUIRE( result == std::string(kUtf8) );
         REQUIRE( enc_is_valid_utf8(result) );
-#else
-        REQUIRE( result != NULL);
-#endif
     }
 
     SECTION("enc_from_utf8_to_unicode") {
@@ -57,11 +53,7 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
         const wchar_t* result = enc_from_utf8_to_unicode(kUtf8, get_pool());
 
         // Assert
-#ifdef _MSC_VER
         REQUIRE( result == std::wstring(kUnicode) );
-#else
-        REQUIRE( result != NULL);
-#endif
     }
 
     SECTION("enc_from_ansi_to_utf8") {
@@ -96,7 +88,7 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
 #ifdef _MSC_VER
         REQUIRE( (GetACP() != 1251 || result == std::wstring(kUnicode)) );
 #else
-        REQUIRE( result != NULL);
+        REQUIRE( result == NULL);
 #endif
     }
 }
