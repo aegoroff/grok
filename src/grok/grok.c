@@ -90,9 +90,12 @@ int main(int argc, const char* const argv[]) {
 #ifndef _DEBUG // only Release configuration dump generating
     SetUnhandledExceptionFilter(dbg_top_level_filter);
 #endif
-#endif
-
     setlocale(LC_ALL, ".ACP");
+#elifdef __APPLE_CC__
+    setlocale(LC_ALL, "en_US.utf8");
+#else
+    setlocale(LC_ALL, "C.utf8");
+#endif
     setlocale(LC_NUMERIC, "C");
 
     const apr_status_t status = apr_app_initialize(&argc, &argv, NULL);
