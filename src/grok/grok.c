@@ -91,7 +91,7 @@ int main(int argc, const char* const argv[]) {
     SetUnhandledExceptionFilter(dbg_top_level_filter);
 #endif
     setlocale(LC_ALL, ".ACP");
-#elifdef __APPLE_CC__
+#elif defined(__APPLE_CC__)
     setlocale(LC_ALL, "en_US.utf8");
 #else
     setlocale(LC_ALL, "C.utf8");
