@@ -53,6 +53,13 @@ jobs:
         uses: microsoft/setup-msbuild@v1.0.3
         with:
           vs-version: 16.11
+      - name: Change binary version
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: '#define PRODUCT_VERSION "\d+\.\d+\.\d+"'
+          replace: '#define PRODUCT_VERSION "${{ steps.get_version.outputs.VERSION }}"'
+          include: "**/targetver.h"
       - name: Build
         uses: lukka/run-cmake@v3
         with:
@@ -105,6 +112,13 @@ jobs:
         run: |
           flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
           bison --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
+      - name: Change binary version
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: '#define PRODUCT_VERSION "\d+\.\d+\.\d+"'
+          replace: '#define PRODUCT_VERSION "${{ steps.get_version.outputs.VERSION }}"'
+          include: "**/targetver.h"
       - name: Build
         uses: lukka/run-cmake@v3
         with:
@@ -162,6 +176,13 @@ jobs:
           export PATH="/usr/local/opt/flex/bin:/usr/local/opt/bison/bin:$PATH"
           flex --fast --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
           bison --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
+      - name: Change binary version
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: '#define PRODUCT_VERSION "\d+\.\d+\.\d+"'
+          replace: '#define PRODUCT_VERSION "${{ steps.get_version.outputs.VERSION }}"'
+          include: "**/targetver.h"
       - name: Build
         uses: lukka/run-cmake@v3
         with:
