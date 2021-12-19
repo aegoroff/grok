@@ -16,6 +16,15 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 #define COMPOSE_INIT_SZ   64
 
+#ifndef _MSC_VER
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#else
+#undef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+#endif
+
 #include "../pcre/pcre2.h"
 #include <apr_tables.h>
 #include "lib.h"
