@@ -18,9 +18,7 @@
 const size_t kBufferSize = 128;
 
 SCENARIO("size to string") {
-    std::unique_ptr<char> buffer = std::unique_ptr<char>(new char[kBufferSize]);
-    memset(buffer.get(), 0, kBufferSize);
-
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(kBufferSize);
     WHEN("1024 value to string") {
         const uint64_t size = 1024;
         lib_size_to_string(size, buffer.get());
