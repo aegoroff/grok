@@ -94,7 +94,7 @@ int main(int argc, const char* const argv[]) {
 #elif defined(__APPLE_CC__)
     setlocale(LC_ALL, "en_US.UTF-8");
 #else
-    setlocale(LC_ALL, "C.utf8");
+    setlocale(LC_ALL, "C.UTF-8");
 #endif
     setlocale(LC_NUMERIC, "C");
 
