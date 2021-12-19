@@ -16,8 +16,7 @@
 const size_t kBufferSize = 64;
 
 SCENARIO("time to string") {
-    std::unique_ptr<char> buffer = std::unique_ptr<char>(new char[kBufferSize]);
-    memset(buffer.get(), 0, kBufferSize);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(kBufferSize);
 
     GIVEN( "50 000 001.0 seconds value" ) {
         const auto time = 50000001.0;
