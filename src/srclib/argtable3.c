@@ -4608,7 +4608,7 @@ void arg_set_module_version(int major, int minor, int patch, const char* tag) {
     arg_dstr_cat(ds, s_mod_ver_tag);
 
     xfree(s_mod_ver);
-    slen_ds = strlen(arg_dstr_cstr(ds));
+    slen_ds = strnlen(arg_dstr_cstr(ds), ARG_DSTR_SIZE);
     s_mod_ver = (char*)xmalloc(slen_ds + 1);
     memset(s_mod_ver, 0, slen_ds + 1);
 
