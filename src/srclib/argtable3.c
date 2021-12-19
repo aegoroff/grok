@@ -1,4 +1,4 @@
-/*******************************************************************************
+﻿/*******************************************************************************
  * This file is part of the argtable3 library.
  *
  * Copyright (C) 1998-2001,2003-2011,2013 Stewart Heitmann
@@ -988,7 +988,6 @@ void arg_dstr_destroy(arg_dstr_t ds) {
 }
 
 void arg_dstr_set(arg_dstr_t ds, char* str, arg_dstr_freefn* free_proc) {
-    int length;
     register arg_dstr_freefn* old_free_proc = ds->free_proc;
     char* old_result = ds->data;
 
@@ -997,7 +996,7 @@ void arg_dstr_set(arg_dstr_t ds, char* str, arg_dstr_freefn* free_proc) {
         ds->data = ds->sbuf;
         ds->free_proc = ARG_DSTR_STATIC;
     } else if (free_proc == ARG_DSTR_VOLATILE) {
-        length = (int)strlen(str);
+        const size_t length = strnlen(str, 2048);
         if (length > ARG_DSTR_SIZE) {
             ds->data = (char*)xmalloc((unsigned)length + 1);
             ds->free_proc = ARG_DSTR_DYNAMIC;
@@ -1005,7 +1004,7 @@ void arg_dstr_set(arg_dstr_t ds, char* str, arg_dstr_freefn* free_proc) {
             ds->data = ds->sbuf;
             ds->free_proc = ARG_DSTR_STATIC;
         }
-        strcpy(ds->data, str);
+        strncpy(ds->data, length, str);
     } else {
         ds->data = str;
         ds->free_proc = free_proc;
@@ -1162,14 +1161,14 @@ static void setup_append_buf(arg_dstr_t ds, int new_space) {
         }
         newbuf = (char*)xmalloc((unsigned)total_space);
         memset(newbuf, 0, total_space);
-        strcpy(newbuf, ds->data);
+        strncpy(newbuf, total_space, ds->data);
         if (ds->append_data != NULL) {
             xfree(ds->append_data);
         }
         ds->append_data = newbuf;
         ds->append_data_size = total_space;
     } else if (ds->data != ds->append_data) {
-        strcpy(ds->append_data, ds->data);
+        strncpy(ds->append_data, ds->append_data_size, ds->data);
     }
 
     arg_dstr_free(ds);
@@ -2958,7 +2957,6 @@ static long int strtol0X(const char* str, const char** endptr, char X, int base)
     /* skip leading whitespace */
     while (isspace(*ptr))
         ptr++;
-    /* printf("1) %s\n",ptr); */
 
     /* scan optional sign character */
     switch (*ptr) {
@@ -2974,7 +2972,6 @@ static long int strtol0X(const char* str, const char** endptr, char X, int base)
             s = 1;
             break;
     }
-    /* printf("2) %s\n",ptr); */
 
     /* '0X' prefix */
     if ((*ptr++) != '0') {
@@ -2982,13 +2979,11 @@ static long int strtol0X(const char* str, const char** endptr, char X, int base)
         *endptr = str;
         return 0;
     }
-    /* printf("3) %s\n",ptr); */
     if (toupper(*ptr++) != toupper(X)) {
         /* printf("failed to detect '%c'\n",X); */
         *endptr = str;
         return 0;
     }
-    /* printf("4) %s\n",ptr); */
 
     /* attempt conversion on remainder of string using strtol() */
     val = strtol(ptr, (char**)endptr, base);
@@ -3098,13 +3093,11 @@ static int arg_int_scanfn(struct arg_int* parent, const char* argval) {
             parent->ival[parent->count++] = (int)val;
     }
 
-    /* printf("%s:scanfn(%p,%p) returns %d\n",__FILE__,parent,argval,errorcode); */
     return errorcode;
 }
 
 static int arg_int_checkfn(struct arg_int* parent) {
     int errorcode = (parent->count < parent->hdr.mincount) ? ARG_ERR_MINCOUNT : 0;
-    /*printf("%s:checkfn(%p) returns %d\n",__FILE__,parent,errorcode);*/
     return errorcode;
 }
 
@@ -4587,7 +4580,7 @@ void arg_set_module_version(int major, int minor, int patch, const char* tag) {
     s_mod_ver_patch = patch;
 
     xfree(s_mod_ver_tag);
-    slen_tag = strlen(tag);
+    slen_tag = strnlen(tag, ARG_CMD_DESCRIPTION_LEN);
     s_mod_ver_tag = (char*)xmalloc(slen_tag + 1);
     memset(s_mod_ver_tag, 0, slen_tag + 1);
 
@@ -4647,8 +4640,8 @@ void arg_cmd_register(const char* name, arg_cmdfn* proc, const char* description
     size_t slen_name;
     void* k;
 
-    assert(strlen(name) < ARG_CMD_NAME_LEN);
-    assert(strlen(description) < ARG_CMD_DESCRIPTION_LEN);
+    assert(strnlen(name, ARG_CMD_NAME_LEN) < ARG_CMD_NAME_LEN);
+    assert(strnlen(description, ARG_CMD_DESCRIPTION_LEN) < ARG_CMD_DESCRIPTION_LEN);
 
     /* Check if the command already exists. */
     /* If the command exists, replace the existing command. */
@@ -5002,7 +4995,6 @@ static char* alloc_shortoptions(struct arg_hdr** table) {
     /* null terminate the string */
     *res = 0;
 
-    /*printf("alloc_shortoptions() returns \"%s\"\n",(result?result:"NULL"));*/
     return result;
 }
 
@@ -5019,8 +5011,6 @@ static void arg_parse_tagged(int argc, char** argv, struct arg_hdr** table, stru
     char* shortoptions;
     int copt;
 
-    /*printf("arg_parse_tagged(%d,%p,%p,%p)\n",argc,argv,table,endtable);*/
-
     /* allocate short and long option arrays for the given opttable[].   */
     /* if the allocs fail then put an error msg in the last table entry. */
     longoptions = alloc_longoptions(table);
@@ -5034,19 +5024,11 @@ static void arg_parse_tagged(int argc, char** argv, struct arg_hdr** table, stru
 
     /* fetch and process args using getopt_long */
     while ((copt = getopt_long(argc, argv, shortoptions, longoptions->options, NULL)) != -1) {
-        /*
-           printf("optarg='%s'\n",optarg);
-           printf("optind=%d\n",optind);
-           printf("copt=%c\n",(char)copt);
-           printf("optopt=%c (%d)\n",optopt, (int)(optopt));
-         */
         switch (copt) {
             case 0: {
                 int tabindex = longoptions->getoptval;
                 void* parent = table[tabindex]->parent;
-                /*printf("long option detected from argtable[%d]\n", tabindex);*/
                 if (optarg && optarg[0] == 0 && (table[tabindex]->flag & ARG_HASVALUE)) {
-                    /* printf(": long option %s requires an argument\n",argv[optind-1]); */
                     arg_register_error(endtable, endtable, ARG_EMISSARG, argv[optind - 1]);
                     /* continue to scan the (empty) argument value to enforce argument count checking */
                 }
@@ -5065,11 +5047,9 @@ static void arg_parse_tagged(int argc, char** argv, struct arg_hdr** table, stru
                  */
                 switch (optopt) {
                     case 0:
-                        /*printf("?0 unrecognised long option %s\n",argv[optind-1]);*/
                         arg_register_error(endtable, endtable, ARG_ELONGOPT, argv[optind - 1]);
                         break;
                     default:
-                        /*printf("?* unrecognised short option '%c'\n",optopt);*/
                         arg_register_error(endtable, endtable, optopt, NULL);
                         break;
                 }
@@ -5079,17 +5059,14 @@ static void arg_parse_tagged(int argc, char** argv, struct arg_hdr** table, stru
                 /*
                  * getopt_long() found an option with its argument missing.
                  */
-                /*printf(": option %s requires an argument\n",argv[optind-1]); */
                 arg_register_error(endtable, endtable, ARG_EMISSARG, argv[optind - 1]);
                 break;
 
             default: {
                 /* getopt_long() found a valid short option */
                 int tabindex = find_shortoption(table, (char)copt);
-                /*printf("short option detected from argtable[%d]\n", tabindex);*/
                 if (tabindex == -1) {
                     /* should never get here - but handle it just in case */
-                    /*printf("unrecognised short option %d\n",copt);*/
                     arg_register_error(endtable, endtable, copt, NULL);
                 } else {
                     if (table[tabindex]->scanfn) {
@@ -5114,27 +5091,23 @@ static void arg_parse_untagged(int argc, char** argv, struct arg_hdr** table, st
     const char* optarglast = NULL;
     void* parentlast = NULL;
 
-    /*printf("arg_parse_untagged(%d,%p,%p,%p)\n",argc,argv,table,endtable);*/
     while (!(table[tabindex]->flag & ARG_TERMINATOR)) {
         void* parent;
         int errorcode;
 
         /* if we have exhausted our argv[optind] entries then we have finished */
         if (optind >= argc) {
-            /*printf("arg_parse_untagged(): argv[] exhausted\n");*/
             return;
         }
 
         /* skip table entries with non-null long or short options (they are not untagged entries) */
         if (table[tabindex]->longopts || table[tabindex]->shortopts) {
-            /*printf("arg_parse_untagged(): skipping argtable[%d] (tagged argument)\n",tabindex);*/
             tabindex++;
             continue;
         }
 
         /* skip table entries with NULL scanfn */
         if (!(table[tabindex]->scanfn)) {
-            /*printf("arg_parse_untagged(): skipping argtable[%d] (NULL scanfn)\n",tabindex);*/
             tabindex++;
             continue;
         }
@@ -5146,14 +5119,12 @@ static void arg_parse_untagged(int argc, char** argv, struct arg_hdr** table, st
         errorcode = table[tabindex]->scanfn(parent, argv[optind]);
         if (errorcode == 0) {
             /* success, move onto next argv[optind] but stay with same table[tabindex] */
-            /*printf("arg_parse_untagged(): argtable[%d] successfully matched\n",tabindex);*/
             optind++;
 
             /* clear the last tentative error */
             errorlast = 0;
         } else {
             /* failure, try same argv[optind] with next table[tabindex] entry */
-            /*printf("arg_parse_untagged(): argtable[%d] failed match\n",tabindex);*/
             tabindex++;
 
             /* remember this as a tentative error we may wish to reinstate later */
@@ -5172,14 +5143,12 @@ static void arg_parse_untagged(int argc, char** argv, struct arg_hdr** table, st
     /* only get here when not all argv[] entries were consumed */
     /* register an error for each unused argv[] entry */
     while (optind < argc) {
-        /*printf("arg_parse_untagged(): argv[%d]=\"%s\" not consumed\n",optind,argv[optind]);*/
         arg_register_error(endtable, endtable, ARG_ENOMATCH, argv[optind++]);
     }
 }
 
 static void arg_parse_check(struct arg_hdr** table, struct arg_end* endtable) {
     int tabindex = 0;
-    /* printf("arg_parse_check()\n"); */
     do {
         if (table[tabindex]->checkfn) {
             void* parent = table[tabindex]->parent;
@@ -5193,7 +5162,6 @@ static void arg_parse_check(struct arg_hdr** table, struct arg_end* endtable) {
 static void arg_reset(void** argtable) {
     struct arg_hdr** table = (struct arg_hdr**)argtable;
     int tabindex = 0;
-    /*printf("arg_reset(%p)\n",argtable);*/
     do {
         if (table[tabindex]->resetfn)
             table[tabindex]->resetfn(table[tabindex]->parent);
@@ -5206,8 +5174,6 @@ int arg_parse(int argc, char** argv, void** argtable) {
     int endindex;
     char** argvcopy = NULL;
     int i;
-
-    /*printf("arg_parse(%d,%p,%p)\n",argc,argv,argtable);*/
 
     /* reset any argtable data from previous invocations */
     arg_reset(argtable);
