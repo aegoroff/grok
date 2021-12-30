@@ -10,10 +10,9 @@
  */
 
 #include <cstdio>
-#include <apr_pools.h>
 #include "catch.hpp"
-#include "encoding.h"
 #include "apr_test_fixture.h"
+#include "encoding.h"
 
 const char* kUtf8 = "\xd1\x82\xd0\xb5\xd1\x81\xd1\x82"; // тест
 const char* kAnsi = "\xf2\xe5\xf1\xf2";                 // тест
