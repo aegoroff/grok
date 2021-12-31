@@ -9,8 +9,6 @@
  * Copyright: (c) Alexander Egorov 2020
  */
 
-#include <cstdio>
-#include <cstring>
 #include <cstdint>
 #include "catch.hpp"
 #include "lib.h"
