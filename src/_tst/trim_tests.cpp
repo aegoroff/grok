@@ -9,7 +9,7 @@
  * Copyright: (c) Alexander Egorov 2020
  */
 
-s#include <cstring>
+#include <cstring>
 #include "catch.hpp"
 #include "lib.h"
 
