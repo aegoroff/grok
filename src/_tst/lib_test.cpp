@@ -10,7 +10,6 @@
  */
 
 #include <cstdio>
-#include <cstring>
 #include "catch.hpp"
 #include "lib.h"
 
