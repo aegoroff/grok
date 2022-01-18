@@ -16,6 +16,7 @@
 
 #define PCRE2_CODE_UNIT_WIDTH 8
 #define MAX_PATTERN_LEN_FROM_CMDLINE 4096
+#define MAX_STRING_LEN 33554432 // 32 Mb
 
 #ifndef _MSC_VER
 #define EXIT_FAILURE      1
@@ -306,7 +307,14 @@ apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
             return status;
         }
         if(cur + 2 >= *len) {
+            if(*len == MAX_STRING_LEN) {
+                // Already allocated
+                break;
+            }
             apr_size_t new_len = 2 * (*len);
+            if (new_len > MAX_STRING_LEN) {
+                new_len = MAX_STRING_LEN;
+            }
             char* nb = (char*) apr_pcalloc(main_pool, new_len);
 #ifdef __STDC_WANT_SECURE_LIB__
             const errno_t err = memcpy_s(nb, new_len, *str, cur);
