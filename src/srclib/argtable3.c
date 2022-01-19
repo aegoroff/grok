@@ -4578,7 +4578,7 @@ void arg_set_module_name(const char* name) {
 #if (defined(__STDC_LIB_EXT1__) && defined(__STDC_WANT_LIB_EXT1__)) || (defined(__STDC_SECURE_LIB__) && defined(__STDC_WANT_SECURE_LIB__))
     strncpy_s(s_module_name, slen + 1, name, slen);
 #else
-    memcpy(s_module_name, name, slen);
+    strncpy(s_module_name, name, slen);
 #endif
 }
 
@@ -4598,7 +4598,7 @@ void arg_set_module_version(int major, int minor, int patch, const char* tag) {
 #if (defined(__STDC_LIB_EXT1__) && defined(__STDC_WANT_LIB_EXT1__)) || (defined(__STDC_SECURE_LIB__) && defined(__STDC_WANT_SECURE_LIB__))
     strncpy_s(s_mod_ver_tag, slen_tag + 1, tag, slen_tag);
 #else
-    memcpy(s_mod_ver_tag, tag, slen_tag);
+    strncpy(s_mod_ver_tag, tag, slen_tag);
 #endif
 
     ds = arg_dstr_create();
@@ -4615,7 +4615,7 @@ void arg_set_module_version(int major, int minor, int patch, const char* tag) {
 #if (defined(__STDC_LIB_EXT1__) && defined(__STDC_WANT_LIB_EXT1__)) || (defined(__STDC_SECURE_LIB__) && defined(__STDC_WANT_SECURE_LIB__))
     strncpy_s(s_mod_ver, slen_ds + 1, arg_dstr_cstr(ds), slen_ds);
 #else
-    memcpy(s_mod_ver, arg_dstr_cstr(ds), slen_ds);
+    strncpy(s_mod_ver, arg_dstr_cstr(ds), slen_ds);
 #endif
 
     arg_dstr_destroy(ds);
