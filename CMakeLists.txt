@@ -66,7 +66,7 @@ add_definitions(-DAPU_DECLARE_STATIC)
 if ("$ENV{GROK_VERSION}" STREQUAL "")
     add_definitions(-DPRODUCT_VERSION="0.2.0")
 else ()
-    add_definitions(-DPRODUCT_VERSION=$ENV{GROK_VERSION})
+    add_definitions(-DPRODUCT_VERSION="$ENV{GROK_VERSION}")
 endif ()
 
 SET(GROK_SOURCE_FILES
