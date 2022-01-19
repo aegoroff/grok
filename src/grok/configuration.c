@@ -68,9 +68,7 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     struct arg_lit* infoI = arg_lit0(OPT_NOGREP_SHORT, OPT_NOGREP_LONG, OPT_NOGREP_DESCR);
 
     struct arg_str* string = arg_str1(OPT_STR_SHORT, OPT_STR_LONG, NULL, OPT_STR_DESCR);
-    struct arg_str* stringG = arg_str0(OPT_STR_SHORT, OPT_STR_LONG, NULL, OPT_STR_DESCR);
     struct arg_file* file = arg_file1(OPT_FILE_SHORT, OPT_FILE_LONG, NULL, OPT_FILE_DESCR);
-    struct arg_file* fileG = arg_file0(OPT_FILE_SHORT, OPT_FILE_LONG, NULL, OPT_FILE_DESCR);
 
     struct arg_str* macro = arg_str0(OPT_MACRO_SHORT, OPT_MACRO_LONG, NULL, OPT_MACRO_DESCR);
     struct arg_str* macroS = arg_str1(OPT_MACRO_SHORT, OPT_MACRO_LONG, NULL, OPT_MACRO_DESCR);
@@ -84,8 +82,7 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     struct arg_file* patternsI = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 0, ctx->argc + 2, OPT_PATT_DESCR);
     struct arg_file* patternsT = arg_filen(OPT_PATT_SHORT, OPT_PATT_LONG, NULL, 0, ctx->argc + 2, OPT_PATT_DESCR);
 
-    struct arg_lit* template = arg_lit0(OPT_TPL_SHORT, OPT_TPL_LONG, OPT_TPL_DESCR);
-    struct arg_lit* templateT = arg_lit1(OPT_TPL_SHORT, OPT_TPL_LONG, OPT_TPL_DESCR);
+    struct arg_lit* template = arg_lit1(OPT_TPL_SHORT, OPT_TPL_LONG, OPT_TPL_DESCR);
 
     struct arg_end* end = arg_end(10);
     struct arg_end* endF = arg_end(10);
@@ -93,11 +90,11 @@ void conf_configure_app(configuration_ctx_t* ctx) {
     struct arg_end* endI = arg_end(10);
     struct arg_end* endT = arg_end(10);
 
-    void* argtable[] = {help, info, stringG, fileG, macro, patterns, template, end};
+    void* argtable[] = {help, info,  macro, patterns, end};
     void* argtableF[] = {helpF, infoF, file, macroF, patternsF, endF};
     void* argtableS[] = {helpS, infoS, string, macroS, patternsS, endS};
     void* argtableI[] = {helpI, infoI, macroI, patternsI, endI};
-    void* argtableT[] = {helpT, templateT, macroT, patternsT, endT};
+    void* argtableT[] = {helpT, template, macroT, patternsT, endT};
 
     if(arg_nullcheck(argtable) != 0 || arg_nullcheck(argtableF) != 0 || arg_nullcheck(argtableS) != 0 ||
        arg_nullcheck(argtableI) != 0 || arg_nullcheck(argtableT) != 0) {
