@@ -10,7 +10,7 @@
  * \date    \verbatim
             Creation date: 2020-11-21
             \endverbatim
- * Copyright: (c) Alexander Egorov 2015-2020
+ * Copyright: (c) Alexander Egorov 2015-2022
  */
 
 #include <apr_strings.h>
