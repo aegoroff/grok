@@ -6,7 +6,7 @@
  * \date    \verbatim
             Creation date: 2020-11-23
             \endverbatim
- * Copyright: (c) Alexander Egorov 2020
+ * Copyright: (c) Alexander Egorov 2015-2022
  */
 
 #include <cstring>

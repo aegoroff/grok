@@ -10,7 +10,7 @@
  * \date    \verbatim
             Creation date: 2010-03-05
             \endverbatim
- * Copyright: (c) Alexander Egorov 2009-2020
+ * Copyright: (c) Alexander Egorov 2015-2022
  */
 
 #ifndef GROK_LIB_H_
@@ -50,7 +50,7 @@ extern "C" {
 #define NEW_LINE "\n"
 #endif
 
-#define COPYRIGHT_FMT_TRAIL NEW_LINE "Copyright (C) 2019-2020 Alexander Egorov. All rights reserved." NEW_LINE NEW_LINE
+#define COPYRIGHT_FMT_TRAIL NEW_LINE "Copyright (C) 2019-2022 Alexander Egorov. All rights reserved." NEW_LINE NEW_LINE
 #if defined(_WIN64) || defined(__APPLE_CC__)
 #define COPYRIGHT_FMT NEW_LINE "%s x64" COPYRIGHT_FMT_TRAIL
 #else
