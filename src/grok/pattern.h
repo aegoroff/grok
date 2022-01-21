@@ -10,7 +10,7 @@
  * \date    \verbatim
             Creation date: 2020-06-14
             \endverbatim
- * Copyright: (c) Alexander Egorov 2019-2020
+ * Copyright: (c) Alexander Egorov 2015-2022
  */
 
 #ifndef GROK_PATTERN_H
