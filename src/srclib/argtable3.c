@@ -973,11 +973,11 @@ typedef struct _internal_arg_dstr {
     arg_dstr_freefn* free_proc;
     char sbuf[ARG_DSTR_SIZE + 1];
     char* append_data;
-    int append_data_size;
-    int append_used;
+    size_t append_data_size;
+    size_t append_used;
 } _internal_arg_dstr_t;
 
-static void setup_append_buf(arg_dstr_t res, int newSpace);
+static void setup_append_buf(arg_dstr_t ds, size_t new_space);
 
 arg_dstr_t arg_dstr_create(void) {
     _internal_arg_dstr_t* h = (_internal_arg_dstr_t*)xmalloc(sizeof(_internal_arg_dstr_t));
@@ -1131,9 +1131,7 @@ void arg_dstr_catf(arg_dstr_t ds, const char* fmt, ...) {
     xfree(buff);
 }
 
-static void setup_append_buf(arg_dstr_t ds, int new_space) {
-    int total_space;
-
+static void setup_append_buf(arg_dstr_t ds, size_t new_space) {
     /*
      * Make the append buffer larger, if that's necessary, then copy the
      * data into the append buffer and make the append buffer the official
@@ -1150,35 +1148,53 @@ static void setup_append_buf(arg_dstr_t ds, int new_space) {
             ds->append_data = NULL;
             ds->append_data_size = 0;
         }
-        ds->append_used = (int)strnlen(ds->data, ARG_DSTR_SIZE);
+#if (defined(__STDC_LIB_EXT1__) && defined(__STDC_WANT_LIB_EXT1__)) || (defined(__STDC_SECURE_LIB__) && defined(__STDC_WANT_SECURE_LIB__))
+        ds->append_used = strnlen_s(ds->data, ARG_DSTR_SIZE);
+#else
+        ds->append_used = strnlen(ds->data, ARG_DSTR_SIZE);
+#endif
     } else if (ds->data[ds->append_used] != 0) {
         /*
          * Most likely someone has modified a result created by
          * arg_dstr_cat et al. so that it has a different size. Just
          * recompute the size.
          */
-        ds->append_used = (int)strnlen(ds->data, ARG_DSTR_SIZE);
+#if (defined(__STDC_LIB_EXT1__) && defined(__STDC_WANT_LIB_EXT1__)) || (defined(__STDC_SECURE_LIB__) && defined(__STDC_WANT_SECURE_LIB__))
+        ds->append_used = strnlen_s(ds->data, ARG_DSTR_SIZE);
+#else
+        ds->append_used = strnlen(ds->data, ARG_DSTR_SIZE);
+#endif
     }
 
-    total_space = new_space + ds->append_used;
+    size_t total_space = new_space + ds->append_used;
     if (total_space >= ds->append_data_size) {
-        char* newbuf;
 
         if (total_space < 100) {
-            total_space = 200;
+            total_space = ARG_DSTR_SIZE;
         } else {
             total_space *= 2;
         }
-        newbuf = (char*)xmalloc((unsigned)total_space);
+        char* newbuf = xmalloc(total_space);
         memset(newbuf, 0, total_space);
-        strncpy(newbuf, ds->data, total_space);
+        if(ds->append_used > 0) {
+#if (defined(__STDC_LIB_EXT1__) && defined(__STDC_WANT_LIB_EXT1__)) || (defined(__STDC_SECURE_LIB__) && defined(__STDC_WANT_SECURE_LIB__))
+            strncpy_s(newbuf, ds->append_used, ds->data, total_space);
+#else
+            strncpy(newbuf, ds->data, ds->append_used);
+#endif
+        }
+
         if (ds->append_data != NULL) {
             xfree(ds->append_data);
         }
         ds->append_data = newbuf;
         ds->append_data_size = total_space;
     } else if (ds->data != ds->append_data) {
-        strncpy(ds->append_data, ds->data, ds->append_data_size);
+#if (defined(__STDC_LIB_EXT1__) && defined(__STDC_WANT_LIB_EXT1__)) || (defined(__STDC_SECURE_LIB__) && defined(__STDC_WANT_SECURE_LIB__))
+        strcpy_s(ds->append_data, ds->append_used, ds->data);
+#else
+        strncpy(ds->append_data, ds->data, ds->append_used);
+#endif
     }
 
     arg_dstr_free(ds);
