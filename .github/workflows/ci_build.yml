@@ -46,13 +46,10 @@ jobs:
         run: |
           win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
           win_bison.exe --output="src/grok/generated/grok.tab.c" -dy src/grok/grok.y
-      - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
-        with:
-          sdk-version: 19041
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.0.3
+        uses: microsoft/setup-msbuild@v1.1
         with:
-          vs-version: 16.11
+          msbuild-architecture: x64
       - name: Build
         uses: lukka/run-cmake@v3
         with:
