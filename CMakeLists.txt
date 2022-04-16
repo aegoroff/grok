@@ -114,6 +114,7 @@ SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_substring.c
         ${SRC}/${PCRE}/pcre2_tables.c
         ${SRC}/${PCRE}/pcre2_ucd.c
+        ${SRC}/${PCRE}/pcre2_ucptables.c
         ${SRC}/${PCRE}/pcre2_valid_utf.c
         ${SRC}/${PCRE}/pcre2_xclass.c
         )
