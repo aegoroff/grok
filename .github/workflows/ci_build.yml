@@ -40,8 +40,8 @@ jobs:
           mkdir ${{ github.workspace }}\src\grok\generated
       - name: Download APR
         run: |
-          curl -L  -o apr-vs2019.zip "https://drive.google.com/uc?export=download&id=1WeIo7YUKfouddMLVXzhAs7h9FzbRrJ75"
-          7z x -o${{ env.APR_HOME16 }} apr-vs2019.zip
+          curl -L  -o apr-vs2022.zip "https://drive.google.com/uc?export=download&id=1S0K5zTTn-Y_X2Di1racXPy4yLQ0kwHT4"
+          7z x -o${{ env.APR_HOME16 }} apr-vs2022.zip
       - name: flex and bison
         run: |
           win_flex.exe --fast --wincompat --outfile="src/grok/generated/grok.flex.c" src/grok/grok.lex
