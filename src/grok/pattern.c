@@ -32,6 +32,7 @@
 #include "pattern.h"
 
 #include <stdbool.h>
+
 #ifndef _MSC_VER
 
 #include <errno.h>
