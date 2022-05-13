@@ -312,7 +312,7 @@ apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
                 break;
             }
             apr_size_t new_len = 2 * (*len);
-            if (new_len > MAX_STRING_LEN) {
+            if(new_len > MAX_STRING_LEN) {
                 new_len = MAX_STRING_LEN;
             }
             char* nb = (char*) apr_pcalloc(main_pool, new_len);
