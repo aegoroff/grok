@@ -196,17 +196,17 @@ lib_file_size_t lib_normalize_size(uint64_t size) {
 int lib_printf(__format_string const char* format, ...) {
 #else
 
-    int lib_printf(const char* format, ...) {
+int lib_printf(const char* format, ...) {
 #endif
     va_list params;
     int result;
-            va_start(params, format);
+    va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
     result = vfprintf_s(stdout, format, params);
 #else
     result = vfprintf(stdout, format, params);
 #endif
-            va_end(params);
+    va_end(params);
     return result;
 }
 
@@ -215,17 +215,17 @@ int lib_printf(__format_string const char* format, ...) {
 int lib_fprintf(FILE* file, __format_string const char* format, ...) {
 #else
 
-    int lib_fprintf(FILE* file, const char* format, ...) {
+int lib_fprintf(FILE* file, const char* format, ...) {
 #endif
     va_list params;
     int result;
-            va_start(params, format);
+    va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
     result = vfprintf_s(file, format, params);
 #else
     result = vfprintf(file, format, params);
 #endif
-            va_end(params);
+    va_end(params);
     return result;
 }
 
@@ -234,18 +234,18 @@ int lib_fprintf(FILE* file, __format_string const char* format, ...) {
 int lib_sprintf(char* buffer, __format_string const char* format, ...) {
 #else
 
-    int lib_sprintf(char* buffer, const char* format, ...) {
+int lib_sprintf(char* buffer, const char* format, ...) {
 #endif
     va_list params;
     int result;
-            va_start(params, format);
+    va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
     int len = _vscprintf(format, params) + 1; // _vscprintf doesn't count terminating '\0'
     result = vsprintf_s(buffer, len, format, params);
 #else
     result = vsprintf(buffer, format, params);
 #endif
-            va_end(params);
+    va_end(params);
     return result;
 }
 
@@ -254,11 +254,11 @@ int lib_sprintf(char* buffer, __format_string const char* format, ...) {
 int lib_wcsprintf(wchar_t* buffer, __format_string const wchar_t* format, ...) {
 #else
 
-    int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...) {
+int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...) {
 #endif
     va_list params;
     int result;
-            va_start(params, format);
+    va_start(params, format);
 #ifdef __STDC_WANT_SECURE_LIB__
     const int len = _vscwprintf(format, params) + 1; // _vscwprintf doesn't count terminating '\0'
     result = vswprintf_s(buffer, len, format, params);
@@ -267,7 +267,7 @@ int lib_wcsprintf(wchar_t* buffer, __format_string const wchar_t* format, ...) {
     const int len = vfwprintf(printf_dummy_file, format, params);
     result = vswprintf(buffer, len, format, params);
 #endif
-            va_end(params);
+    va_end(params);
     return result;
 }
 
