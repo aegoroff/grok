@@ -137,7 +137,7 @@ wchar_t* enc_from_code_page_to_unicode(const char* from, UINT code_page, apr_poo
 /*!
 * IMPORTANT: Memory allocated for result must be freed up by caller
 */
-char* enc_from_unicode_to_ansi(const wchar_t* from, apr_pool_t* pool) {
+__attribute__((unused)) char* enc_from_unicode_to_ansi(const wchar_t* from, apr_pool_t* pool) {
     return prenc_from_unicode_to_code_page(from, CP_ACP, pool);
 }
 
