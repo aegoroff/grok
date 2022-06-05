@@ -66,7 +66,7 @@ wchar_t* enc_from_utf8_to_unicode(const char* from, apr_pool_t* pool);
 /*!
  * IMPORTANT: Memory allocated for result must be freed up by caller
  */
-char* enc_from_unicode_to_ansi(const wchar_t* from, apr_pool_t* pool);
+__attribute__((unused)) char* enc_from_unicode_to_ansi(const wchar_t* from, apr_pool_t* pool);
 
 /*!
  * IMPORTANT: Memory allocated for result must be freed up by caller
