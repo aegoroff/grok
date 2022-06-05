@@ -133,14 +133,14 @@ int lib_wcsprintf(wchar_t* buffer, const wchar_t* format, ...);
 
 #endif
 
-__attribute__((unused)) extern void lib_print_size(uint64_t size);
+extern void lib_print_size(uint64_t size);
 
 extern lib_file_size_t lib_normalize_size(uint64_t size);
 
 /*!
  * Prints new line into stdout
  */
-__attribute__((unused)) extern void lib_new_line(void);
+extern void lib_new_line(void);
 
 /**
  * \brief converts time in seconds into structure that can be easly interpreted into appropriate form
@@ -149,17 +149,17 @@ __attribute__((unused)) extern void lib_new_line(void);
  */
 extern lib_time_t lib_normalize_time(double seconds);
 
-__attribute__((unused)) extern void lib_start_timer(void);
+extern void lib_start_timer(void);
 
-__attribute__((unused)) extern void lib_stop_timer(void);
+extern void lib_stop_timer(void);
 
-__attribute__((unused)) extern lib_time_t lib_read_elapsed_time(void);
+extern lib_time_t lib_read_elapsed_time(void);
 
 extern void lib_size_to_string(uint64_t size, char* str);
 
 extern void lib_time_to_string(const lib_time_t* time, char* str);
 
-__attribute__((unused)) extern void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz);
+extern void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz);
 
 extern uint32_t lib_htoi(const char* ptr, int size);
 

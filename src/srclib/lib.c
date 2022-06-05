@@ -103,7 +103,7 @@ uint32_t lib_get_processor_count(void) {
 #endif
 }
 
-__attribute__((unused)) void lib_print_size(uint64_t size) {
+void lib_print_size(uint64_t size) {
     const lib_file_size_t normalized = lib_normalize_size(size);
 
     if(normalized.unit) {
@@ -158,7 +158,7 @@ uint32_t lib_htoi(const char* ptr, int size) {
     }
 }
 
-__attribute__((unused)) void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz) {
+void lib_hex_str_2_byte_array(const char* str, uint8_t* bytes, size_t sz) {
     size_t i = 0;
     const size_t to = MIN(sz, strlen(str) / BYTE_CHARS_SIZE);
 
@@ -322,11 +322,11 @@ void lib_time_to_string(const lib_time_t* time, char* str) {
     lib_sprintf(str, SEC_FMT, time->seconds);
 }
 
-__attribute__((unused)) void lib_new_line(void) {
+void lib_new_line(void) {
     lib_printf(NEW_LINE);
 }
 
-__attribute__((unused)) void lib_start_timer(void) {
+void lib_start_timer(void) {
 #ifdef _MSC_VER
     QueryPerformanceFrequency(&lib_freq);
     QueryPerformanceCounter(&lib_time1);
@@ -335,7 +335,7 @@ __attribute__((unused)) void lib_start_timer(void) {
 #endif
 }
 
-__attribute__((unused)) void lib_stop_timer(void) {
+void lib_stop_timer(void) {
 #ifdef _MSC_VER
     QueryPerformanceCounter(&lib_time2);
     lib_span = (double) (lib_time2.QuadPart - lib_time1.QuadPart) / (double) lib_freq.QuadPart;
@@ -345,7 +345,7 @@ __attribute__((unused)) void lib_stop_timer(void) {
 #endif
 }
 
-__attribute__((unused)) lib_time_t lib_read_elapsed_time(void) {
+lib_time_t lib_read_elapsed_time(void) {
     return lib_normalize_time(lib_span);
 }
 
