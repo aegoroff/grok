@@ -10,7 +10,7 @@
  */
 
 #include <cstdint>
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "lib.h"
 
 const size_t kBufferSize = 128;

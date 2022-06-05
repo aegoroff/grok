@@ -10,7 +10,7 @@
  */
 
 #include <cstdio>
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "lib.h"
 
 using namespace Catch::literals;
