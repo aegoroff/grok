@@ -10,7 +10,7 @@
  */
 
 #include <cstring>
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "lib.h"
 
 const char* kSeps = "'\"";
