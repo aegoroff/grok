@@ -18,7 +18,7 @@ class apr_test_fixture {
 private:
     apr_pool_t* pool_;
 public:
-    apr_test_fixture() {
+    apr_test_fixture() { // NOLINT(cppcoreguidelines-pro-type-member-init)
         auto argc = 1;
 
 #ifdef _MSC_VER
@@ -35,7 +35,7 @@ public:
         auto status = apr_app_initialize(&argc, (const char* const**) &argv, nullptr);
 
         if(status != APR_SUCCESS) {
-            throw status;
+            throw status; // NOLINT(misc-throw-by-value-catch-by-reference,hicpp-exception-baseclass)
         }
         apr_pool_create(&pool_, nullptr);
     }
