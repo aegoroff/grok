@@ -29,4 +29,5 @@ pcre-*/
 /out/
 /cmake-build-*/
 bin/
+build/
 *.PVS-Studio.cfg
