@@ -21,7 +21,7 @@ int prsort_partition(apr_array_header_t* array, int start, int end) {
     int marker = start;
     const char** items = (const char**) array->elts;
     for(int i = start; i <= end; i++) {
-        //array[end] is pivot
+        //array[end] is pivot point
         if(apr_strnatcmp(items[i], items[end]) < 0) {
             temp = items[marker];
             items[marker] = items[i];
