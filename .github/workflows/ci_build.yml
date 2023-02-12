@@ -8,6 +8,7 @@ env:
   WINDOWS_TARGET: x86_64-pc-windows-msvc
   MACOS_TARGET: x86_64-apple-darwin
   LINUX_TARGET: x86_64-unknown-linux-gnu
+  RELEASER_VER: 0.10.6
 
 on:
   push:
@@ -25,7 +26,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Query version number
         id: get_version
         shell: bash
@@ -88,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Query version number
         id: get_version
         shell: bash
@@ -141,7 +142,7 @@ jobs:
     runs-on: macos-11
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Query version number
         id: get_version
         shell: bash
@@ -248,13 +249,12 @@ jobs:
           license = "MIT"
           EOL
 
-      - name: Install Rust
+      - name: Download Releaser
         run: |
-          rustup update stable --no-self-update
-          rustup default stable
-          cargo install releaser
+          curl -L  -o releaser.tar.gz https://github.com/aegoroff/releaser/releases/download/{{ env.RELEASER_VER }}/releaser-{{ env.RELEASER_VER }}-x86_64-unknown-linux-musl.tar.gz
+          tar -xf releaser.tar.gz
       - name: Create brew formula
-        run: /home/runner/.cargo/bin/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux/' -m './macos/' -u ${{ env.RELEASE_BIN }}.rb
+        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux/' -m './macos/' -u ${{ env.RELEASE_BIN }}.rb
       - name: Publish brew formula
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
@@ -268,7 +268,7 @@ jobs:
           commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
 
       - name: Create scoop json
-        run: /home/runner/.cargo/bin/releaser s -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -i './windows/' -e ${{ env.RELEASE_BIN }}.exe -u ${{ env.RELEASE_BIN }}.json
+        run: ${{ github.workspace }}/releaser s -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -i './windows/' -e ${{ env.RELEASE_BIN }}.exe -u ${{ env.RELEASE_BIN }}.json
       - name: Publish scoop json
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
