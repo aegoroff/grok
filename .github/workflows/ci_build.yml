@@ -251,7 +251,7 @@ jobs:
 
       - name: Download Releaser
         run: |
-          curl -L  -o releaser.tar.gz https://github.com/aegoroff/releaser/releases/download/{{ env.RELEASER_VER }}/releaser-{{ env.RELEASER_VER }}-x86_64-unknown-linux-musl.tar.gz
+          curl -L  -o releaser.tar.gz https://github.com/aegoroff/releaser/releases/download/${{ env.RELEASER_VER }}/releaser-${{ env.RELEASER_VER }}-x86_64-unknown-linux-musl.tar.gz
           tar -xf releaser.tar.gz
       - name: Create brew formula
         run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux/' -m './macos/' -u ${{ env.RELEASE_BIN }}.rb
