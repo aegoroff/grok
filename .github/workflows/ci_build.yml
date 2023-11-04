@@ -44,7 +44,7 @@ jobs:
         uses: microsoft/setup-msbuild@v1.3.1
         with:
           msbuild-architecture: x64
-          vs-version: '[17.7]'
+          vs-version: '17.7'
       - name: Build
         uses: lukka/run-cmake@v3
         with:
