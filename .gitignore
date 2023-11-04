@@ -32,3 +32,4 @@ bin/
 build/
 *.PVS-Studio.cfg
 .DS_Store
+.cache/
