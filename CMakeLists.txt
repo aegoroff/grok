@@ -89,8 +89,11 @@ SET(TST_SOURCE_FILES
         "${SRC}/${TST}/catch_amalgamated.cpp"
         "${SRC}/${TST}/trim_tests.cpp")
 
+SET(LICENSE_FILE "LICENSE.txt")
+
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
+
 
 SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_auto_possess.c
@@ -199,3 +202,4 @@ endif ()
 
 install(TARGETS grok DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 install(FILES ${PATTERN_FILES} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+install(FILES ${LICENSE_FILE} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
