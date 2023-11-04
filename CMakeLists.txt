@@ -91,6 +91,7 @@ SET(TST_SOURCE_FILES
 
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
+file(MAKE_DIRECTORY "${SRC}/${GROK}/${GEN}")
 
 SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_auto_possess.c
