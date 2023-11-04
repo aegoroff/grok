@@ -173,8 +173,11 @@ add_custom_target(generate_parser
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 
 SET(GROK_GENERATED_FILES
-        "${SRC}/${GROK}/${GEN}/grok.flex.c"
-        "${SRC}/${GROK}/${GEN}/grok.tab.c")
+        "${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}/grok.flex.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}/grok.tab.c")
+
+set_source_files_properties(${GROK_GENERATED_FILES}
+        PROPERTIES GENERATED TRUE)
 
 add_executable(grok ${GROK_SOURCE_FILES} ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
 add_library(libgrok ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
