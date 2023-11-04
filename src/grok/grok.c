@@ -131,6 +131,9 @@ int main(int argc, const char* const argv[]) {
 void grok_compile_lib(struct arg_file* files) {
     patt_init(main_pool);
     if(files->count == 0) {
+        // case when no specific patterns path set so use default
+        // usually it's where executable file is located
+        // but it's not true for linux
         char* patterns_path = NULL;
 
         apr_status_t status = apr_filepath_merge(&patterns_path,
