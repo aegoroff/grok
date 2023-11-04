@@ -306,14 +306,14 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
 }
 
 apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
-    size_t cur = 0;
+    apr_size_t current_ix = 0;
     while(1) {
         char c;
         apr_status_t status = apr_file_getc(&c, f);
         if(status != APR_SUCCESS) {
             return status;
         }
-        if(cur + 2 >= *len) {
+        if(current_ix + 2 >= *len) {
             if(*len == MAX_STRING_LEN) {
                 // Already allocated
                 break;
@@ -324,19 +324,19 @@ apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
             }
             char* new_buffer = (char*) apr_pcalloc(main_pool, new_len);
 #ifdef __STDC_WANT_SECURE_LIB__
-            const errno_t err = memcpy_s(new_buffer, new_len, *str, cur);
+            const errno_t err = memcpy_s(new_buffer, new_len, *str, current_ix);
             if(err) {
                 lib_fprintf(stderr, "memcpy_s() in grok_read_line failed: %i\n", err);
             }
 #else
-            memcpy(new_buffer, *str, cur);
+            memcpy(new_buffer, *str, current_ix);
 #endif
             *str = new_buffer;
             *len = new_len;
         }
 
-        (*str)[cur] = c;
-        ++cur;
+        (*str)[current_ix] = c;
+        ++current_ix;
 
         if(c == '\n') {
             break;
