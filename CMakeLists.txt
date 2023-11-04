@@ -91,7 +91,6 @@ SET(TST_SOURCE_FILES
 
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
-file(MAKE_DIRECTORY "${SRC}/${GROK}/${GEN}")
 
 SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_auto_possess.c
@@ -165,20 +164,23 @@ else ()
     set(BISON bison --output="${GEN}/grok.tab.c" -dy grok.y)
 endif ()
 
+add_custom_target(generated_directory ALL
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}")
+
 add_custom_target(generate_parser
         COMMAND ${FLEX}
         COMMAND ${BISON}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK})
 
-file(GLOB GROK_GENERATED_FILES
-        CONFIGURE_DEPENDS *.c
-        "${SRC}/${GROK}/${GEN}/*.c"
-        )
+SET(GROK_GENERATED_FILES
+        "${SRC}/${GROK}/${GEN}/grok.flex.c"
+        "${SRC}/${GROK}/${GEN}/grok.tab.c")
 
 add_executable(grok ${GROK_SOURCE_FILES} ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
 add_library(libgrok ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
 add_executable(_tst ${TST_SOURCE_FILES} ${LIB_SOURCE_FILES})
 
+add_dependencies(generate_parser generated_directory)
 add_dependencies(grok generate_parser)
 add_dependencies(libgrok generate_parser)
 
