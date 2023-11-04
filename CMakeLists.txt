@@ -11,6 +11,7 @@ set(APR apr)
 set(APR_UTIL apr-util)
 set(LIBD Debug)
 set(LIBR Release)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(APR_X64 "$ENV{APR_HOME16}/${APR}/x64")
