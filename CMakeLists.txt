@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.21)
 project(grok)
 
 set(SRC src)
@@ -200,6 +200,24 @@ else ()
     target_link_libraries(libgrok m libapr-1.a libaprutil-1.a pcre)
 endif ()
 
-install(TARGETS grok DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
-install(FILES ${PATTERN_FILES} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
-install(FILES ${LICENSE_FILE} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+install(TARGETS grok DESTINATION bin COMPONENT application)
+install(FILES ${PATTERN_FILES} DESTINATION bin COMPONENT patterns)
+install(FILES ${LICENSE_FILE} DESTINATION bin COMPONENT license)
+
+set(CPACK_GENERATOR     TGZ)
+set(CPACK_PACKAGE_VERSION $ENV{GROK_VERSION})
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+    set(CPACK_SYSTEM_NAME  x86_64-pc-windows-msvc)
+elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+    set(CPACK_SYSTEM_NAME  x86_64-apple-darwin)
+else()
+    set(CPACK_SYSTEM_NAME  x86_64-unknown-linux-gnu)
+endif()
+
+include(CPack)
+
+cpack_add_component(application)
+cpack_add_component(patterns)
+cpack_add_component(license)
