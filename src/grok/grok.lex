@@ -1,4 +1,4 @@
-/* recognize tokens for the calculator and print them out */
+/* recognize tokens and print them out */
 
 %{
     #include "grok.tab.h"
