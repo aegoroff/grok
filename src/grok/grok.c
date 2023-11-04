@@ -136,8 +136,16 @@ void grok_compile_lib(struct arg_file* files) {
         // but it's not true for linux
         char* patterns_path = NULL;
 
+#ifdef _MSC_VER
+    const char* patterns_library_path = grok_base_dir;
+#elif defined(__APPLE_CC__)
+    const char* patterns_library_path = grok_base_dir;
+#else
+    const char* patterns_library_path = "/usr/share/grok/patterns";
+#endif
+
         apr_status_t status = apr_filepath_merge(&patterns_path,
-                                                 grok_base_dir,
+                                                 patterns_library_path,
                                                  "*.patterns",
                                                  APR_FILEPATH_NATIVE,
                                                  main_pool);
