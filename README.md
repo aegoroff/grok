@@ -34,10 +34,22 @@ scoop bucket add aegoroff https://github.com/aegoroff/scoop-bucket.git
 scoop install grok
 ```
 
+**AUR (Arch Linux User Repository)**:
+
+install binary package:
+```sh
+ yay -S grok-tool-bin
+```
+or if yay reports that package not found force updating repo info
+```sh
+yay -Syyu grok-tool-bin
+```
+
 **manually**:
 
 Download the pre-compiled binaries from the [releases](https://github.com/aegoroff/grok/releases) and
-copy to the desired location.
+copy to the desired location. On linux put *.patterns files that are next to executable to folder `/usr/share/grok/patterns`. 
+Create it if not exists. On other platforms grok searches files within executable's directory.
 
 **SYNTAX**:
 ```
