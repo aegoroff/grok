@@ -46,12 +46,8 @@ extern "C" {
 #define NEW_LINE "\n"
 #endif
 
-#define COPYRIGHT_FMT_TRAIL NEW_LINE "Copyright (C) 2019-2022 Alexander Egorov. All rights reserved." NEW_LINE NEW_LINE
-#if defined(_WIN64) || defined(__APPLE_CC__)
+#define COPYRIGHT_FMT_TRAIL NEW_LINE "Copyright (C) 2019-2023 Alexander Egorov. All rights reserved." NEW_LINE NEW_LINE
 #define COPYRIGHT_FMT NEW_LINE "%s x64" COPYRIGHT_FMT_TRAIL
-#else
-#define COPYRIGHT_FMT NEW_LINE "%s x86" COPYRIGHT_FMT_TRAIL
-#endif
 
 #define ALLOCATION_FAIL_FMT "Failed to allocate %Iu bytes"
 #define ALLOCATION_FAILURE_MESSAGE ALLOCATION_FAIL_FMT " in: %s:%d" NEW_LINE
