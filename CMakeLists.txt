@@ -146,7 +146,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     link_directories(
             "$ENV{APR_HOME}/apr/lib/"
-            "$ENV{APR_HOME}/apr-util/libexec/lib/"
+            "$ENV{APR_HOME}/apr-util/lib/"
     )
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .dylib)
 elseif (DEFINED ENV{APR_LINK})
