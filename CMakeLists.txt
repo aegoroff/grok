@@ -203,6 +203,13 @@ endif ()
 install(TARGETS grok DESTINATION . COMPONENT application)
 install(FILES ${PATTERN_FILES} DESTINATION . COMPONENT patterns)
 install(FILES ${LICENSE_FILE} DESTINATION . COMPONENT license)
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+    set(APR_DYLIBS  
+    "$ENV{APR_HOME}/apr/lib/libapr-1.0.gylib"
+    "$ENV{APR_HOME}/apr-util/libexec/lib/libaprutil-1.0.gylib"
+    )
+    install(FILES ${APR_DYLIBS} DESTINATION . COMPONENT apr_libs)
+endif()
 
 set(CPACK_GENERATOR     TGZ)
 set(CPACK_PACKAGE_VERSION "$ENV{GROK_VERSION}")
@@ -221,3 +228,6 @@ include(CPack)
 cpack_add_component(application)
 cpack_add_component(patterns)
 cpack_add_component(license)
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+cpack_add_component(apr_libs)
+endif()
