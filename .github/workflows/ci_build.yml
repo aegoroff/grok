@@ -61,17 +61,16 @@ jobs:
         shell: cmd
         run: ${{ runner.temp }}\build\Release\_tst.exe
       - name: Create artifact directory
-        if: startsWith(github.ref, 'refs/tags/v')
+        # if: startsWith(github.ref, 'refs/tags/v')
         run: |
           mkdir ${{ env.RELEASE_DIR }}
-      - name: Install
-        # if: startsWith(github.ref, 'refs/tags/v')
-        working-directory: ${{ runner.temp }}\build
-        run: cpack
       - name: Packaging
-        if: startsWith(github.ref, 'refs/tags/v')
+        # if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        working-directory: ${{ runner.temp }}\build
         run: |
-          tar -cvzf .\${{ env.RELEASE_DIR }}\${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz -C .\bin *
+          cpack
+          cp -v ..\bin\*.gz ..\${{ env.RELEASE_DIR }}\
       - uses: actions/upload-artifact@v3
         if: startsWith(github.ref, 'refs/tags/v')
         with:
