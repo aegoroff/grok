@@ -70,7 +70,7 @@ jobs:
         working-directory: ${{ runner.temp }}\build
         run: |
           cpack
-          cp -v ..\bin\*.gz ..\${{ env.RELEASE_DIR }}\
+          cp -v ../bin/*.gz ../${{ env.RELEASE_DIR }}/
       - uses: actions/upload-artifact@v3
         if: startsWith(github.ref, 'refs/tags/v')
         with:
