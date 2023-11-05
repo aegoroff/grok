@@ -58,8 +58,8 @@ jobs:
         env:
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Unit Tests
-        shell: cmd
-        run: ${{ runner.temp }}\build\Release\_tst.exe
+        working-directory: ${{ runner.temp }}\build
+        run: ctest -C Release -VV
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
@@ -101,7 +101,8 @@ jobs:
           APR_HOME: /usr/
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Unit Tests
-        run: ${{ runner.temp }}/build/_tst
+        working-directory: ${{ runner.temp }}/build
+        run: ctest -C Release -VV
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
@@ -147,7 +148,8 @@ jobs:
           CMAKE_LIBRARY_PATH: /usr/local/opt/flex/lib;/usr/local/opt/bison/lib
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Unit Tests
-        run: ${{ runner.temp }}/build/_tst
+        working-directory: ${{ runner.temp }}/build
+        run: ctest -C Release -VV
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
