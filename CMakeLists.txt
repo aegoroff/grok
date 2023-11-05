@@ -148,6 +148,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
             "$ENV{APR_HOME}/apr/lib/"
             "$ENV{APR_HOME}/apr-util/libexec/lib/"
     )
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .dylib)
 elseif (DEFINED ENV{APR_LINK})
     link_directories(
             "$ENV{APR_LINK}"
@@ -194,13 +195,19 @@ add_dependencies(grok generate_parser)
 add_dependencies(libgrok generate_parser)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    target_link_libraries(grok libgrok)
-    target_link_libraries(_tst libgrok)
-    target_link_libraries(libgrok ws2_32 rpcrt4 apr-1 aprutil-1 pcre strsafe)
+    target_link_libraries(grok PRIVATE libgrok)
+    target_link_libraries(_tst PRIVATE libgrok)
+    target_link_libraries(libgrok 
+        PRIVATE ws2_32 
+        PRIVATE rpcrt4 
+        PRIVATE apr-1 
+        PRIVATE aprutil-1 
+        PRIVATE pcre 
+        PRIVATE strsafe)
 else ()
-    target_link_libraries(grok libgrok)
-    target_link_libraries(_tst libgrok)
-    target_link_libraries(libgrok m libapr-1.a libaprutil-1.a pcre)
+    target_link_libraries(grok PRIVATE libgrok)
+    target_link_libraries(_tst PRIVATE libgrok)
+    target_link_libraries(libgrok PRIVATE m PRIVATE libapr-1.a PRIVATE libaprutil-1.a PRIVATE pcre)
 endif ()
 
 add_test(NAME RunUnitTests COMMAND _tst)
