@@ -66,7 +66,7 @@ jobs:
       - name: Packaging
         shell: bash
         run: |
-          (cd ${{ runner.temp }}/build && cpack)
+          (cd ${{ runner.temp }}\build && cpack)
           cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
       - uses: actions/upload-artifact@v3
         if: startsWith(github.ref, 'refs/tags/v')
@@ -106,7 +106,6 @@ jobs:
         run: |
           mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
-        working-directory: ${{ runner.temp }}/build
         run: |
           (cd ${{ runner.temp }}/build && cpack)
           cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
