@@ -148,9 +148,6 @@ jobs:
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Unit Tests
         run: ${{ runner.temp }}/build/_tst
-      - name: Install p7zip (MacOS)
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: brew install p7zip
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
