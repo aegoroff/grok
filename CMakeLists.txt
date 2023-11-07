@@ -251,9 +251,9 @@ SET(GROK_GENERATED_FILES
 set_source_files_properties(${GROK_GENERATED_FILES}
         PROPERTIES GENERATED TRUE)
 
-add_executable(grok ${GROK_SOURCE_FILES} ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
-add_library(libgrok ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
-add_executable(_tst ${TST_SOURCE_FILES} ${LIB_SOURCE_FILES})
+add_library(libgrok STATIC ${GROK_GENERATED_FILES} ${LIB_SOURCE_FILES})
+add_executable(grok ${GROK_SOURCE_FILES})
+add_executable(_tst ${TST_SOURCE_FILES})
 
 add_dependencies(generate_parser generated_directory)
 add_dependencies(grok generate_parser)
