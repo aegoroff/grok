@@ -260,8 +260,6 @@ add_dependencies(grok generate_parser)
 add_dependencies(libgrok generate_parser)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    target_link_libraries(grok PRIVATE libgrok)
-    target_link_libraries(_tst PRIVATE libgrok)
     target_link_libraries(libgrok 
         PRIVATE ws2_32 
         PRIVATE rpcrt4 
@@ -270,10 +268,10 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         PRIVATE pcre 
         PRIVATE strsafe)
 else ()
-    target_link_libraries(grok PRIVATE libgrok)
-    target_link_libraries(_tst PRIVATE libgrok)
     target_link_libraries(libgrok PRIVATE m PRIVATE libapr-1.a PRIVATE libaprutil-1.a PRIVATE pcre)
 endif ()
+target_link_libraries(grok PRIVATE libgrok)
+target_link_libraries(_tst PRIVATE libgrok)
 
 add_test(NAME RunUnitTests COMMAND _tst)
 
