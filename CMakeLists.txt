@@ -22,26 +22,91 @@ else ()
     set(APR_UTIL_X64 "$ENV{APR_HOME}APR-UTIL")
 endif ()
 
+set(compiler_flags)
+set(debug_compiler_flags)
+set(release_compiler_flags)
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS_RELEASE "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /W3 /utf-8 /validate-charset /sdl /std:c11 /D NDEBUG")
-    set(CMAKE_CXX_FLAGS_DEBUG "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MTd /Od /Zi /W3 /utf-8 /validate-charset /sdl /std:c11 /RTC1")
-    set(CMAKE_C_FLAGS_RELEASE "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /W3 /utf-8 /validate-charset /std:c11 /TC /sdl /D NDEBUG")
-    set(CMAKE_C_FLAGS_DEBUG "/MP /Zc:wchar_t /Zc:inline /Zc:preprocessor /MTd /Od /Zi /W3 /utf-8 /validate-charset /std:c11 /TC /sdl /RTC1")
+    list(APPEND compiler_flags
+        /MP
+        /Zc:wchar_t
+        /Zc:inline
+        /Zc:preprocessor
+        /utf-8
+        /validate-charset
+        /sdl
+        /std:c11
+        /W3
+    )
+    list(APPEND debug_compiler_flags
+        /MTd
+        /Od
+        /Zi
+        /RTC1
+    )
+    list(APPEND release_compiler_flags
+        /MT
+        /Ox
+        /Ob2
+        /Oy
+        /Oi
+        /Ot
+        /GL
+        /Qpar
+        /D
+        NDEBUG
+    )
+    foreach(compiler_flag ${compiler_flags})
+        set(FLAGS "${FLAGS} ${compiler_flag}")
+    endforeach()
+    foreach(compiler_flag ${release_compiler_flags})
+        set(RELEASE_FLAGS "${RELEASE_FLAGS} ${compiler_flag}")
+    endforeach()
+    foreach(compiler_flag ${debug_compiler_flags})
+        set(DEBUG_FLAGS "${DEBUG_FLAGS} ${compiler_flag}")
+    endforeach()
+    set(CMAKE_CXX_FLAGS_RELEASE "${FLAGS} ${RELEASE_FLAGS}")
+    set(CMAKE_CXX_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS}")
+    set(CMAKE_C_FLAGS_RELEASE "${FLAGS} ${RELEASE_FLAGS} /TC")
+    set(CMAKE_C_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS} /TC")
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     else ()
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
         set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /LTCG")
     endif ()
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Ofast -pthread -std=c++17")
-    set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Og -pthread -gfull -glldb -std=c++17")
-    set(CMAKE_C_FLAGS_RELEASE "-Wall -Ofast -pthread -std=c11")
-    set(CMAKE_C_FLAGS_DEBUG "-Wall -Og -pthread -gfull -glldb -std=c11")
 else ()
-    set(CMAKE_CXX_FLAGS_RELEASE "-march=haswell -Wall -Ofast -mtune=haswell -mfpmath=both -pthread -std=c++17")
-    set(CMAKE_CXX_FLAGS_DEBUG "-march=haswell -Wall -Og -ggdb -mtune=haswell -mfpmath=both -pthread -std=c++17")
-    set(CMAKE_C_FLAGS_RELEASE "-march=haswell -Wall -Ofast -mtune=haswell -mfpmath=both -pthread -std=c11")
-    set(CMAKE_C_FLAGS_DEBUG "-march=haswell -Wall -Og -ggdb -mtune=haswell -mfpmath=both -pthread -std=c11")
+    list(APPEND compiler_flags
+        -Wall
+        -pthread
+    )
+    list(APPEND debug_compiler_flags
+        -Og
+    )
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+        list(APPEND debug_compiler_flags
+            -gfull
+            -glldb
+        )
+    else ()
+        list(APPEND compiler_flags
+            -march=haswell
+            -mtune=haswell
+            -mfpmath=both
+        )
+        list(APPEND debug_compiler_flags
+            -ggdb
+        )
+    endif ()
+    foreach(compiler_flag ${compiler_flags})
+        set(FLAGS "${FLAGS} ${compiler_flag}")
+    endforeach()
+    foreach(compiler_flag ${debug_compiler_flags})
+        set(DEBUG_FLAGS "${DEBUG_FLAGS} ${compiler_flag}")
+    endforeach()
+    set(CMAKE_CXX_FLAGS_RELEASE "${FLAGS} -Ofast -std=c++17")
+    set(CMAKE_CXX_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS} -std=c++17")
+    set(CMAKE_C_FLAGS_RELEASE "${FLAGS} -Ofast -std=c11")
+    set(CMAKE_C_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS} -std=c11")
 endif ()
 
 include_directories(${SRC}/${LIB})
