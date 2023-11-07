@@ -22,6 +22,11 @@ void patt_init(apr_pool_t* pool);
 
 void patt_compile_pattern_file(const char* p);
 
+/// @brief Splits path specified into directory path and file name
+/// @param path full path to split
+/// @param d directory path
+/// @param f file name
+/// @param pool poot to use for operation
 void patt_split_path(const char* path, const char** dir, const char** file, apr_pool_t* pool);
 
 #ifdef __cplusplus

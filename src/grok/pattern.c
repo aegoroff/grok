@@ -88,6 +88,11 @@ void patt_compile_pattern_file(const char* p) {
     fclose(f);
 }
 
+/// @brief Splits path specified into directory path and file name
+/// @param path full path to split
+/// @param d directory path
+/// @param f file name
+/// @param pool poot to use for operation
 void patt_split_path(const char* path, const char** d, const char** f, apr_pool_t* pool) {
 #ifdef _MSC_VER
     char* dir = (char*) apr_pcalloc(pool, sizeof(char) * MAX_PATH);
