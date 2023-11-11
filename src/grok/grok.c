@@ -51,6 +51,7 @@
 #include <apr_general.h>
 #include "argtable3.h"
 #include "configuration.h"
+#include "sort.h"
 
 #ifdef _MSC_VER
 
