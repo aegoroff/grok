@@ -78,6 +78,8 @@ const char* grok_get_executable_path(apr_pool_t* pool);
 
 void grok_out_pattern(const char* name);
 
+int grok_on_each_property(void* rec, const void* key, apr_ssize_t klen, const void* value);
+
 static apr_pool_t* main_pool;
 static const char* grok_base_dir;
 
@@ -280,6 +282,8 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
             }
 
             if(count_not_empty_properties) {
+                apr_array_header_t* list = apr_array_make(p, 8, sizeof(const char*));
+
                 // Second cycle - not good but without additional memory allocation
                 lib_printf("\n  Meta properties found:\n");
                 for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
@@ -289,8 +293,14 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
                     apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
 
                     if(v != NULL && strlen(v)) {
-                        lib_printf("\t%s: %s\n", k, v);
+                        *(const char**) apr_array_push(list) = k;
                     }
+                }
+                sort_quicksort_strings(list, 0, list->nelts - 1);
+                for(size_t i = 0; i < list->nelts; i++) {
+                    const char* k = ((const char**) list->elts)[i];
+                    const char* v = apr_hash_get(pattern->properties, k, APR_HASH_KEY_STRING);
+                    lib_printf("\t%s: %s\n", k, v);
                 }
                 lib_printf("\n\n");
             }
@@ -303,6 +313,12 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
     if(status != APR_SUCCESS) {
         lib_printf("file %s closing error\n", path);
     }
+}
+
+int grok_on_each_property(void* rec, const void* key, apr_ssize_t klen, const void* value) {
+    apr_array_header_t* list = (apr_array_header_t*) rec;
+    *(const char**) apr_array_push(list) = (const char*) key;
+    return 1;
 }
 
 apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
