@@ -106,9 +106,18 @@ bool bend_match_re(pattern_t* pattern, const char* subject, size_t buffer_sz) {
 
         apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
         size_t buffer_size_in_chars = 128;
-        PCRE2_SIZE len = buffer_size_in_chars * sizeof(PCRE2_UCHAR);
-        PCRE2_UCHAR* buffer = (PCRE2_UCHAR*) apr_pcalloc(bend_pool, len);
-        pcre2_substring_copy_byname(match_data, k, buffer, &len);
+        PCRE2_UCHAR* buffer = NULL;
+        while (TRUE) {
+            PCRE2_SIZE len = buffer_size_in_chars * sizeof(PCRE2_UCHAR);
+            buffer = (PCRE2_UCHAR*) apr_pcalloc(bend_pool, len);
+            int result = pcre2_substring_copy_byname(match_data, k, buffer, &len);
+            if (result == PCRE2_ERROR_NOMEMORY) {
+                buffer_size_in_chars *= 2;
+            } else {
+                break;
+            }
+        }
+
         apr_hash_set(pattern->properties, k, APR_HASH_KEY_STRING, buffer);
     }
     cleanup:
