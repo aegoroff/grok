@@ -182,7 +182,8 @@ void grok_on_string(struct arg_file* pattern_files, const char* macro, const cha
     grok_compile_lib(pattern_files);
     pattern_t* pattern = bend_create_pattern(macro, main_pool);
     apr_pool_t* p = bend_init(main_pool);
-    const bool r = bend_match_re(pattern, str, MAX_PATTERN_LEN_FROM_CMDLINE);
+
+    const bool r = bend_match_re(pattern->regex, NULL, str, MAX_PATTERN_LEN_FROM_CMDLINE);
 
     if(info_mode) {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
@@ -257,8 +258,13 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
             wchar_t* wide_buffer = grok_char_to_wchar(buffer, len, encoding, p);
             buffer = enc_from_unicode_to_utf8(wide_buffer, p);
         }
+        apr_hash_t* properties = NULL;
+        if (info_mode) {
+            // each string own properties so as not to influence others
+            properties = apr_hash_copy(p, pattern->properties);
+        }
 
-        const bool matched = bend_match_re(pattern, buffer, len);
+        const bool matched = bend_match_re(pattern->regex, properties, buffer, len);
         if(status != APR_EOF) {
             if(info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, matched ? "TRUE" : "FALSE", macro);
@@ -268,43 +274,27 @@ void grok_on_file(struct arg_file* pattern_files, const char* macro, const char*
         }
 
         // Extract meta information if applicable and pattern contains instructions to extract properties
-        if(matched && info_mode && apr_hash_count(pattern->properties) > 0) {
-            int count_not_empty_properties = 0;
-            // First cycle only count not empty properties
-            for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
+        if(matched && info_mode && apr_hash_count(properties) > 0) {
+            apr_array_header_t* list = apr_array_make(p, 8, sizeof(const char*));
+
+            lib_printf("\n  Meta properties found:\n");
+            for(apr_hash_index_t* hi = apr_hash_first(NULL, properties); hi; hi = apr_hash_next(hi)) {
                 const char* k;
                 const char* v;
 
                 apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
 
                 if(v != NULL && strlen(v)) {
-                    ++count_not_empty_properties;
+                    *(const char**) apr_array_push(list) = k;
                 }
             }
-
-            if(count_not_empty_properties) {
-                apr_array_header_t* list = apr_array_make(p, 8, sizeof(const char*));
-
-                // Second cycle - not good but without additional memory allocation
-                lib_printf("\n  Meta properties found:\n");
-                for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
-                    const char* k;
-                    const char* v;
-
-                    apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
-
-                    if(v != NULL && strlen(v)) {
-                        *(const char**) apr_array_push(list) = k;
-                    }
-                }
-                sort_quicksort_strings(list, 0, list->nelts - 1);
-                for(size_t i = 0; i < list->nelts; i++) {
-                    const char* k = ((const char**) list->elts)[i];
-                    const char* v = apr_hash_get(pattern->properties, k, APR_HASH_KEY_STRING);
-                    lib_printf("\t%s: %s\n", k, v);
-                }
-                lib_printf("\n\n");
+            sort_quicksort_strings(list, 0, list->nelts - 1);
+            for(size_t i = 0; i < list->nelts; i++) {
+                const char* k = ((const char**) list->elts)[i];
+                const char* v = apr_hash_get(properties, k, APR_HASH_KEY_STRING);
+                lib_printf("\t%s: %s\n", k, v);
             }
+            lib_printf("\n\n");
         }
         memset(allocated_buffer, 0, len);
         bend_cleanup();

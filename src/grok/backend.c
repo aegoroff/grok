@@ -58,16 +58,16 @@ void bend_cleanup(void) {
     apr_pool_destroy(bend_pool);
 }
 
-bool bend_match_re(pattern_t* pattern, const char* subject, size_t buffer_sz) {
+bool bend_match_re(char* regex, apr_hash_t* properties_to_fill, const char* subject, size_t buffer_sz) {
     int errornumber = 0;
     size_t erroroffset = 0;
 
-    if(pattern == NULL) {
+    if(regex == NULL) {
         return false;
     }
 
     pcre2_code* re = pcre2_compile(
-            pattern->regex, /* the pattern */
+            regex, /* the pattern */
             PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
             0, /* default options */
             &errornumber, /* for error number */
@@ -100,19 +100,22 @@ bool bend_match_re(pattern_t* pattern, const char* subject, size_t buffer_sz) {
         goto cleanup;
     }
 
-    for(apr_hash_index_t* hi = apr_hash_first(NULL, pattern->properties); hi; hi = apr_hash_next(hi)) {
-        const char* k;
-        const char* v;
+    if (properties_to_fill != NULL) {
+        for(apr_hash_index_t* hi = apr_hash_first(NULL, properties_to_fill); hi; hi = apr_hash_next(hi)) {
+            const char* k;
+            const char* v;
 
-        apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
+            apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
 
-        PCRE2_SIZE buffer_size_in_chars = 0;
-        PCRE2_UCHAR* buffer = "";
-        pcre2_substring_get_byname(match_data, k, &buffer, &buffer_size_in_chars);
-        // IMPORTANT: we must always add even zero values into hashtable because it's shared
-        // betweenn different rows so setting NULL or not setting a key will broke it for next rows
-        apr_hash_set(pattern->properties, k, APR_HASH_KEY_STRING, buffer);
+            PCRE2_SIZE buffer_size_in_chars = 0;
+            PCRE2_UCHAR* buffer = NULL;
+            int get_string_result = pcre2_substring_get_byname(match_data, k, &buffer, &buffer_size_in_chars);
+            if (get_string_result == 0) {
+                apr_hash_set(properties_to_fill, k, APR_HASH_KEY_STRING, buffer);
+            }
+        }
     }
+
     cleanup:
     pcre2_match_data_free(match_data);
     pcre2_code_free(re);
@@ -151,7 +154,7 @@ pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool) {
                     if(result != NULL) {
                         reference = apr_pstrcat(local_pool, current->data, "_", reference, NULL);
                     }
-                    apr_hash_set(used_properties, reference, APR_HASH_KEY_STRING, current->data);
+                    apr_hash_set(used_properties, reference, APR_HASH_KEY_STRING, "");
 
                     // leading (?<name> immediately into composition
                     *(char**) apr_array_push(composition) = "(?<";
