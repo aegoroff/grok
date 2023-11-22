@@ -76,6 +76,7 @@ apr_status_t grok_read_line(char **str, apr_size_t *len, apr_file_t *f);
 const char *grok_get_executable_path(apr_pool_t *pool);
 
 void grok_out_pattern(const char *name);
+static int grok_print_property(void *data, const char *key, const char *value);
 
 static apr_pool_t *main_pool;
 static const char *grok_base_dir;
@@ -263,19 +264,11 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
             }
         }
 
-        // Extract meta information if applicable and pattern contains
-        // instructions to extract properties
-        if (result && info_mode && result->properties != NULL) {
-            const apr_array_header_t *tarr = apr_table_elts(result->properties);
-            const apr_table_entry_t *telts = (const apr_table_entry_t *)tarr->elts;
-
-            if (tarr->nelts > 0) {
-                lib_printf("\n  Meta properties found:\n");
-                for (size_t i = 0; i < tarr->nelts; i++) {
-                    lib_printf("\t%s: %s\n", telts[i].key, telts[i].val);
-                }
-                lib_printf("\n\n");
-            }
+        // Extract meta information if applicable
+        if (result && info_mode && result->properties != NULL && apr_table_elts(result->properties)->nelts > 0) {
+            lib_printf("\n  Meta properties found:\n");
+            apr_table_do(grok_print_property, NULL, result->properties, NULL);
+            lib_printf("\n\n");
         }
         memset(allocated_buffer, 0, len);
         bend_cleanup();
@@ -285,6 +278,11 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
     if (status != APR_SUCCESS) {
         lib_printf("file %s closing error\n", path);
     }
+}
+
+static int grok_print_property(void *data, const char *key, const char *value) {
+    lib_printf("\t%s: %s\n", key, value);
+    return TRUE; /* TRUE:continue iteration. FALSE:stop iteration */
 }
 
 apr_status_t grok_read_line(char **str, apr_size_t *len, apr_file_t *f) {
