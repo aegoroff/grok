@@ -9,22 +9,20 @@
  * Copyright: (c) Alexander Egorov 2015-2023
  */
 
-
 #ifndef GROK_CONFIGURATION_H_
 #define GROK_CONFIGURATION_H_
 
 typedef struct configuration_ctx_t {
-    void (* on_string)(struct arg_file* pattern_files, const char* const macro, const char* const str, int info_mode);
+    void (*on_string)(struct arg_file *pattern_files, const char *const macro, const char *const str, int info_mode);
 
-    void (* on_file)(struct arg_file* pattern_files, const char* const macro, const char* const path, int info_mode);
+    void (*on_file)(struct arg_file *pattern_files, const char *const macro, const char *const path, int info_mode);
 
-    void (* on_template_info)(struct arg_file* pattern_files, const char* const macro);
+    void (*on_template_info)(struct arg_file *pattern_files, const char *const macro);
 
     int argc;
-    const char* const* argv;
+    const char *const *argv;
 } configuration_ctx_t;
 
-void conf_configure_app(configuration_ctx_t* ctx);
+void conf_configure_app(configuration_ctx_t *ctx);
 
 #endif // GROK_CONFIGURATION_H_
-
