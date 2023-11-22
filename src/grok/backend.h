@@ -28,7 +28,7 @@ apr_pool_t* bend_init(apr_pool_t* pool);
 
 void bend_cleanup(void);
 
-bool bend_match_re(char* regex, apr_hash_t* properties_to_fill, const char* subject, size_t buffer_sz);
+bool bend_match_re(const char* regex, apr_hash_t* properties_to_fill, const char* subject, size_t buffer_sz);
 
 pattern_t* bend_create_pattern(const char* macro, apr_pool_t* pool);
 
