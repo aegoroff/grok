@@ -27,6 +27,7 @@
 #include "lib.h"
 #include "sort.h"
 #include <apr_strings.h>
+#include <apr_hash.h>
 
 /*
    bend_ - public members
@@ -93,7 +94,7 @@ match_result_t *bend_match_re(pattern_t *pattern, const char *subject, size_t bu
     }
 
     if (pattern->properties != NULL) {
-        apr_hash_t *properties = apr_hash_make(pool);
+        apr_table_t *properties = apr_table_make(pool, 16);
         for (size_t i = 0; i < pattern->properties->nelts; i++) {
             const char *k = ((const char **)pattern->properties->elts)[i];
 
@@ -101,7 +102,7 @@ match_result_t *bend_match_re(pattern_t *pattern, const char *subject, size_t bu
             PCRE2_UCHAR *buffer = NULL;
             int get_string_result = pcre2_substring_get_byname(match_data, k, &buffer, &buffer_size_in_chars);
             if (get_string_result == 0) {
-                apr_hash_set(properties, k, APR_HASH_KEY_STRING, buffer);
+                apr_table_set(properties, k, buffer);
             }
         }
         result->properties = properties;

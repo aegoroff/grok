@@ -265,16 +265,17 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
 
         // Extract meta information if applicable and pattern contains
         // instructions to extract properties
-        if (result && info_mode && result->properties != NULL && apr_hash_count(result->properties) > 0) {
-            lib_printf("\n  Meta properties found:\n");
-            for (size_t i = 0; i < pattern->properties->nelts; i++) {
-                const char *k = ((const char **)pattern->properties->elts)[i];
-                const char *v = apr_hash_get(result->properties, k, APR_HASH_KEY_STRING);
-                if (v != NULL) {
-                    lib_printf("\t%s: %s\n", k, v);
+        if (result && info_mode && result->properties != NULL) {
+            const apr_array_header_t *tarr = apr_table_elts(result->properties);
+            const apr_table_entry_t *telts = (const apr_table_entry_t *)tarr->elts;
+
+            if (tarr->nelts > 0) {
+                lib_printf("\n  Meta properties found:\n");
+                for (size_t i = 0; i < tarr->nelts; i++) {
+                    lib_printf("\t%s: %s\n", telts[i].key, telts[i].val);
                 }
+                lib_printf("\n\n");
             }
-            lib_printf("\n\n");
         }
         memset(allocated_buffer, 0, len);
         bend_cleanup();

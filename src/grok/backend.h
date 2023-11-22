@@ -12,7 +12,6 @@
 #ifndef GROK_BACKEND_H_
 #define GROK_BACKEND_H_
 
-#include <apr_hash.h>
 #include <apr_tables.h>
 #include <stdbool.h>
 
@@ -27,7 +26,7 @@ typedef struct pattern {
 
 typedef struct match_result {
     bool matched;
-    apr_hash_t *properties;
+    apr_table_t *properties;
 } match_result_t;
 
 apr_pool_t *bend_init(apr_pool_t *pool);
