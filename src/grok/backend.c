@@ -28,7 +28,6 @@
 #include "backend.h"
 #include <apr_strings.h>
 #include "frontend.h"
-#include <apr_hash.h>
 
 /*
    bend_ - public members
