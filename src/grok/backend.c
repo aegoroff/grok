@@ -58,7 +58,7 @@ void bend_cleanup(void) {
     apr_pool_destroy(bend_pool);
 }
 
-bool bend_match_re(char* regex, apr_hash_t* properties_to_fill, const char* subject, size_t buffer_sz) {
+bool bend_match_re(const char* regex, apr_hash_t* properties_to_fill, const char* subject, size_t buffer_sz) {
     int errornumber = 0;
     size_t erroroffset = 0;
 
@@ -102,7 +102,7 @@ bool bend_match_re(char* regex, apr_hash_t* properties_to_fill, const char* subj
 
     if (properties_to_fill != NULL) {
         for(apr_hash_index_t* hi = apr_hash_first(NULL, properties_to_fill); hi; hi = apr_hash_next(hi)) {
-            const char* k;
+            PCRE2_SPTR k;
             const char* v;
 
             apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
