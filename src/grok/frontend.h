@@ -12,47 +12,43 @@
 #ifndef GROK_FRONTEND_H_
 #define GROK_FRONTEND_H_
 
-#include <apr_tables.h>
 #include <apr_hash.h>
+#include <apr_tables.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum part {
-    part_literal,
-    part_reference
-} part_t;
+typedef enum part { part_literal, part_reference } part_t;
 
 typedef struct info {
     part_t type;
-    char* data;
-    char* reference;
+    char *data;
+    char *reference;
 } info_t;
 
 typedef struct macro macro_t;
 
-void fend_init(apr_pool_t* pool);
+void fend_init(apr_pool_t *pool);
 
 void fend_on_definition(void);
 
-void fend_on_definition_end(char* key);
+void fend_on_definition_end(char *key);
 
-void fend_on_literal(char* str);
+void fend_on_literal(char *str);
 
-void fend_on_grok(macro_t* str);
+void fend_on_grok(macro_t *str);
 
-macro_t* fend_on_macro(char* name, char* prop);
+macro_t *fend_on_macro(char *name, char *prop);
 
-apr_array_header_t* fend_get_pattern(const char* def);
+apr_array_header_t *fend_get_pattern(const char *def);
 
-apr_hash_t* fend_get_patterns(void);
+apr_hash_t *fend_get_patterns(void);
 
-char* fend_strdup(char* str);
+char *fend_strdup(char *str);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif // GROK_FRONTEND_H_
-

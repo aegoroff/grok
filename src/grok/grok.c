@@ -9,13 +9,12 @@
  * Copyright: (c) Alexander Egorov 2015-2023
  */
 
-
 #define PCRE2_CODE_UNIT_WIDTH 8
 #define MAX_PATTERN_LEN_FROM_CMDLINE 4096
 #define MAX_STRING_LEN 33554432 // 32 Mb
 
 #ifndef _MSC_VER
-#define EXIT_FAILURE      1
+#define EXIT_FAILURE 1
 
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
@@ -37,21 +36,20 @@
 
 #endif
 
-#include <locale.h>
 #include "apr.h"
-#include "apr_file_io.h"
 #include "apr_file_info.h"
+#include "apr_file_io.h"
+#include <locale.h>
 
-#include "lib.h"
-#include "frontend.h"
+#include "argtable3.h"
 #include "backend.h"
+#include "configuration.h"
 #include "encoding.h"
+#include "frontend.h"
+#include "lib.h"
 #include "pattern.h"
 #include <apr_errno.h>
 #include <apr_general.h>
-#include "argtable3.h"
-#include "configuration.h"
-#include "sort.h"
 
 #ifdef _MSC_VER
 
@@ -59,32 +57,30 @@
 
 #endif
 
-void grok_compile_lib(struct arg_file* files);
+void grok_compile_lib(struct arg_file *files);
 
-void grok_on_string(struct arg_file* pattern_files, const char* macro, const char* str, int info_mode);
+void grok_on_string(struct arg_file *pattern_files, const char *macro, const char *str, int info_mode);
 
-void grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode);
+void grok_on_file(struct arg_file *pattern_files, const char *macro, const char *path, int info_mode);
 
-void grok_on_template_info(struct arg_file* pattern_files, const char* macro);
+void grok_on_template_info(struct arg_file *pattern_files, const char *macro);
 
-wchar_t* grok_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p);
+wchar_t *grok_char_to_wchar(const char *buffer, size_t len, bom_t encoding, apr_pool_t *p);
 
-void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p);
+void grok_output_line(const char *str, bom_t encoding, apr_pool_t *p);
 
-apr_status_t grok_open_file(const char* path, apr_file_t** file_handle);
+apr_status_t grok_open_file(const char *path, apr_file_t **file_handle);
 
-apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f);
+apr_status_t grok_read_line(char **str, apr_size_t *len, apr_file_t *f);
 
-const char* grok_get_executable_path(apr_pool_t* pool);
+const char *grok_get_executable_path(apr_pool_t *pool);
 
-void grok_out_pattern(const char* name);
+void grok_out_pattern(const char *name);
 
-int grok_on_each_property(void* rec, const void* key, apr_ssize_t klen, const void* value);
+static apr_pool_t *main_pool;
+static const char *grok_base_dir;
 
-static apr_pool_t* main_pool;
-static const char* grok_base_dir;
-
-int main(int argc, const char* const argv[]) {
+int main(int argc, const char *const argv[]) {
 
 #ifdef _MSC_VER
 #ifndef _DEBUG // only Release configuration dump generating
@@ -99,7 +95,7 @@ int main(int argc, const char* const argv[]) {
     setlocale(LC_NUMERIC, "C");
 
     const apr_status_t status = apr_app_initialize(&argc, &argv, NULL);
-    if(status != APR_SUCCESS) {
+    if (status != APR_SUCCESS) {
         lib_printf("Couldn't initialize APR");
         return EXIT_FAILURE;
     }
@@ -109,12 +105,12 @@ int main(int argc, const char* const argv[]) {
     apr_pool_create(&main_pool, NULL);
     fend_init(main_pool);
 
-    const char* exe = grok_get_executable_path(main_pool);
+    const char *exe = grok_get_executable_path(main_pool);
 
-    const char* exe_file_name;
+    const char *exe_file_name;
     patt_split_path(exe, &grok_base_dir, &exe_file_name, main_pool);
 
-    configuration_ctx_t* configuration = (configuration_ctx_t*) apr_pcalloc(main_pool, sizeof(configuration_ctx_t));
+    configuration_ctx_t *configuration = (configuration_ctx_t *)apr_pcalloc(main_pool, sizeof(configuration_ctx_t));
     configuration->argc = argc;
     configuration->argv = argv;
     configuration->on_string = &grok_on_string;
@@ -127,46 +123,43 @@ int main(int argc, const char* const argv[]) {
     return 0;
 }
 
-void grok_compile_lib(struct arg_file* files) {
+void grok_compile_lib(struct arg_file *files) {
     patt_init(main_pool);
-    if(files->count == 0) {
+    if (files->count == 0) {
         // case when no specific patterns path set so use default
         // usually it's where executable file is located
         // but it's not true for linux
-        char* patterns_path = NULL;
+        char *patterns_path = NULL;
 
 #ifdef _MSC_VER
-    const char* patterns_library_path = grok_base_dir;
+        const char *patterns_library_path = grok_base_dir;
 #elif defined(__APPLE_CC__)
-    const char* patterns_library_path = grok_base_dir;
+        const char *patterns_library_path = grok_base_dir;
 #else
-    const char* patterns_library_path = "/usr/share/grok/patterns";
+        const char *patterns_library_path = "/usr/share/grok/patterns";
 #endif
 
-        apr_status_t status = apr_filepath_merge(&patterns_path,
-                                                 patterns_library_path,
-                                                 "*.patterns",
-                                                 APR_FILEPATH_NATIVE,
-                                                 main_pool);
-        if(status != APR_SUCCESS) {
+        apr_status_t status =
+            apr_filepath_merge(&patterns_path, patterns_library_path, "*.patterns", APR_FILEPATH_NATIVE, main_pool);
+        if (status != APR_SUCCESS) {
             return;
         }
 
         patt_compile_pattern_file(patterns_path);
     } else {
-        for(size_t i = 0; i < files->count; i++) {
-            const char* p = files->filename[i];
+        for (size_t i = 0; i < files->count; i++) {
+            const char *p = files->filename[i];
             patt_compile_pattern_file(p);
         }
     }
 }
 
-void grok_on_template_info(struct arg_file* pattern_files, const char* const macro) {
+void grok_on_template_info(struct arg_file *pattern_files, const char *const macro) {
     grok_compile_lib(pattern_files);
 
-    if(macro != NULL && macro[0] != '\0') {
-        pattern_t* pattern = bend_create_pattern(macro, main_pool);
-        if(pattern == NULL) {
+    if (macro != NULL && macro[0] != '\0') {
+        pattern_t *pattern = bend_create_pattern(macro, main_pool);
+        if (pattern == NULL) {
             lib_printf("pattern %s not found\n", macro);
         } else {
             lib_printf("%s\n", pattern->regex);
@@ -178,161 +171,142 @@ void grok_on_template_info(struct arg_file* pattern_files, const char* const mac
     }
 }
 
-void grok_on_string(struct arg_file* pattern_files, const char* macro, const char* str, int info_mode) {
+void grok_on_string(struct arg_file *pattern_files, const char *macro, const char *str, int info_mode) {
     grok_compile_lib(pattern_files);
-    pattern_t* pattern = bend_create_pattern(macro, main_pool);
-    apr_pool_t* p = bend_init(main_pool);
+    pattern_t *pattern = bend_create_pattern(macro, main_pool);
+    apr_pool_t *p = bend_init(main_pool);
 
-    const bool r = bend_match_re(pattern->regex, NULL, str, MAX_PATTERN_LEN_FROM_CMDLINE);
+    const bool r = bend_match_re(pattern->regex, NULL, str, MAX_PATTERN_LEN_FROM_CMDLINE, p);
 
-    if(info_mode) {
+    if (info_mode) {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
-    } else if(r) {
+    } else if (r) {
         grok_output_line(str, bom_utf8, p);
     }
 
     bend_cleanup();
 }
 
-void grok_on_file(struct arg_file* pattern_files, const char* macro, const char* path, int info_mode) {
+void grok_on_file(struct arg_file *pattern_files, const char *macro, const char *path, int info_mode) {
     grok_compile_lib(pattern_files);
-    pattern_t* pattern = bend_create_pattern(macro, main_pool);
-    apr_file_t* file_handle = NULL;
+    pattern_t *pattern = bend_create_pattern(macro, main_pool);
+    apr_file_t *file_handle = NULL;
     apr_status_t status = APR_SUCCESS;
 
     status = grok_open_file(path, &file_handle);
 
-    if(status != APR_SUCCESS) {
+    if (status != APR_SUCCESS) {
         return;
     }
 
     bom_t encoding = bom_unknown;
     bom_t current_encoding = encoding;
 
-    if(path != NULL) {
+    if (path != NULL) {
         // real file
         encoding = enc_detect_bom(file_handle);
     }
 
-    if(encoding == bom_utf32be) {
+    if (encoding == bom_utf32be) {
         lib_printf("unsupported file encoding %s\n", enc_get_encoding_name(encoding));
         return;
     }
 
     apr_size_t len = 4096;
-    char* buffer = (char*) apr_pcalloc(main_pool, len);
-    char* allocated_buffer = buffer;
+    char *buffer = (char *)apr_pcalloc(main_pool, len);
+    char *allocated_buffer = buffer;
 
     long long lineno = 1;
     do {
-        apr_pool_t* p = bend_init(main_pool);
+        apr_pool_t *p = bend_init(main_pool);
 
         // it maybe shifted by bom encoder. so wind it back
         buffer = allocated_buffer;
         status = grok_read_line(&buffer, &len, file_handle);
 
         // It may occur on realloc if line is too long
-        if(buffer != allocated_buffer) {
+        if (buffer != allocated_buffer) {
             allocated_buffer = buffer;
         }
 
-        if(path == NULL && status != APR_EOF) {
-            // stdin case. Detect encoding on each line because stdin can be concatenated from several files using cat
+        if (path == NULL && status != APR_EOF) {
+            // stdin case. Detect encoding on each line because stdin can be
+            // concatenated from several files using cat
             size_t line_offset = 0;
             encoding = enc_detect_bom_memory(buffer, BOM_MAX_LEN, &line_offset);
             buffer += line_offset;
-            if(encoding != bom_unknown) {
+            if (encoding != bom_unknown) {
                 current_encoding = encoding;
             } else {
                 encoding = current_encoding;
             }
         }
 
-        if(encoding == bom_utf16le && status != APR_EOF) {
-            // read one more zero byte from file after trailing \n to avoid conversion to BE
+        if (encoding == bom_utf16le && status != APR_EOF) {
+            // read one more zero byte from file after trailing \n to avoid
+            // conversion to BE
             char zero;
             apr_file_getc(&zero, file_handle);
         }
 
-        if(encoding == bom_utf16le || encoding == bom_utf16be) {
-            wchar_t* wide_buffer = grok_char_to_wchar(buffer, len, encoding, p);
+        if (encoding == bom_utf16le || encoding == bom_utf16be) {
+            wchar_t *wide_buffer = grok_char_to_wchar(buffer, len, encoding, p);
             buffer = enc_from_unicode_to_utf8(wide_buffer, p);
         }
-        apr_hash_t* properties = NULL;
-        if (info_mode) {
-            // each string own properties so as not to influence others
-            properties = apr_hash_copy(p, pattern->properties);
-        }
 
-        const bool matched = bend_match_re(pattern->regex, properties, buffer, len);
-        if(status != APR_EOF) {
-            if(info_mode) {
-                lib_printf("line: %d match: %s | pattern: %s\n", lineno++, matched ? "TRUE" : "FALSE", macro);
-            } else if(matched) {
+        match_result_t *result = bend_match_re(pattern->regex, pattern->properties, buffer, len, p);
+        if (status != APR_EOF) {
+            if (info_mode) {
+                lib_printf("line: %d match: %s | pattern: %s\n", lineno++, result->matched ? "TRUE" : "FALSE", macro);
+            } else if (result->matched) {
                 grok_output_line(buffer, encoding, p);
             }
         }
 
-        // Extract meta information if applicable and pattern contains instructions to extract properties
-        if(matched && info_mode && apr_hash_count(properties) > 0) {
-            apr_array_header_t* list = apr_array_make(p, 8, sizeof(const char*));
-
+        // Extract meta information if applicable and pattern contains
+        // instructions to extract properties
+        if (result && info_mode && result->properties != NULL && apr_hash_count(result->properties) > 0) {
             lib_printf("\n  Meta properties found:\n");
-            for(apr_hash_index_t* hi = apr_hash_first(NULL, properties); hi; hi = apr_hash_next(hi)) {
-                const char* k;
-                const char* v;
-
-                apr_hash_this(hi, (const void**) &k, NULL, (void**) &v);
-
-                if(v != NULL && strlen(v)) {
-                    *(const char**) apr_array_push(list) = k;
+            for (size_t i = 0; i < pattern->properties->nelts; i++) {
+                const char *k = ((const char **)pattern->properties->elts)[i];
+                const char *v = apr_hash_get(result->properties, k, APR_HASH_KEY_STRING);
+                if (v != NULL) {
+                    lib_printf("\t%s: %s\n", k, v);
                 }
-            }
-            sort_quicksort_strings(list, 0, list->nelts - 1);
-            for(size_t i = 0; i < list->nelts; i++) {
-                const char* k = ((const char**) list->elts)[i];
-                const char* v = apr_hash_get(properties, k, APR_HASH_KEY_STRING);
-                lib_printf("\t%s: %s\n", k, v);
             }
             lib_printf("\n\n");
         }
         memset(allocated_buffer, 0, len);
         bend_cleanup();
-    } while(status == APR_SUCCESS);
+    } while (status == APR_SUCCESS);
 
     status = apr_file_close(file_handle);
-    if(status != APR_SUCCESS) {
+    if (status != APR_SUCCESS) {
         lib_printf("file %s closing error\n", path);
     }
 }
 
-int grok_on_each_property(void* rec, const void* key, apr_ssize_t klen, const void* value) {
-    apr_array_header_t* list = (apr_array_header_t*) rec;
-    *(const char**) apr_array_push(list) = (const char*) key;
-    return 1;
-}
-
-apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
+apr_status_t grok_read_line(char **str, apr_size_t *len, apr_file_t *f) {
     apr_size_t current_ix = 0;
-    while(1) {
+    while (1) {
         char c;
         apr_status_t status = apr_file_getc(&c, f);
-        if(status != APR_SUCCESS) {
+        if (status != APR_SUCCESS) {
             return status;
         }
-        if(current_ix + 2 >= *len) {
-            if(*len == MAX_STRING_LEN) {
+        if (current_ix + 2 >= *len) {
+            if (*len == MAX_STRING_LEN) {
                 // Already allocated
                 break;
             }
             apr_size_t new_len = 2 * (*len);
-            if(new_len > MAX_STRING_LEN) {
+            if (new_len > MAX_STRING_LEN) {
                 new_len = MAX_STRING_LEN;
             }
-            char* new_buffer = (char*) apr_pcalloc(main_pool, new_len);
+            char *new_buffer = (char *)apr_pcalloc(main_pool, new_len);
 #ifdef __STDC_WANT_SECURE_LIB__
             const errno_t err = memcpy_s(new_buffer, new_len, *str, current_ix);
-            if(err) {
+            if (err) {
                 lib_fprintf(stderr, "memcpy_s() in grok_read_line failed: %i\n", err);
             }
 #else
@@ -345,7 +319,7 @@ apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
         (*str)[current_ix] = c;
         ++current_ix;
 
-        if(c == '\n') {
+        if (c == '\n') {
             break;
         }
     }
@@ -353,16 +327,16 @@ apr_status_t grok_read_line(char** str, apr_size_t* len, apr_file_t* f) {
     return APR_SUCCESS;
 }
 
-apr_status_t grok_open_file(const char* path, apr_file_t** file_handle) {
+apr_status_t grok_open_file(const char *path, apr_file_t **file_handle) {
     apr_status_t status = APR_SUCCESS;
-    if(path != NULL) {
+    if (path != NULL) {
         (status) = apr_file_open(file_handle, path, APR_READ | APR_FOPEN_BUFFERED, APR_FPROT_WREAD, main_pool);
     } else {
         (status) = apr_file_open_stdin(file_handle, main_pool);
     }
 
-    if(status != APR_SUCCESS) {
-        if(path == NULL) {
+    if (status != APR_SUCCESS) {
+        if (path == NULL) {
             lib_printf("cannot open stdin\n");
         } else {
             lib_printf("cannot open file %s\n", path);
@@ -371,28 +345,26 @@ apr_status_t grok_open_file(const char* path, apr_file_t** file_handle) {
     return status;
 }
 
-wchar_t* grok_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_pool_t* p) {
+wchar_t *grok_char_to_wchar(const char *buffer, size_t len, bom_t encoding, apr_pool_t *p) {
     unsigned char wide_char[2];
     wchar_t wchar;
-    wchar_t* wide_buffer = (wchar_t*) apr_pcalloc(p, sizeof(wchar_t) * len / 2);
+    wchar_t *wide_buffer = (wchar_t *)apr_pcalloc(p, sizeof(wchar_t) * len / 2);
     int counter = 0;
 
-    for(int i = 0; i < len; i += 2) {
-        switch(encoding) {
-            case bom_utf16le: {
-                wide_char[0] = buffer[i];
-                wide_char[1] = buffer[i + 1];
-            }
-                break;
-            default:
-            case bom_utf16be: {
-                wide_char[1] = buffer[i];
-                wide_char[0] = buffer[i + 1];
-            }
-                break;
+    for (int i = 0; i < len; i += 2) {
+        switch (encoding) {
+        case bom_utf16le: {
+            wide_char[0] = buffer[i];
+            wide_char[1] = buffer[i + 1];
+        } break;
+        default:
+        case bom_utf16be: {
+            wide_char[1] = buffer[i];
+            wide_char[0] = buffer[i + 1];
+        } break;
         }
 
-        wchar = (uint16_t) ((uint8_t) wide_char[1] << 8 | (uint8_t) wide_char[0]);
+        wchar = (uint16_t)((uint8_t)wide_char[1] << 8 | (uint8_t)wide_char[0]);
         wide_buffer[counter] = wchar;
         ++counter;
     }
@@ -400,34 +372,34 @@ wchar_t* grok_char_to_wchar(const char* buffer, size_t len, bom_t encoding, apr_
     return wide_buffer;
 }
 
-void grok_output_line(const char* str, bom_t encoding, apr_pool_t* p) {
-    const char* s = str;
+void grok_output_line(const char *str, bom_t encoding, apr_pool_t *p) {
+    const char *s = str;
 #ifdef _MSC_VER
-    if(encoding == bom_utf8 || enc_is_valid_utf8(str)) {
+    if (encoding == bom_utf8 || enc_is_valid_utf8(str)) {
         s = enc_from_utf8_to_ansi(str, p);
     }
 #endif
     lib_printf("%s", s);
 }
 
-const char* grok_get_executable_path(apr_pool_t* pool) {
+const char *grok_get_executable_path(apr_pool_t *pool) {
     uint32_t size = 512;
-    char* buf = (char*) apr_pcalloc(pool, size);
+    char *buf = (char *)apr_pcalloc(pool, size);
     int do_realloc = 1;
     do {
 #ifdef __APPLE_CC__
         int result = _NSGetExecutablePath(buf, &size);
         do_realloc = result == -1;
-        if(do_realloc) {
+        if (do_realloc) {
             // if the buffer is not large enough, and * bufsize is set to the
             //     size required.
             // size + 1 made buffer null terminated
-            buf = (char*) apr_pcalloc(pool, size + 1);
+            buf = (char *)apr_pcalloc(pool, size + 1);
         } else {
-            char* real_path = realpath(buf, NULL);
-            if(real_path != NULL) {
+            char *real_path = realpath(buf, NULL);
+            if (real_path != NULL) {
                 size_t len = strnlen(real_path, PATH_MAX);
-                buf = (char*) apr_pcalloc(pool, len + 1);
+                buf = (char *)apr_pcalloc(pool, len + 1);
                 memcpy(buf, real_path, len);
                 free(real_path);
             }
@@ -438,23 +410,20 @@ const char* grok_get_executable_path(apr_pool_t* pool) {
         DWORD result = GetModuleFileNameA(NULL, buf, size - 1);
         DWORD lastError = GetLastError();
 
-        do_realloc = result == (size - 1)
-                     && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS);
+        do_realloc = result == (size - 1) && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS);
 #else
         // size - 1 made buffer null terminated
         ssize_t result = readlink("/proc/self/exe", buf, size - 1);
 
         do_realloc = result >= (size - 1);
 #endif
-        if(do_realloc) {
+        if (do_realloc) {
             size *= 2;
-            buf = (char*) apr_pcalloc(pool, size);
+            buf = (char *)apr_pcalloc(pool, size);
         }
 #endif
-    } while(do_realloc);
+    } while (do_realloc);
     return buf;
 }
 
-void grok_out_pattern(const char* name) {
-    lib_printf("%s\n", name);
-}
+void grok_out_pattern(const char *name) { lib_printf("%s\n", name); }
