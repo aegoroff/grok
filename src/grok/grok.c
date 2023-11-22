@@ -176,7 +176,7 @@ void grok_on_string(struct arg_file *pattern_files, const char *macro, const cha
     pattern_t *pattern = bend_create_pattern(macro, main_pool);
     apr_pool_t *p = bend_init(main_pool);
 
-    const bool r = bend_match_re(pattern->regex, NULL, str, MAX_PATTERN_LEN_FROM_CMDLINE, p);
+    const bool r = bend_match_re(pattern, str, MAX_PATTERN_LEN_FROM_CMDLINE, p);
 
     if (info_mode) {
         lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
@@ -254,7 +254,7 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
             buffer = enc_from_unicode_to_utf8(wide_buffer, p);
         }
 
-        match_result_t *result = bend_match_re(pattern->regex, pattern->properties, buffer, len, p);
+        match_result_t *result = bend_match_re(pattern, buffer, len, p);
         if (status != APR_EOF) {
             if (info_mode) {
                 lib_printf("line: %d match: %s | pattern: %s\n", lineno++, result->matched ? "TRUE" : "FALSE", macro);

@@ -52,16 +52,15 @@ void bend_cleanup(void) {
     apr_pool_destroy(bend_pool);
 }
 
-match_result_t *bend_match_re(const char *regex, apr_array_header_t *pattern_properties, const char *subject,
-                              size_t buffer_sz, apr_pool_t *pool) {
+match_result_t *bend_match_re(pattern_t *pattern, const char *subject, size_t buffer_sz, apr_pool_t *pool) {
     int errornumber = 0;
     size_t erroroffset = 0;
 
-    if (regex == NULL) {
+    if (pattern == NULL) {
         return false;
     }
 
-    pcre2_code *re = pcre2_compile(regex,                 /* the pattern */
+    pcre2_code *re = pcre2_compile(pattern->regex,        /* the pattern */
                                    PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
                                    0,                     /* default options */
                                    &errornumber,          /* for error number */
@@ -93,10 +92,10 @@ match_result_t *bend_match_re(const char *regex, apr_array_header_t *pattern_pro
         goto cleanup;
     }
 
-    if (pattern_properties != NULL) {
+    if (pattern->properties != NULL) {
         apr_hash_t *properties = apr_hash_make(pool);
-        for (size_t i = 0; i < pattern_properties->nelts; i++) {
-            const char *k = ((const char **)pattern_properties->elts)[i];
+        for (size_t i = 0; i < pattern->properties->nelts; i++) {
+            const char *k = ((const char **)pattern->properties->elts)[i];
 
             PCRE2_SIZE buffer_size_in_chars = 0;
             PCRE2_UCHAR *buffer = NULL;
