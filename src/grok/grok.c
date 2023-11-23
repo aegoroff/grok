@@ -225,7 +225,8 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
         buffer = allocated_buffer;
         status = grok_read_line(&buffer, &len, file_handle);
         if (status == APR_EOF) {
-            goto file_eof;
+            bend_cleanup();
+            break;
         }
 
         // It may occur on realloc if line is too long
@@ -271,7 +272,6 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
             lib_printf("\n\n");
         }
         memset(allocated_buffer, 0, len);
-    file_eof:
         bend_cleanup();
     } while (status == APR_SUCCESS);
 
