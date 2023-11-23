@@ -53,12 +53,13 @@ void bend_cleanup(void) {
     apr_pool_destroy(bend_pool);
 }
 
-match_result_t *bend_match_re(pattern_t *pattern, const char *subject, size_t buffer_sz, apr_pool_t *pool) {
+match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buffer_sz, apr_pool_t *pool) {
     int errornumber = 0;
     size_t erroroffset = 0;
+    match_result_t result =  { 0 };
 
     if (pattern == NULL) {
-        return false;
+        return result;
     }
 
     pcre2_code *re = pcre2_compile(pattern->regex,        /* the pattern */
@@ -74,7 +75,7 @@ match_result_t *bend_match_re(pattern_t *pattern, const char *subject, size_t bu
         PCRE2_UCHAR *buffer = (PCRE2_UCHAR *)apr_pcalloc(bend_pool, len);
         pcre2_get_error_message(errornumber, buffer, len);
         lib_printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
-        return FALSE;
+        return result;
     }
     pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, NULL);
 
@@ -87,9 +88,8 @@ match_result_t *bend_match_re(pattern_t *pattern, const char *subject, size_t bu
                          flags, match_data,           /* block for storing the result */
                          NULL);                       /* use default match context */
 
-    match_result_t *result = (match_result_t *)apr_pcalloc(pool, sizeof(match_result_t));
-    result->matched = rc > 0;
-    if (!result->matched) {
+    result.matched = rc > 0;
+    if (!result.matched) {
         goto cleanup;
     }
 
@@ -105,7 +105,7 @@ match_result_t *bend_match_re(pattern_t *pattern, const char *subject, size_t bu
                 apr_table_set(properties, k, buffer);
             }
         }
-        result->properties = properties;
+        result.properties = properties;
     }
 
 cleanup:

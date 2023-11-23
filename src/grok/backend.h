@@ -33,7 +33,7 @@ apr_pool_t *bend_init(apr_pool_t *pool);
 
 void bend_cleanup(void);
 
-match_result_t *bend_match_re(pattern_t *pattern, const char *subject, size_t buffer_sz, apr_pool_t *pool);
+match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buffer_sz, apr_pool_t *pool);
 
 pattern_t *bend_create_pattern(const char *macro, apr_pool_t *pool);
 
