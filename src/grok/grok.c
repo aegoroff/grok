@@ -177,11 +177,11 @@ void grok_on_string(struct arg_file *pattern_files, const char *macro, const cha
     pattern_t *pattern = bend_create_pattern(macro, main_pool);
     apr_pool_t *p = bend_init(main_pool);
 
-    const bool r = bend_match_re(pattern, str, MAX_PATTERN_LEN_FROM_CMDLINE, p);
+    match_result_t r = bend_match_re(pattern, str, MAX_PATTERN_LEN_FROM_CMDLINE, p);
 
     if (info_mode) {
-        lib_printf("string: %s | match: %s | pattern: %s\n", str, r > 0 ? "TRUE" : "FALSE", macro);
-    } else if (r) {
+        lib_printf("string: %s | match: %s | pattern: %s\n", str, r.matched ? "TRUE" : "FALSE", macro);
+    } else if (r.matched) {
         grok_output_line(str, bom_utf8, p);
     }
 
@@ -255,19 +255,19 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
             buffer = enc_from_unicode_to_utf8(wide_buffer, p);
         }
 
-        match_result_t *result = bend_match_re(pattern, buffer, len, p);
+        match_result_t result = bend_match_re(pattern, buffer, len, p);
         if (status != APR_EOF) {
             if (info_mode) {
-                lib_printf("line: %d match: %s | pattern: %s\n", lineno++, result->matched ? "TRUE" : "FALSE", macro);
-            } else if (result->matched) {
+                lib_printf("line: %d match: %s | pattern: %s\n", lineno++, result.matched ? "TRUE" : "FALSE", macro);
+            } else if (result.matched) {
                 grok_output_line(buffer, encoding, p);
             }
         }
 
         // Extract meta information if applicable
-        if (result && info_mode && result->properties != NULL && apr_table_elts(result->properties)->nelts > 0) {
+        if (result.matched && info_mode && result.properties != NULL && apr_table_elts(result.properties)->nelts > 0) {
             lib_printf("\n  Meta properties found:\n");
-            apr_table_do(grok_print_property, NULL, result->properties, NULL);
+            apr_table_do(grok_print_property, NULL, result.properties, NULL);
             lib_printf("\n\n");
         }
         memset(allocated_buffer, 0, len);
