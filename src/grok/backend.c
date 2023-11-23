@@ -89,11 +89,7 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buf
                          NULL);                       /* use default match context */
 
     result.matched = rc > 0;
-    if (!result.matched) {
-        goto cleanup;
-    }
-
-    if (pattern->properties != NULL) {
+    if (result.matched && pattern->properties != NULL && pattern->properties->nelts > 0) {
         apr_table_t *properties = apr_table_make(pool, 16);
         for (size_t i = 0; i < pattern->properties->nelts; i++) {
             const char *k = ((const char **)pattern->properties->elts)[i];
@@ -108,7 +104,6 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buf
         result.properties = properties;
     }
 
-cleanup:
     pcre2_match_data_free(match_data);
     pcre2_code_free(re);
     return result;
