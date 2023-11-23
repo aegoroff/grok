@@ -224,13 +224,16 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
         // it maybe shifted by bom encoder. so wind it back
         buffer = allocated_buffer;
         status = grok_read_line(&buffer, &len, file_handle);
+        if (status == APR_EOF) {
+            goto file_eof;
+        }
 
         // It may occur on realloc if line is too long
         if (buffer != allocated_buffer) {
             allocated_buffer = buffer;
         }
 
-        if (path == NULL && status != APR_EOF) {
+        if (path == NULL) {
             // stdin case. Detect encoding on each line because stdin can be
             // concatenated from several files using cat
             size_t line_offset = 0;
@@ -243,7 +246,7 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
             }
         }
 
-        if (encoding == bom_utf16le && status != APR_EOF) {
+        if (encoding == bom_utf16le) {
             // read one more zero byte from file after trailing \n to avoid
             // conversion to BE
             char zero;
@@ -256,14 +259,11 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
         }
 
         match_result_t result = bend_match_re(pattern, buffer, len, p);
-        if (status != APR_EOF) {
-            if (info_mode) {
-                lib_printf("line: %d match: %s | pattern: %s\n", lineno++, result.matched ? "TRUE" : "FALSE", macro);
-            } else if (result.matched) {
-                grok_output_line(buffer, encoding, p);
-            }
+        if (info_mode) {
+            lib_printf("line: %d match: %s | pattern: %s\n", lineno++, result.matched ? "TRUE" : "FALSE", macro);
+        } else if (result.matched) {
+            grok_output_line(buffer, encoding, p);
         }
-
         // Extract meta information if applicable
         if (result.matched && info_mode && result.properties != NULL && apr_table_elts(result.properties)->nelts > 0) {
             lib_printf("\n  Meta properties found:\n");
@@ -271,6 +271,7 @@ void grok_on_file(struct arg_file *pattern_files, const char *macro, const char 
             lib_printf("\n\n");
         }
         memset(allocated_buffer, 0, len);
+    file_eof:
         bend_cleanup();
     } while (status == APR_SUCCESS);
 
