@@ -18,6 +18,10 @@ extern "C" {
 #include <stdbool.h>
 #endif
 
+#ifdef __linux__
+#include <stddef.h>
+#endif
+
 #include "apr_file_io.h"
 #include "apr_pools.h"
 
