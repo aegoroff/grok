@@ -18,10 +18,10 @@
 extern "C" {
 #endif
 
-void sort_quicksort_strings(apr_array_header_t* array, int start, int end);
+void sort_quicksort_strings(apr_array_header_t *array, int start, int end);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //GROK_SORT_H
+#endif // GROK_SORT_H
