@@ -127,23 +127,14 @@ member
 
 %%
 
-void yyerror(char *s, ...)
-{
+void yyerror(char *s, ...) {
 	va_list ap;
 	va_start(ap, s);
-	if(yylloc.first_line)
-		lib_fprintf(stderr, "%d.%d-%d.%d: error: ", yylloc.first_line, yylloc.first_column, yylloc.last_line, yylloc.last_column);
-#ifdef __STDC_WANT_SECURE_LIB__
-    vfprintf_s(stderr, s, ap);
-#else
-    vfprintf(stderr, s, ap);
-#endif
+	lyyerror(yylloc, s, ap);	
 	va_end(ap);
-	lib_fprintf(stderr, "\n");
 }
 
-void lyyerror(YYLTYPE t, char *s, ...)
-{
+void lyyerror(YYLTYPE t, char *s, ...) {
 	va_list ap;
 	va_start(ap, s);
 	if(t.first_line)
