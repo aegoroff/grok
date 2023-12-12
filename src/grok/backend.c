@@ -26,8 +26,8 @@
 #include "frontend.h"
 #include "lib.h"
 #include "sort.h"
-#include <apr_strings.h>
 #include <apr_hash.h>
+#include <apr_strings.h>
 
 /*
    bend_ - public members
@@ -56,7 +56,7 @@ void bend_cleanup(void) {
 match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buffer_sz, apr_pool_t *pool) {
     int errornumber = 0;
     size_t erroroffset = 0;
-    match_result_t result =  { 0 };
+    match_result_t result = {0};
 
     if (pattern == NULL) {
         return result;
