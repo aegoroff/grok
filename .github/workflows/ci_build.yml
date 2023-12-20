@@ -163,9 +163,31 @@ jobs:
           name: macos
           path: ./${{ env.RELEASE_DIR }}
 
+  generate-changelog:
+    name: Generate changelog
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    outputs:
+      release_body: ${{ steps.git-cliff.outputs.content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check typos
+        uses: crate-ci/typos@master
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@main
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: -vv --latest --strip header
+        env:
+          OUTPUT: CHANGES.md
+
   release:
     name: GitHub Release
-    needs: [ build_windows, build_macos, build_linux ]
+    needs: [ build_windows, build_macos, build_linux, generate-changelog ]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -184,6 +206,7 @@ jobs:
         with:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           release_name: ${{ steps.get_version.outputs.VERSION }}
+          body: "${{ needs.generate-changelog.outputs.release_body }}"
 
       - name: Download Linux tarball
         uses: actions/download-artifact@v3
