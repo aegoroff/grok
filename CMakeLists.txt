@@ -95,6 +95,10 @@ else ()
         list(APPEND debug_compiler_flags
             -ggdb
         )
+        list(APPEND release_compiler_flags
+            -Ofast
+            -s
+        )
     endif ()
     foreach(compiler_flag ${compiler_flags})
         set(FLAGS "${FLAGS} ${compiler_flag}")
@@ -102,9 +106,12 @@ else ()
     foreach(compiler_flag ${debug_compiler_flags})
         set(DEBUG_FLAGS "${DEBUG_FLAGS} ${compiler_flag}")
     endforeach()
-    set(CMAKE_CXX_FLAGS_RELEASE "${FLAGS} -Ofast -std=c++17")
+    foreach(compiler_flag ${release_compiler_flags})
+        set(RELEASE_FLAGS "${RELEASE_FLAGS} ${compiler_flag}")
+    endforeach()
+    set(CMAKE_CXX_FLAGS_RELEASE "${FLAGS} ${RELEASE_FLAGS} -std=c++17")
     set(CMAKE_CXX_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS} -std=c++17")
-    set(CMAKE_C_FLAGS_RELEASE "${FLAGS} -Ofast")
+    set(CMAKE_C_FLAGS_RELEASE "${FLAGS} ${RELEASE_FLAGS}")
     set(CMAKE_C_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS}")
 endif ()
 
