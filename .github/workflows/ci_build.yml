@@ -249,6 +249,12 @@ jobs:
           name: linux
           path: linux
 
+      - name: Download Linux MUSL tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: linux_musl
+          path: linux_musl
+
       - name: Download Windows zip
         uses: actions/download-artifact@v3
         with:
