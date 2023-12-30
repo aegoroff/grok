@@ -132,8 +132,9 @@ jobs:
       - name: Install Zig
         uses: goto-bus-stop/setup-zig@v2
       - name: Build
-        shell: bash
-        run: musl.sh
+        run: |
+          chmod +x ./musl.sh
+          ./musl.sh
         env:
           APR_HOME: /usr/
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
