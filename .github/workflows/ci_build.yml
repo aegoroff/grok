@@ -160,7 +160,7 @@ jobs:
 
   build_macos_arm:
 
-    runs-on: macos-13-large
+    runs-on: macos-13
 
     steps:
       - uses: actions/checkout@v4
