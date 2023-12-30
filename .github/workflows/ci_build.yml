@@ -183,7 +183,7 @@ jobs:
 
   release:
     name: GitHub Release
-    needs: [ build_windows, build_macos, build_macos_arm, build_linux, generate-changelog ]
+    needs: [ build_windows, build_macos, build_linux, generate-changelog ]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
