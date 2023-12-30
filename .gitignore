@@ -30,7 +30,8 @@ pcre-*/
 /cmake-build-*/
 bin/
 build/
-build-musl/
+build-musl-*/
+external_lib/
 *.PVS-Studio.cfg
 .DS_Store
 .cache/
