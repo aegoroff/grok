@@ -140,7 +140,8 @@ jobs:
           chmod +x ./musl.sh
           ./musl.sh
         env:
-          APR_HOME: /usr/
+          APR_INCLUDE: ${{ runner.temp }}/external_lib/lib/apr/include/apr-1
+          APR_LINK: ${{ runner.temp }}/external_lib/lib/apr/lib
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
