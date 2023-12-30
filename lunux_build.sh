@@ -1,8 +1,10 @@
 BUILD_CONF=Release
-BUILD_DIR=build-musl-${BUILD_CONF}
+ABI=$1
+[[ -n "${ABI}" ]] || ABI=musl
+BUILD_DIR=build-${ABI}-${BUILD_CONF}
 LIB_INSTALL_SRC=./external_lib/src
 LIB_INSTALL_PREFIX=./external_lib/lib
-CC_FLAGS="zig cc -target x86_64-linux-musl"
+CC_FLAGS="zig cc -target x86_64-linux-${ABI}"
 CFLAGS="-Ofast -march=haswell -mtune=haswell"
 APR_SRC=apr-1.7.4
 APR_UTIL_SRC=apr-util-1.6.3
@@ -28,7 +30,11 @@ EXPAT_SRC=expat-2.5.0
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${APR_UTIL_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --prefix=$(realpath ../../lib/apr) --with-apr=$(realpath ../../lib/apr) --with-expat=$(realpath ../../lib/expat) && make && make install)
 
-APR_INCLUDE=$(realpath ${LIB_INSTALL_PREFIX})/apr/include/apr-1; APR_LINK=$(realpath ${LIB_INSTALL_PREFIX})/apr/lib; cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} -DCMAKE_TOOLCHAIN_FILE=cmake/zig-toolchain-linux-musl.cmake
+if [[ "${ABI}" = "musl" ]]; then
+    TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=cmake/zig-toolchain-linux-musl.cmake"
+fi
+
+APR_INCLUDE=$(realpath ${LIB_INSTALL_PREFIX})/apr/include/apr-1; APR_LINK=$(realpath ${LIB_INSTALL_PREFIX})/apr/lib; cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} ${TOOLCHAIN}
 cmake --build ${BUILD_DIR}
-ctest --test-dir ${BUILD_DIR}
+ctest --test-dir ${BUILD_DIR} -VV
 (cd ${BUILD_DIR} && cpack --config CPackConfig.cmake)
