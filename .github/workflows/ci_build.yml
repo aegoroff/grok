@@ -114,7 +114,7 @@ jobs:
   build_macos:
     strategy:
       matrix:
-        os: [macos-11, macos-13-xlarge]
+        os: [macos-11]
 
     runs-on: ${{ matrix.os }}
 
