@@ -34,7 +34,9 @@ if [[ "${ABI}" = "musl" ]]; then
     TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=cmake/zig-toolchain-linux-musl.cmake"
 fi
 
-APR_INCLUDE=$(realpath ${LIB_INSTALL_PREFIX})/apr/include/apr-1; APR_LINK=$(realpath ${LIB_INSTALL_PREFIX})/apr/lib; cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} ${TOOLCHAIN}
+APR_INCLUDE="$(realpath ${LIB_INSTALL_PREFIX})/apr/include/apr-1" \
+APR_LINK="$(realpath ${LIB_INSTALL_PREFIX})/apr/lib" \
+cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} ${TOOLCHAIN}
 cmake --build ${BUILD_DIR}
 ctest --test-dir ${BUILD_DIR} -VV
 (cd ${BUILD_DIR} && cpack --config CPackConfig.cmake)
