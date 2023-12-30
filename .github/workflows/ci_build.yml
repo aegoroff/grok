@@ -133,8 +133,6 @@ jobs:
         uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.11.0
-      - name: Install Ninja
-        run: sudo apt update && sudo apt install -y --no-install-recommends ninja-build
       - name: Build
         run: |
           chmod +x ./musl.sh

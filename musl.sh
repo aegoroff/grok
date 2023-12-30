@@ -28,7 +28,7 @@ EXPAT_SRC=expat-2.5.0
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${APR_UTIL_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --prefix=$(realpath ../../lib/apr) --with-apr=$(realpath ../../lib/apr) --with-expat=$(realpath ../../lib/expat) && make && make install)
 
-APR_INCLUDE=$(realpath ${LIB_INSTALL_PREFIX})/apr/include/apr-1; APR_LINK=$(realpath ${LIB_INSTALL_PREFIX})/apr/lib; cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/zig-toolchain-linux-musl.cmake
+APR_INCLUDE=$(realpath ${LIB_INSTALL_PREFIX})/apr/include/apr-1; APR_LINK=$(realpath ${LIB_INSTALL_PREFIX})/apr/lib; cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} -DCMAKE_TOOLCHAIN_FILE=cmake/zig-toolchain-linux-musl.cmake
 cmake --build ${BUILD_DIR}
 ctest --test-dir ${BUILD_DIR}
 (cd ${BUILD_DIR} && cpack --config CPackConfig.cmake)
