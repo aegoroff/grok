@@ -315,6 +315,16 @@ jobs:
           asset_content_type: application/gzip
           asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET }}.tar.gz
 
+      - name: Release Linux MUSL tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./linux/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_MUSL }}.tar.gz
+          asset_content_type: application/gzip
+          asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_MUSL }}.tar.gz
+
       - name: Release Windows zip
         uses: actions/upload-release-asset@v1
         env:
