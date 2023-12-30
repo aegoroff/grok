@@ -112,8 +112,11 @@ jobs:
           path: ./${{ env.RELEASE_DIR }}
 
   build_macos:
+    strategy:
+      matrix:
+        os: [macos-11, macos-13-arm64]
 
-    runs-on: macos-11
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
