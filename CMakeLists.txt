@@ -91,7 +91,6 @@ else ()
         list(APPEND compiler_flags
             -march=haswell
             -mtune=haswell
-            -mfpmath=both
         )
         list(APPEND debug_compiler_flags
             -ggdb
@@ -105,8 +104,8 @@ else ()
     endforeach()
     set(CMAKE_CXX_FLAGS_RELEASE "${FLAGS} -Ofast -std=c++17")
     set(CMAKE_CXX_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS} -std=c++17")
-    set(CMAKE_C_FLAGS_RELEASE "${FLAGS} -Ofast -std=c11")
-    set(CMAKE_C_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS} -std=c11")
+    set(CMAKE_C_FLAGS_RELEASE "${FLAGS} -Ofast")
+    set(CMAKE_C_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS}")
 endif ()
 
 include_directories(${SRC}/${LIB})
