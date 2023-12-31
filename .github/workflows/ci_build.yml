@@ -116,7 +116,6 @@ jobs:
       - name: Packaging
         run: cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
       - uses: actions/upload-artifact@v3
-        if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: ${{ matrix.os }}_${{ matrix.abi }}
           path: ./${{ env.RELEASE_DIR }}
