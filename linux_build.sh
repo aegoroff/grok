@@ -19,18 +19,22 @@ EXPAT_SRC=expat-2.5.0
 [[ -d "${LIB_INSTALL_SRC}/${APR_UTIL_SRC}" ]] && rm -rf ${LIB_INSTALL_SRC}/${APR_UTIL_SRC}
 
 EXTERNAL_PREFIX=$(realpath ${LIB_INSTALL_PREFIX})
+EXPAT_PREFIX=${EXTERNAL_PREFIX}/expat
+APR_PREFIX=${EXTERNAL_PREFIX}/apr
+echo ${EXPAT_PREFIX}
+echo ${APR_PREFIX}
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || wget https://github.com/libexpat/libexpat/releases/download/R_2_5_0/${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${EXPAT_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${EXTERNAL_PREFIX}/expat && make && make install)
+(cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${EXPAT_PREFIX} && make && make install)
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${APR_SRC}.tar.gz" ]] || wget https://dlcdn.apache.org/apr/${APR_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${APR_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${APR_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${EXTERNAL_PREFIX}/apr && make && make install)
+(cd ${LIB_INSTALL_SRC}/${APR_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${APR_PREFIX} && make && make install)
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${APR_UTIL_SRC}.tar.gz" ]] || wget https://dlcdn.apache.org/apr/${APR_UTIL_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${APR_UTIL_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${EXTERNAL_PREFIX}/apr --with-apr=${EXTERNAL_PREFIX}/apr --with-expat=${EXTERNAL_PREFIX}/expat && make && make install)
+(cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${APR_PREFIX} --with-apr=${APR_PREFIX} --with-expat=${EXPAT_PREFIX} && make && make install)
 
 if [[ "${ABI}" = "musl" ]]; then
     TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=cmake/zig-toolchain-linux-musl.cmake"

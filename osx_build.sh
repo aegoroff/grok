@@ -18,20 +18,26 @@ EXPAT_SRC=expat-2.5.0
 [[ -d "${LIB_INSTALL_SRC}/${APR_SRC}" ]] && rm -rf ${LIB_INSTALL_SRC}/${APR_SRC}
 [[ -d "${LIB_INSTALL_SRC}/${APR_UTIL_SRC}" ]] && rm -rf ${LIB_INSTALL_SRC}/${APR_UTIL_SRC}
 
+EXTERNAL_PREFIX=$(realpath ${LIB_INSTALL_PREFIX})
+EXPAT_PREFIX=${EXTERNAL_PREFIX}/expat
+APR_PREFIX=${EXTERNAL_PREFIX}/apr
+echo ${EXPAT_PREFIX}
+echo ${APR_PREFIX}
+
 (cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || curl -O -L https://github.com/libexpat/libexpat/releases/download/R_2_5_0/${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${EXPAT_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=$(realpath ../../lib)/expat && make && make install)
+(cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${EXPAT_PREFIX} && make && make install)
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${APR_SRC}.tar.gz" ]] || curl -O -L https://dlcdn.apache.org/apr/${APR_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${APR_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${APR_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=$(realpath ../../lib)/apr && make && make install)
+(cd ${LIB_INSTALL_SRC}/${APR_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${APR_PREFIX} && make && make install)
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${APR_UTIL_SRC}.tar.gz" ]] || curl -O -L https://dlcdn.apache.org/apr/${APR_UTIL_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${APR_UTIL_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=$(realpath ../../lib)/apr --with-apr=$(realpath ../../lib)/apr --with-expat=$(realpath ../../lib)/expat && make && make install)
+(cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${APR_PREFIX} --with-apr=${APR_PREFIX} --with-expat=${EXPAT_PREFIX} && make && make install)
 
-APR_INCLUDE="$(realpath ${LIB_INSTALL_PREFIX})/apr/include/apr-1" \
-APR_LINK="$(realpath ${LIB_INSTALL_PREFIX})/apr/lib" \
+APR_INCLUDE="${EXTERNAL_PREFIX}/apr/include/apr-1" \
+APR_LINK="${EXTERNAL_PREFIX}/apr/lib" \
 cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR}
 cmake --build ${BUILD_DIR}
 ctest --test-dir ${BUILD_DIR} -VV
