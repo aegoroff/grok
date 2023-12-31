@@ -35,15 +35,15 @@ fi
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || wget https://github.com/libexpat/libexpat/releases/download/R_2_5_0/${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${EXPAT_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && CMAKE_C_FLAGS="${CFLAGS}" CMAKE_CXX_FLAGS="${CFLAGS}" cmake ${TOOLCHAIN} -B ${BUILD_DIR} -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=${BUILD_CONF} -DEXPAT_BUILD_TESTS=False -DCMAKE_INSTALL_PREFIX=${EXPAT_PREFIX} && cmake --build ${BUILD_DIR} && cmake --install ${BUILD_DIR})
+(cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && AR="zig ar" RANLIB="zig ranlib" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --enable-shared=no --prefix=${EXPAT_PREFIX} && make -j && make install)
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${APR_SRC}.tar.gz" ]] || wget https://dlcdn.apache.org/apr/${APR_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${APR_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${APR_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS} -Wno-implicit-function-declaration -Wno-int-conversion" ./configure ac_cv_file__dev_zero=yes apr_cv_process_shared_works=yes apr_cv_mutex_robust_shared=yes apr_cv_tcp_nodelay_with_cork=yes --host=x86_64-linux --enable-shared=no --prefix=${APR_PREFIX} && make -j && make install)
+(cd ${LIB_INSTALL_SRC}/${APR_SRC} && AR="zig ar" RANLIB="zig ranlib" CC="${CC_FLAGS}" CFLAGS="${CFLAGS} -Wno-implicit-function-declaration -Wno-int-conversion" ./configure ac_cv_file__dev_zero=yes apr_cv_process_shared_works=yes apr_cv_mutex_robust_shared=yes apr_cv_tcp_nodelay_with_cork=yes --host=x86_64-linux --enable-shared=no --prefix=${APR_PREFIX} && make -j && make install)
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${APR_UTIL_SRC}.tar.gz" ]] || wget https://dlcdn.apache.org/apr/${APR_UTIL_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${APR_UTIL_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --enable-shared=no --prefix=${APR_PREFIX} --with-apr=${APR_PREFIX} --with-expat=${EXPAT_PREFIX} && make -j && make install)
+(cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && AR="zig ar" RANLIB="zig ranlib" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --enable-shared=no --prefix=${APR_PREFIX} --with-apr=${APR_PREFIX} --with-expat=${EXPAT_PREFIX} && make -j && make install)
 
 APR_INCLUDE="${EXTERNAL_PREFIX}/apr/include/apr-1" \
 APR_LINK="${EXTERNAL_PREFIX}/apr/lib" \
