@@ -88,10 +88,16 @@ else ()
             -glldb
         )
     else ()
-        list(APPEND compiler_flags
-            -march=haswell
-            -mtune=haswell
-        )
+        if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
+            list(APPEND compiler_flags
+                -march=haswell
+                -mtune=haswell
+            )
+        else ()
+            list(APPEND compiler_flags
+
+            )
+        endif ()
         list(APPEND debug_compiler_flags
             -ggdb
         )
@@ -308,8 +314,14 @@ set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     set(CPACK_SYSTEM_NAME  x86_64-pc-windows-msvc)
     set(CPACK_GENERATOR     TGZ)
-elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+elseif ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "zig-toolchain-macos-none")
     set(CPACK_SYSTEM_NAME  x86_64-apple-darwin)
+    set(CPACK_GENERATOR     TGZ)
+elseif ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "zig-toolchain-aarch64-linux")
+    set(CPACK_SYSTEM_NAME  aarch64-unknown-linux-gnu)
+    set(CPACK_GENERATOR     TGZ)
+elseif ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "zig-toolchain-aarch64-macos")
+    set(CPACK_SYSTEM_NAME  aarch64-apple-darwin)
     set(CPACK_GENERATOR     TGZ)
 elseif ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "zig-toolchain-linux-musl")
     set(CPACK_SYSTEM_NAME  x86_64-unknown-linux-musl)

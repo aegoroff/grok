@@ -1,16 +1,23 @@
 BUILD_CONF=Release
 ABI=$1
 OS=$2
+ARCH=$3
 [[ -n "${ABI}" ]] || ABI=musl
 [[ -n "${OS}" ]] || OS=linux
-BUILD_DIR=build-${OS}-${ABI}-${BUILD_CONF}
+[[ -n "${ARCH}" ]] || ARCH=x86_64
+BUILD_DIR=build-${ARCH}-${OS}-${ABI}-${BUILD_CONF}
 LIB_INSTALL_SRC=./external_lib/src
 LIB_INSTALL_PREFIX=./external_lib/lib
-CC_FLAGS="zig cc -target x86_64-${OS}-${ABI}"
-CFLAGS="-Ofast -march=haswell -mtune=haswell"
+CC_FLAGS="zig cc -target ${ARCH}-${OS}-${ABI}"
 APR_SRC=apr-1.7.4
 APR_UTIL_SRC=apr-util-1.6.3
 EXPAT_SRC=expat-2.5.0
+
+if [[ "${ARCH}" = "x86_64" ]]; then
+    CFLAGS="-Ofast -march=haswell -mtune=haswell"
+else
+    CFLAGS="-Ofast"
+fi
 
 [[ -d "${LIB_INSTALL_SRC}" ]] || mkdir -p ${LIB_INSTALL_SRC}
 [[ -d "${LIB_INSTALL_PREFIX}" ]] && rm -rf ${LIB_INSTALL_PREFIX}
@@ -26,12 +33,23 @@ APR_PREFIX=${EXTERNAL_PREFIX}/apr
 echo ${EXPAT_PREFIX}
 echo ${APR_PREFIX}
 
-if [[ "${ABI}" = "musl" ]]; then
-    TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-linux-musl.cmake)"
+if [[ "${ARCH}" = "x86_64" ]]; then
+    if [[ "${ABI}" = "musl" ]]; then
+        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-linux-musl.cmake)"
+    fi
+    if [[ "${ABI}" = "none" ]]; then
+        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-macos-none.cmake)"
+    fi
 fi
-if [[ "${ABI}" = "none" ]]; then
-    TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-macos-none.cmake)"
+if [[ "${ARCH}" = "aarch64" ]]; then
+    if [[ "${OS}" = "linux" ]]; then
+        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-aarch64-linux-gnu.cmake)"
+    fi
+    if [[ "${OS}" = "macos" ]]; then
+        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-aarch64-macos-none.cmake)"
+    fi
 fi
+
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || wget https://github.com/libexpat/libexpat/releases/download/R_2_5_0/${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${EXPAT_SRC}.tar.gz)
