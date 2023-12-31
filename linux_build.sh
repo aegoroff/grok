@@ -35,7 +35,7 @@ fi
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || wget https://github.com/libexpat/libexpat/releases/download/R_2_5_0/${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${EXPAT_SRC}.tar.gz)
-(cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && cmake ${TOOLCHAIN} -B ${BUILD_DIR} -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=${BUILD_CONF} -DEXPAT_BUILD_TESTS=False -DCMAKE_INSTALL_PREFIX=${EXPAT_PREFIX} && cmake --build ${BUILD_DIR} && cmake --install ${BUILD_DIR})
+(cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && CMAKE_C_FLAGS="${CFLAGS}" CMAKE_CXX_FLAGS="${CFLAGS}" cmake ${TOOLCHAIN} -B ${BUILD_DIR} -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=${BUILD_CONF} -DEXPAT_BUILD_TESTS=False -DCMAKE_INSTALL_PREFIX=${EXPAT_PREFIX} && cmake --build ${BUILD_DIR} && cmake --install ${BUILD_DIR})
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${APR_SRC}.tar.gz" ]] || wget https://dlcdn.apache.org/apr/${APR_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${APR_SRC}.tar.gz)
