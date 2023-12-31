@@ -18,7 +18,11 @@ EXPAT_SRC=expat-2.5.0
 [[ -d "${LIB_INSTALL_SRC}/${APR_SRC}" ]] && rm -rf ${LIB_INSTALL_SRC}/${APR_SRC}
 [[ -d "${LIB_INSTALL_SRC}/${APR_UTIL_SRC}" ]] && rm -rf ${LIB_INSTALL_SRC}/${APR_UTIL_SRC}
 
-EXTERNAL_PREFIX=$(readlink -f ${LIB_INSTALL_PREFIX})
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
+EXTERNAL_PREFIX=$(realpath ${LIB_INSTALL_PREFIX})
 EXPAT_PREFIX=${EXTERNAL_PREFIX}/expat
 APR_PREFIX=${EXTERNAL_PREFIX}/apr
 echo ${EXPAT_PREFIX}
