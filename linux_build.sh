@@ -48,6 +48,6 @@ fi
 APR_INCLUDE="${EXTERNAL_PREFIX}/apr/include/apr-1" \
 APR_LINK="${EXTERNAL_PREFIX}/apr/lib" \
 cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} ${TOOLCHAIN}
-cmake --build ${BUILD_DIR}
+cmake --build ${BUILD_DIR} --verbose
 ctest --test-dir ${BUILD_DIR} -VV
 (cd ${BUILD_DIR} && cpack --config CPackConfig.cmake)
