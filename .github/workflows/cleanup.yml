@@ -11,4 +11,4 @@ jobs:
       - name: cleanup
         uses: glassechidna/artifact-cleaner@master
         with:
-          minimumAge: 2592000 # all artifacts at least one month old
+          minimumAge: 172800 # all artifacts 2 days
