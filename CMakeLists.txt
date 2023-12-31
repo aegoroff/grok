@@ -123,8 +123,12 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     include_directories($ENV{APR_HOME16}/${APR}/include)
     include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    include_directories($ENV{APR_HOME}/apr/include/apr-1)
-    include_directories($ENV{APR_HOME}/apr-util/include/apr-1)
+    if (DEFINED ENV{APR_INCLUDE})
+        include_directories($ENV{APR_INCLUDE})
+    else ()
+        include_directories($ENV{APR_HOME}/apr/include/apr-1)
+        include_directories($ENV{APR_HOME}/apr-util/include/apr-1)
+    endif ()
 elseif (DEFINED ENV{APR_INCLUDE})
     include_directories($ENV{APR_INCLUDE})
 else ()
@@ -215,11 +219,18 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         )
     endif ()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    link_directories(
-            "$ENV{APR_HOME}/apr/lib/"
-            "$ENV{APR_HOME}/apr-util/lib/"
-    )
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .dylib)
+    if (DEFINED ENV{APR_LINK})
+        link_directories(
+            "$ENV{APR_LINK}"
+        )
+        set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+    else ()
+        link_directories(
+                "$ENV{APR_HOME}/apr/lib/"
+                "$ENV{APR_HOME}/apr-util/lib/"
+        )
+        set(CMAKE_FIND_LIBRARY_SUFFIXES .a .dylib)
+    endif ()
 elseif (DEFINED ENV{APR_LINK})
     link_directories(
             "$ENV{APR_LINK}"
@@ -284,13 +295,6 @@ add_test(NAME RunUnitTests COMMAND _tst)
 install(TARGETS grok DESTINATION . COMPONENT application)
 install(FILES ${PATTERN_FILES} DESTINATION . COMPONENT patterns)
 install(FILES ${LICENSE_FILE} DESTINATION . COMPONENT license)
-if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-    set(APR_DYLIBS  
-    "$ENV{APR_HOME}apr/lib/libapr-1.0.dylib"
-    "$ENV{APR_HOME}apr-util/lib/libaprutil-1.0.dylib"
-    )
-    install(FILES ${APR_DYLIBS} DESTINATION . COMPONENT apr_libs)
-endif()
 
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
@@ -313,6 +317,3 @@ include(CPack)
 cpack_add_component(application)
 cpack_add_component(patterns)
 cpack_add_component(license)
-if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-cpack_add_component(apr_libs)
-endif()
