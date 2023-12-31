@@ -128,33 +128,22 @@ jobs:
           echo ::set-output name=version::"${GITHUB_REF:11}"
       - name: install tools and libs
         run: |
-          brew install apr
-          brew install apr-util
           brew install flex
           brew install bison
-      - name: Build
-        uses: lukka/run-cmake@v3
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
         with:
-          cmakeListsOrSettingsJson: CMakeListsTxtBasic
-          cmakeListsTxtPath: ${{ github.workspace }}/CMakeLists.txt
-          cmakeBuildType: ${{ env.BUILD_CONFIGURATION }}
-          buildWithCMakeArgs: "-- -v"
-          buildDirectory: ${{ runner.temp }}/build
-          buildWithCMake: true
+          version: 0.11.0
+      - name: Build
+        run: |
+          chmod +x ./osx_build.sh
+          ./osx_build.sh
         env:
-          APR_HOME: /usr/local/opt/
-          CMAKE_INCLUDE_PATH: /usr/local/opt/flex/include
-          CMAKE_LIBRARY_PATH: /usr/local/opt/flex/lib;/usr/local/opt/bison/lib
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
-      - name: Unit Tests
-        working-directory: ${{ runner.temp }}/build
-        run: ctest -C ${{ env.BUILD_CONFIGURATION }} -VV
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
-        run: |
-          (cd ${{ runner.temp }}/build && cpack)
-          cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
+        run: cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
       - uses: actions/upload-artifact@v3
         if: startsWith(github.ref, 'refs/tags/v')
         with:
