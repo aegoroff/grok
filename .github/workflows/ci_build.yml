@@ -8,8 +8,10 @@ env:
   BUILD_CONFIGURATION: Release
   WINDOWS_TARGET: x86_64-pc-windows-msvc
   MACOS_TARGET: x86_64-apple-darwin
+  MACOS_TARGET_AARCH64: aarch64-apple-darwin
   LINUX_TARGET_GNU: x86_64-unknown-linux-gnu
   LINUX_TARGET_MUSL: x86_64-unknown-linux-musl
+  LINUX_TARGET_GNU_AARCH64: aarch64-unknown-linux-gnu
   RELEASER_VER: 0.11.2
 
 on:
@@ -81,17 +83,28 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ linux-gnu, linux-musl, macos-none ]
+        target: [ x86_64-linux-gnu, aarch64-linux-gnu, x86_64-linux-musl, x86_64-macos-none, aarch64-macos-none ]
         include:
-          - target: linux-gnu
+          - target: x86_64-linux-gnu
             abi: gnu
             os: linux
-          - target: linux-musl
+            arch: x86_64
+          - target: x86_64-linux-musl
             abi: musl
             os: linux
-          - target: macos-none
+            arch: x86_64
+          - target: x86_64-macos-none
             abi: none
             os: macos
+            arch: x86_64
+          - target: aarch64-macos-none
+            abi: none
+            os: macos
+            arch: aarch64
+          - target: aarch64-linux-gnu
+            abi: gnu
+            os: linux
+            arch: aarch64
 
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +121,7 @@ jobs:
       - name: Build
         run: |
           chmod +x ./linux_build.sh
-          ./linux_build.sh ${{ matrix.abi }} ${{ matrix.os }}
+          ./linux_build.sh ${{ matrix.abi }} ${{ matrix.os }} ${{ matrix.arch }}
         env:
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Create artifact directory
@@ -117,7 +130,7 @@ jobs:
         run: cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.os }}_${{ matrix.abi }}
+          name: ${{ matrix.os }}_${{ matrix.abi }}_${{ matrix.arch }}
           path: ./${{ env.RELEASE_DIR }}
 
   generate-changelog:
@@ -163,17 +176,23 @@ jobs:
           release_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
 
-      - name: Download Linux GNU tarball
+      - name: Download Linux x86_64 GNU tarball
         uses: actions/download-artifact@v3
         with:
-          name: linux_gnu
-          path: linux_gnu
+          name: linux_gnu_x86_64
+          path: linux_gnu_x86_64
 
-      - name: Download Linux MUSL tarball
+      - name: Download Linux aarch64 GNU tarball
         uses: actions/download-artifact@v3
         with:
-          name: linux_musl
-          path: linux_musl
+          name: linux_gnu_aarch64
+          path: linux_gnu_aarch64
+
+      - name: Download Linux x86_64 MUSL tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: linux_musl_x86_64
+          path: linux_musl_x86_64
 
       - name: Download Windows zip
         uses: actions/download-artifact@v3
@@ -181,11 +200,17 @@ jobs:
           name: windows
           path: windows
 
-      - name: Download MacOS zip
+      - name: Download x86_64 MacOS zip
         uses: actions/download-artifact@v3
         with:
-          name: macos_none
-          path: macos_none
+          name: macos_none_x86_64
+          path: macos_none_x86_64
+
+      - name: Download aarch64 MacOS zip
+        uses: actions/download-artifact@v3
+        with:
+          name: macos_none_aarch64
+          path: macos_none_aarch64
 
       - name: Create fake Cargo.toml
         run: |
@@ -231,23 +256,33 @@ jobs:
           user_name: 'aegoroff'
           commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
 
-      - name: Release Linux GNU tarball
+      - name: Release x86_64 Linux GNU tarball
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux_gnu/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_GNU }}.tar.gz
+          asset_path: ./linux_gnu_x86_64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_GNU }}.tar.gz
           asset_content_type: application/gzip
           asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_GNU }}.tar.gz
 
-      - name: Release Linux MUSL tarball
+      - name: Release aarch64 Linux GNU tarball
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux_musl/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_MUSL }}.tar.gz
+          asset_path: ./linux_gnu_aarch64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_GNU_AARCH64 }}.tar.gz
+          asset_content_type: application/gzip
+          asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_GNU_AARCH64 }}.tar.gz
+
+      - name: Release x86_64 Linux MUSL tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./linux_musl_x86_64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_MUSL }}.tar.gz
           asset_content_type: application/gzip
           asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_MUSL }}.tar.gz
 
@@ -261,12 +296,22 @@ jobs:
           asset_content_type: application/gzip
           asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz
 
-      - name: Release MacOS tarball
+      - name: Release x86_64 MacOS tarball
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./macos_none/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_TARGET }}.tar.gz
+          asset_path: ./macos_none_x86_64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_TARGET }}.tar.gz
           asset_content_type: application/gzip
           asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_TARGET }}.tar.gz
+
+      - name: Release aarch64 MacOS tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./macos_none_aarch64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_TARGET_AARCH64 }}.tar.gz
+          asset_content_type: application/gzip
+          asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_TARGET_AARCH64 }}.tar.gz
