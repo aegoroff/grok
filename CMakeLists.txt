@@ -243,15 +243,22 @@ endif ()
 
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(FLEX win_flex.exe --fast --wincompat --outfile="${GEN}/grok.flex.c" grok.lex)
-    set(BISON win_bison.exe --output="${GEN}/grok.tab.c" -dy grok.y)
+    set(FLEX_EXE win_flex.exe)
+    set(BISON_EXE win_bison.exe)
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    set(FLEX /usr/local/opt/flex/bin/flex --fast --outfile="${GEN}/grok.flex.c" grok.lex)
-    set(BISON /usr/local/opt/bison/bin/bison --output="${GEN}/grok.tab.c" -dy grok.y)
+    set(FLEX_EXE /usr/local/opt/flex/bin/flex)
+    set(BISON_EXE /usr/local/opt/bison/bin/bison)
 else ()
-    set(FLEX flex --fast --outfile="${GEN}/grok.flex.c" grok.lex)
-    set(BISON bison --output="${GEN}/grok.tab.c" -dy grok.y)
+    set(FLEX_EXE flex)
+    set(BISON_EXE bison)
 endif ()
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(FLEX_OPT --wincompat)
+endif ()
+
+set(FLEX ${FLEX_EXE} --fast ${FLEX_OPT} --outfile="${GEN}/grok.flex.c" grok.lex)
+set(BISON ${BISON_EXE} --output="${GEN}/grok.tab.c" -dy grok.y)
 
 add_custom_target(generated_directory ALL
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/${SRC}/${GROK}/${GEN}")
