@@ -79,8 +79,18 @@ else ()
         -Wall
         -pthread
     )
+    if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
+        list(APPEND compiler_flags
+            -march=haswell
+            -mtune=haswell
+        )
+    endif ()
     list(APPEND debug_compiler_flags
         -Og
+    )
+    list(APPEND release_compiler_flags
+        -Ofast
+        -s
     )
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
         list(APPEND debug_compiler_flags
@@ -88,22 +98,8 @@ else ()
             -glldb
         )
     else ()
-        if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
-            list(APPEND compiler_flags
-                -march=haswell
-                -mtune=haswell
-            )
-        else ()
-            list(APPEND compiler_flags
-
-            )
-        endif ()
         list(APPEND debug_compiler_flags
             -ggdb
-        )
-        list(APPEND release_compiler_flags
-            -Ofast
-            -s
         )
     endif ()
     foreach(compiler_flag ${compiler_flags})
