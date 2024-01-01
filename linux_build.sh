@@ -29,11 +29,14 @@ echo ${APR_PREFIX}
 
 if [[ "${ARCH}" = "x86_64" ]]; then
     CFLAGS="-Ofast -march=haswell -mtune=haswell"
-    if [[ "${ABI}" = "musl" ]]; then
-        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-linux-musl.cmake)"
+    if [[ "${ABI}" = "musl" ]] && [[ "${OS}" = "linux" ]]; then
+        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-x86_64-linux-musl.cmake)"
     fi
-    if [[ "${ABI}" = "none" ]]; then
-        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-macos-none.cmake)"
+    if [[ "${ABI}" = "gnu" ]] && [[ "${OS}" = "linux" ]]; then
+        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-x86_64-linux-gnu.cmake)"
+    fi
+    if [[ "${ABI}" = "none" ]] && [[ "${OS}" = "macos" ]]; then
+        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-x86_64-macos-none.cmake)"
     fi
 else
     CFLAGS="-Ofast"
