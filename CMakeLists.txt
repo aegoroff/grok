@@ -294,10 +294,10 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         PRIVATE pcre 
         PRIVATE strsafe)
 else ()
-    target_link_libraries(libgrok PRIVATE m PRIVATE libapr-1.a PRIVATE libaprutil-1.a PRIVATE pcre)
+    target_link_libraries(libgrok PRIVATE m PRIVATE libapr-1.a PRIVATE libaprutil-1.a)
 endif ()
-target_link_libraries(grok PRIVATE libgrok)
-target_link_libraries(_tst PRIVATE libgrok)
+target_link_libraries(grok PRIVATE libgrok PRIVATE pcre)
+target_link_libraries(_tst PRIVATE libgrok PRIVATE pcre)
 
 add_test(NAME RunUnitTests COMMAND _tst)
 
