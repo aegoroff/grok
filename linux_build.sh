@@ -13,12 +13,6 @@ APR_SRC=apr-1.7.4
 APR_UTIL_SRC=apr-util-1.6.3
 EXPAT_SRC=expat-2.5.0
 
-if [[ "${ARCH}" = "x86_64" ]]; then
-    CFLAGS="-Ofast -march=haswell -mtune=haswell"
-else
-    CFLAGS="-Ofast"
-fi
-
 [[ -d "${LIB_INSTALL_SRC}" ]] || mkdir -p ${LIB_INSTALL_SRC}
 [[ -d "${LIB_INSTALL_PREFIX}" ]] && rm -rf ${LIB_INSTALL_PREFIX}
 [[ -d "${LIB_INSTALL_PREFIX}" ]] || mkdir -p ${LIB_INSTALL_PREFIX}
@@ -34,13 +28,17 @@ echo ${EXPAT_PREFIX}
 echo ${APR_PREFIX}
 
 if [[ "${ARCH}" = "x86_64" ]]; then
+    CFLAGS="-Ofast -march=haswell -mtune=haswell"
     if [[ "${ABI}" = "musl" ]]; then
         TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-linux-musl.cmake)"
     fi
     if [[ "${ABI}" = "none" ]]; then
         TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-macos-none.cmake)"
     fi
+else
+    CFLAGS="-Ofast"
 fi
+
 if [[ "${ARCH}" = "aarch64" ]]; then
     if [[ "${OS}" = "linux" ]]; then
         TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-aarch64-linux-gnu.cmake)"
@@ -49,7 +47,6 @@ if [[ "${ARCH}" = "aarch64" ]]; then
         TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-aarch64-macos-none.cmake)"
     fi
 fi
-
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || wget https://github.com/libexpat/libexpat/releases/download/R_2_5_0/${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${EXPAT_SRC}.tar.gz)
@@ -67,5 +64,9 @@ APR_INCLUDE="${EXTERNAL_PREFIX}/apr/include/apr-1" \
 APR_LINK="${EXTERNAL_PREFIX}/apr/lib" \
 cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} ${TOOLCHAIN}
 cmake --build ${BUILD_DIR} --verbose
-ctest --test-dir ${BUILD_DIR} -VV
+
+if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
+    ctest --test-dir ${BUILD_DIR} -VV
+fi
+
 (cd ${BUILD_DIR} && cpack --config CPackConfig.cmake)
