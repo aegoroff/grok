@@ -16,6 +16,7 @@ pub fn build(b: *std.Build) void {
     lib.linkLibrary(pcre2_dep.artifact("pcre2"));
     lib.linkLibC();
     lib.addIncludePath(.{ .path = "src/srclib" });
+    lib.addIncludePath(.{ .path = "src/grok" });
 
     lib.addCSourceFiles(&libgrok_sources, &[_][]const u8{});
     b.installArtifact(lib);
