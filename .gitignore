@@ -29,6 +29,7 @@ pcre-*/
 /out/
 /cmake-build-*/
 bin/
+zig-cache/
 build/
 build-*/
 external_lib/
