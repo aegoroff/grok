@@ -3,23 +3,17 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    // const libapr_dep = b.dependency("libapr", .{
-    //     .target = target,
-    //     .optimize = optimize,
-    // });
-
-    // const libaprutil_dep = b.dependency("libapr", .{
-    //     .target = target,
-    //     .optimize = optimize,
-    // });
+    const pcre2_dep = b.dependency("pcre2", .{
+        .target = target,
+        .optimize = optimize,
+    });
 
     const lib = b.addStaticLibrary(.{
         .name = "libgrok",
         .target = target,
         .optimize = optimize,
     });
-    // lib.linkLibrary(libapr_dep.artifact("apr-1"));
-    // lib.linkLibrary(libaprutil_dep.artifact("aprutil-1"));
+    lib.linkLibrary(pcre2_dep.artifact("pcre2"));
     lib.linkLibC();
     lib.addIncludePath(.{ .path = "src/srclib" });
 

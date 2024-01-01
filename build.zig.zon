@@ -1,0 +1,19 @@
+.{
+    .name = "libgrok",
+    .version = "0.3.0-1",
+
+    .dependencies = .{
+        .pcre2 = .{
+            .url = "https://github.com/PCRE2Project/pcre2/archive/refs/tags/pcre2-10.43-RC1.tar.gz",
+            .hash = "1220919784ba2f3ace259897d6f85c458825ade0fc3ec6bf483477e1d8b52db876e6",
+        },
+    },
+    .paths = .{
+        "LICENSE.txt",
+        "README.md",
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "patterns",
+    },
+}
