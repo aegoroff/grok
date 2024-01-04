@@ -16,16 +16,14 @@ EXPAT_SRC=expat-2.5.0
 [[ -d "${LIB_INSTALL_SRC}" ]] || mkdir -p ${LIB_INSTALL_SRC}
 [[ -d "${LIB_INSTALL_PREFIX}" ]] && rm -rf ${LIB_INSTALL_PREFIX}
 [[ -d "${LIB_INSTALL_PREFIX}" ]] || mkdir -p ${LIB_INSTALL_PREFIX}
-[[ -d "${BUILD_DIR}" ]] && rm -rf ${BUILD_DIR}
-[[ -d "${LIB_INSTALL_SRC}/${EXPAT_SRC}" ]] && rm -rf ${LIB_INSTALL_SRC}/${EXPAT_SRC}
-[[ -d "${LIB_INSTALL_SRC}/${APR_SRC}" ]] && rm -rf ${LIB_INSTALL_SRC}/${APR_SRC}
-[[ -d "${LIB_INSTALL_SRC}/${APR_UTIL_SRC}" ]] && rm -rf ${LIB_INSTALL_SRC}/${APR_UTIL_SRC}
+rm -rf ${BUILD_DIR}
+rm -rf ${LIB_INSTALL_SRC}/${EXPAT_SRC}
+rm -rf ${LIB_INSTALL_SRC}/${APR_SRC}
+rm -rf ${LIB_INSTALL_SRC}/${APR_UTIL_SRC}
 
 EXTERNAL_PREFIX=$(realpath ${LIB_INSTALL_PREFIX})
 EXPAT_PREFIX=${EXTERNAL_PREFIX}/expat
 APR_PREFIX=${EXTERNAL_PREFIX}/apr
-echo ${EXPAT_PREFIX}
-echo ${APR_PREFIX}
 
 if [[ "${ARCH}" = "x86_64" ]]; then
     CFLAGS="-Ofast -march=haswell -mtune=haswell"
