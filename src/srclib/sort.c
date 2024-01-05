@@ -6,7 +6,7 @@
  * \date    \verbatim
             Creation date: 2020-11-21
             \endverbatim
- * Copyright: (c) Alexander Egorov 2015-2023
+ * Copyright: (c) Alexander Egorov 2015-2024
  */
 
 #include "sort.h"

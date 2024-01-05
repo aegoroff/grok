@@ -6,7 +6,7 @@
  * \date    \verbatim
             Creation date: 2015-09-01
             \endverbatim
- * Copyright: (c) Alexander Egorov 2015-2023
+ * Copyright: (c) Alexander Egorov 2015-2024
  */
 
 #ifndef GROK_CONFIGURATION_H_
