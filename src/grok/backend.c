@@ -61,13 +61,14 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buf
     if (pattern == NULL) {
         return result;
     }
+    pcre2_compile_context *compile_ctx = pcre2_compile_context_create(pcre_context);
 
     pcre2_code *re = pcre2_compile(pattern->regex,        /* the pattern */
                                    PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
                                    0,                     /* default options */
                                    &errornumber,          /* for error number */
                                    &erroroffset,          /* for error offset */
-                                   NULL);                 /* use default compile context */
+                                   compile_ctx);                 /* use default compile context */
 
     if (re == NULL) {
         size_t error_buff_size_in_chars = 256;
@@ -81,12 +82,13 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buf
 
     int flags = PCRE2_NOTEMPTY;
 
+    pcre2_match_context *match_ctx = pcre2_match_context_create(pcre_context);
     int rc = pcre2_match(re,                          /* the compiled pattern */
                          subject,                     /* the subject string */
                          strnlen(subject, buffer_sz), /* the length of the subject */
                          0,                           /* start at offset 0 in the subject */
                          flags, match_data,           /* block for storing the result */
-                         NULL);                       /* use default match context */
+                         match_ctx);                       /* use default match context */
 
     result.matched = rc > 0;
     if (result.matched && pattern->properties != NULL && pattern->properties->nelts > 0) {
