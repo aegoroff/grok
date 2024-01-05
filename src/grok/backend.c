@@ -78,7 +78,7 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buf
         lib_printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
         return result;
     }
-    pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, NULL);
+    pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, pcre_context);
 
     int flags = PCRE2_NOTEMPTY;
 
