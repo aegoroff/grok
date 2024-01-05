@@ -9,9 +9,8 @@ env:
   WINDOWS_TARGET: x86_64-pc-windows-msvc
   MACOS_TARGET: x86_64-apple-darwin
   MACOS_TARGET_AARCH64: aarch64-apple-darwin
-  LINUX_TARGET_GNU: x86_64-unknown-linux-gnu
   LINUX_TARGET_MUSL: x86_64-unknown-linux-musl
-  LINUX_TARGET_GNU_AARCH64: aarch64-unknown-linux-gnu
+  LINUX_TARGET_MUSL_AARCH64: aarch64-unknown-linux-musl
   RELEASER_VER: 0.11.2
   CI_BUILD_NUMBER: ${{ github.run_number }}
 
@@ -83,16 +82,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ x86_64-linux-gnu, aarch64-linux-gnu, x86_64-linux-musl, x86_64-macos-none, aarch64-macos-none ]
+        target: [ aarch64-linux-musl, x86_64-linux-musl, x86_64-macos-none, aarch64-macos-none ]
         include:
-          - target: x86_64-linux-gnu
-            abi: gnu
-            os: linux
-            arch: x86_64
           - target: x86_64-linux-musl
             abi: musl
             os: linux
             arch: x86_64
+          - target: aarch64-linux-musl
+            abi: musl
+            os: linux
+            arch: aarch64
           - target: x86_64-macos-none
             abi: none
             os: macos
@@ -101,10 +100,7 @@ jobs:
             abi: none
             os: macos
             arch: aarch64
-          - target: aarch64-linux-gnu
-            abi: gnu
-            os: linux
-            arch: aarch64
+
 
     steps:
       - uses: actions/checkout@v4
@@ -176,17 +172,11 @@ jobs:
           release_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
 
-      - name: Download Linux x86_64 GNU tarball
+      - name: Download Linux aarch64 MUSL tarball
         uses: actions/download-artifact@v3
         with:
-          name: linux_gnu_x86_64
-          path: linux_gnu_x86_64
-
-      - name: Download Linux aarch64 GNU tarball
-        uses: actions/download-artifact@v3
-        with:
-          name: linux_gnu_aarch64
-          path: linux_gnu_aarch64
+          name: linux_musl_aarch64
+          path: linux_musl_aarch64
 
       - name: Download Linux x86_64 MUSL tarball
         uses: actions/download-artifact@v3
@@ -229,7 +219,7 @@ jobs:
           curl -L  -o releaser.tar.gz https://github.com/aegoroff/releaser/releases/download/${{ env.RELEASER_VER }}/releaser-${{ env.RELEASER_VER }}-x86_64-unknown-linux-musl.tar.gz
           tar -xf releaser.tar.gz
       - name: Create brew formula
-        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux_gnu_x86_64/' -m './macos_none_x86_64/' -u ${{ env.RELEASE_BIN }}.rb
+        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux_musl_x86_64/' -m './macos_none_x86_64/' -u ${{ env.RELEASE_BIN }}.rb
       - name: Publish brew formula
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
@@ -256,25 +246,15 @@ jobs:
           user_name: 'aegoroff'
           commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
 
-      - name: Release x86_64 Linux GNU tarball
+      - name: Release aarch64 Linux MUSL tarball
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux_gnu_x86_64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_GNU }}.tar.gz
+          asset_path: ./linux_musl_aarch64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_MUSL_AARCH64 }}.tar.gz
           asset_content_type: application/gzip
-          asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_GNU }}.tar.gz
-
-      - name: Release aarch64 Linux GNU tarball
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux_gnu_aarch64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_GNU_AARCH64 }}.tar.gz
-          asset_content_type: application/gzip
-          asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_GNU_AARCH64 }}.tar.gz
+          asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_MUSL_AARCH64 }}.tar.gz
 
       - name: Release x86_64 Linux MUSL tarball
         uses: actions/upload-release-asset@v1
