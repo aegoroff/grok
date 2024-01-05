@@ -323,7 +323,7 @@ elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin" AND "${CMAKE_SYSTEM_PROCESSOR}"
     set(CPACK_SYSTEM_NAME  aarch64-apple-darwin)
     set(CPACK_GENERATOR     TGZ)
 elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
-    set(CPACK_SYSTEM_NAME  aarch64-unknown-linux-gnu)
+    set(CPACK_SYSTEM_NAME  aarch64-unknown-linux-musl)
     set(CPACK_GENERATOR     TGZ)
 elseif ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "zig-toolchain-x86_64-linux-musl")
     set(CPACK_SYSTEM_NAME  x86_64-unknown-linux-musl)

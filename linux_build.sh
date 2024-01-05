@@ -42,7 +42,7 @@ fi
 
 if [[ "${ARCH}" = "aarch64" ]]; then
     if [[ "${OS}" = "linux" ]]; then
-        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-aarch64-linux-gnu.cmake)"
+        TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-aarch64-linux-musl.cmake)"
     fi
     if [[ "${OS}" = "macos" ]]; then
         TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-aarch64-macos-none.cmake)"
