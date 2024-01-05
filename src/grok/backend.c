@@ -68,7 +68,7 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buf
                                    0,                     /* default options */
                                    &errornumber,          /* for error number */
                                    &erroroffset,          /* for error offset */
-                                   compile_ctx);                 /* use default compile context */
+                                   compile_ctx);
 
     if (re == NULL) {
         size_t error_buff_size_in_chars = 256;
@@ -88,7 +88,7 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buf
                          strnlen(subject, buffer_sz), /* the length of the subject */
                          0,                           /* start at offset 0 in the subject */
                          flags, match_data,           /* block for storing the result */
-                         match_ctx);                       /* use default match context */
+                         match_ctx);
 
     result.matched = rc > 0;
     if (result.matched && pattern->properties != NULL && pattern->properties->nelts > 0) {
