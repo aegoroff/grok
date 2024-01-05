@@ -143,6 +143,7 @@ add_definitions(-DLINK_SIZE=2)
 add_definitions(-DHAVE_CONFIG_H)
 add_definitions(-DAPR_DECLARE_STATIC)
 add_definitions(-DAPU_DECLARE_STATIC)
+add_definitions(-DARCH="${CMAKE_SYSTEM_PROCESSOR}")
 
 if ("$ENV{GROK_VERSION}" STREQUAL "")
     add_definitions(-DPRODUCT_VERSION="0.2.0")

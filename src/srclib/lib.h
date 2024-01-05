@@ -46,8 +46,12 @@ extern "C" {
 #define NEW_LINE "\n"
 #endif
 
+#ifndef ARCH
+#define ARCH "x64"
+#endif
+
 #define COPYRIGHT_FMT_TRAIL NEW_LINE "Copyright (C) 2019-2024 Alexander Egorov. All rights reserved." NEW_LINE NEW_LINE
-#define COPYRIGHT_FMT NEW_LINE "%s x64" COPYRIGHT_FMT_TRAIL
+#define COPYRIGHT_FMT NEW_LINE "%s " ARCH COPYRIGHT_FMT_TRAIL
 
 #define ALLOCATION_FAIL_FMT "Failed to allocate %Iu bytes"
 #define ALLOCATION_FAILURE_MESSAGE ALLOCATION_FAIL_FMT " in: %s:%d" NEW_LINE
