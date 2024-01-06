@@ -10,7 +10,6 @@
  */
 
 #include "configuration.h"
-#include "argtable3.h"
 #include "lib.h"
 #include "targetver.h"
 

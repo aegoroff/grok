@@ -12,6 +12,8 @@
 #ifndef GROK_CONFIGURATION_H_
 #define GROK_CONFIGURATION_H_
 
+#include "argtable3.h"
+
 typedef struct configuration_ctx_t {
     void (*on_string)(struct arg_file *pattern_files, const char *const macro, const char *const str, int info_mode);
 
