@@ -25,7 +25,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build_windows:
+  windows_build:
 
     runs-on: windows-latest
 
@@ -77,7 +77,7 @@ jobs:
           name: windows
           path: .\${{ env.RELEASE_DIR }}
 
-  build_linux:
+  cross_build:
 
     runs-on: ubuntu-latest
     strategy:
@@ -151,7 +151,7 @@ jobs:
 
   release:
     name: GitHub Release
-    needs: [ build_windows, build_linux, generate-changelog ]
+    needs: [ windows_build, cross_build, generate-changelog ]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
