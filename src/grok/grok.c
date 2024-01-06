@@ -41,7 +41,6 @@
 #include "apr_file_io.h"
 #include <locale.h>
 
-#include "argtable3.h"
 #include "backend.h"
 #include "configuration.h"
 #include "encoding.h"
