@@ -19,7 +19,7 @@ EXPAT_SRC=expat-2.5.0
 [[ -d "${LIB_INSTALL_SRC}/${APR_UTIL_SRC}" ]] && rm -rf ${LIB_INSTALL_SRC}/${APR_UTIL_SRC}
 
 realpath() {
-    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+  [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
 
 EXTERNAL_PREFIX=$(realpath ${LIB_INSTALL_PREFIX})
@@ -41,8 +41,8 @@ echo ${APR_PREFIX}
 (cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${APR_PREFIX} --with-apr=${APR_PREFIX} --with-expat=${EXPAT_PREFIX} && make -j && make install)
 
 APR_INCLUDE="${EXTERNAL_PREFIX}/apr/include/apr-1" \
-APR_LINK="${EXTERNAL_PREFIX}/apr/lib" \
-cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR}
+  APR_LINK="${EXTERNAL_PREFIX}/apr/lib" \
+  cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR}
 cmake --build ${BUILD_DIR}
 ctest --test-dir ${BUILD_DIR} -VV
 (cd ${BUILD_DIR} && cpack --config CPackConfig.cmake)
