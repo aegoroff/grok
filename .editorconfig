@@ -1,4 +1,4 @@
-﻿# EditorConfig is awesome:http://EditorConfig.org
+# EditorConfig is awesome:http://EditorConfig.org
 # Documentation here https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 
 # top-most EditorConfig file
@@ -23,7 +23,7 @@ indent_size = 2
 indent_size = 2
 
 # JSON files
-[*.json]
+[*.{json,sh}]
 indent_size = 2
 
 # CSharp code style settings:
