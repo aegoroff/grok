@@ -1,0 +1,24 @@
+{
+    "files.associations": {
+        "array": "c",
+        "bitset": "c",
+        "string_view": "c",
+        "format": "c",
+        "initializer_list": "c",
+        "span": "c",
+        "regex": "c",
+        "__hash_table": "c",
+        "__split_buffer": "c",
+        "__tree": "c",
+        "deque": "c",
+        "list": "c",
+        "map": "c",
+        "queue": "c",
+        "set": "c",
+        "stack": "c",
+        "string": "c",
+        "unordered_map": "c",
+        "valarray": "c",
+        "vector": "c"
+    }
+}

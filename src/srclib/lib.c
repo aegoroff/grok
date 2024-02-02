@@ -91,10 +91,10 @@ void lib_print_size(uint64_t size) {
     const lib_file_size_t normalized = lib_normalize_size(size);
 
     if (normalized.unit) {
-        lib_printf(BIG_FILE_FORMAT, normalized.value.size, lib_sizes[normalized.unit], size,
+        lib_printf(BIG_FILE_FORMAT, normalized.size, lib_sizes[normalized.unit], normalized.size_in_bytes,
                    lib_sizes[size_unit_bytes]);
     } else {
-        lib_printf(SMALL_FILE_FORMAT, size, lib_sizes[size_unit_bytes]);
+        lib_printf(SMALL_FILE_FORMAT, normalized.size_in_bytes, lib_sizes[size_unit_bytes]);
     }
 }
 
@@ -105,10 +105,10 @@ void lib_size_to_string(uint64_t size, char *str) {
         return;
     }
     if (normalized.unit) {
-        lib_sprintf(str, BIG_FILE_FORMAT, normalized.value.size, lib_sizes[normalized.unit], size,
+        lib_sprintf(str, BIG_FILE_FORMAT, normalized.size, lib_sizes[normalized.unit], normalized.size_in_bytes,
                     lib_sizes[size_unit_bytes]);
     } else {
-        lib_sprintf(str, SMALL_FILE_FORMAT, size, lib_sizes[size_unit_bytes]);
+        lib_sprintf(str, SMALL_FILE_FORMAT, normalized.size_in_bytes, lib_sizes[size_unit_bytes]);
     }
 }
 
@@ -170,10 +170,9 @@ uint64_t prlib_ilog(uint64_t x) {
 lib_file_size_t lib_normalize_size(uint64_t size) {
     lib_file_size_t result = {0};
     result.unit = size == 0 ? size_unit_bytes : prlib_ilog(size) / prlib_ilog(BINARY_THOUSAND);
-    if (result.unit == size_unit_bytes) {
-        result.value.size_in_bytes = size;
-    } else {
-        result.value.size = size / pow(BINARY_THOUSAND, result.unit);
+    result.size_in_bytes = size;
+    if(result.unit != size_unit_bytes) {
+        result.size = size / pow(BINARY_THOUSAND, result.unit);
     }
     // ReSharper disable once CppSomeObjectMembersMightNotBeInitialized
     return result;
