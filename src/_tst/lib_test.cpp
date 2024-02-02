@@ -72,7 +72,8 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_bytes);
-        REQUIRE(result.value.size_in_bytes == size);
+        REQUIRE(result.size_in_bytes == size);
+        REQUIRE(result.size == 0.0);
     }
 
     SECTION("Bytes") {
@@ -81,7 +82,8 @@ TEST_CASE("normalize size") {
         auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_bytes);
-        REQUIRE(result.value.size_in_bytes == size);
+        REQUIRE(result.size_in_bytes == size);
+        REQUIRE(result.size == 0.0);
     }
 
     SECTION("KBytes on boundary") {
@@ -90,7 +92,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_kbytes);
-        REQUIRE(result.value.size == 1.0);
+        REQUIRE(result.size == 1.0);
     }
 
     SECTION("KBytes") {
@@ -99,7 +101,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_kbytes);
-        REQUIRE(result.value.size == 2.0);
+        REQUIRE(result.size == 2.0);
     }
 
     SECTION("MBytes") {
@@ -108,7 +110,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_mbytes);
-        REQUIRE(result.value.size == 2.0);
+        REQUIRE(result.size == 2.0);
     }
 
     SECTION("GBytes") {
@@ -118,7 +120,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_gbytes);
-        REQUIRE(result.value.size == 4.0);
+        REQUIRE(result.size == 4.0);
     }
 
     SECTION("TBytes") {
@@ -128,7 +130,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_tbytes);
-        REQUIRE(result.value.size == 2.0);
+        REQUIRE(result.size == 2.0);
     }
 
     SECTION("PBytes") {
@@ -138,7 +140,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_pbytes);
-        REQUIRE(result.value.size == 2.0);
+        REQUIRE(result.size == 2.0);
     }
 
     SECTION("EBytes") {
@@ -149,7 +151,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_ebytes);
-        REQUIRE(result.value.size == 2.0);
+        REQUIRE(result.size == 2.0);
     }
 
 }
