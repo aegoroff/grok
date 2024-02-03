@@ -64,7 +64,7 @@ fi
 APR_INCLUDE="${EXTERNAL_PREFIX}/apr/include/apr-1" \
   APR_LINK="${EXTERNAL_PREFIX}/apr/lib" \
   cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} ${TOOLCHAIN}
-cmake --build ${BUILD_DIR} --verbose
+cmake --build ${BUILD_DIR} --verbose --parallel $(nproc)
 
 if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
   ctest --test-dir ${BUILD_DIR} -VV
