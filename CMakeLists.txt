@@ -163,7 +163,6 @@ SET(GROK_SOURCE_FILES
         "${SRC}/${GROK}/configuration.c"
         "${SRC}/${GROK}/frontend.c"
         "${SRC}/${GROK}/grok.c"
-        "${SRC}/${GROK}/grok.c"
         "${SRC}/${GROK}/pattern.c")
 
 SET(TST_SOURCE_FILES
