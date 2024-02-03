@@ -131,10 +131,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
         include_directories($ENV{APR_HOME}/apr/include/apr-1)
         include_directories($ENV{APR_HOME}/apr-util/include/apr-1)
     endif ()
-elseif (DEFINED ENV{APR_INCLUDE})
-    include_directories($ENV{APR_INCLUDE})
 else ()
-    include_directories($ENV{APR_HOME}/include/apr-1.0)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external_lib/lib/apr/include/apr-1)
 endif ()
 
 add_definitions(-DPCRE2_STATIC)
@@ -238,13 +236,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
         )
         set(CMAKE_FIND_LIBRARY_SUFFIXES .a .dylib)
     endif ()
-elseif (DEFINED ENV{APR_LINK})
-    link_directories(
-            "$ENV{APR_LINK}"
-    )
 else ()
     link_directories(
-            "$ENV{APR_HOME}/lib/x86_64-linux-gnu/"
+        "${CMAKE_CURRENT_SOURCE_DIR}/external_lib/lib/apr/lib/"
     )
 endif ()
 
