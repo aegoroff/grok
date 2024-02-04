@@ -40,9 +40,7 @@ echo ${APR_PREFIX}
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${APR_UTIL_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${APR_PREFIX} --with-apr=${APR_PREFIX} --with-expat=${EXPAT_PREFIX} && make -j && make install)
 
-APR_INCLUDE="${EXTERNAL_PREFIX}/apr/include/apr-1" \
-  APR_LINK="${EXTERNAL_PREFIX}/apr/lib" \
-  cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR}
+cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR}
 cmake --build ${BUILD_DIR}
 ctest --test-dir ${BUILD_DIR} -VV
 (cd ${BUILD_DIR} && cpack --config CPackConfig.cmake)

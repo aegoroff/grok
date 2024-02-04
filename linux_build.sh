@@ -61,9 +61,7 @@ fi
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${APR_UTIL_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && AR="zig ar" RANLIB="zig ranlib" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --enable-shared=no --prefix=${APR_PREFIX} --with-apr=${APR_PREFIX} --with-expat=${EXPAT_PREFIX} && make -j $(nproc) && make install)
 
-APR_INCLUDE="${EXTERNAL_PREFIX}/apr/include/apr-1" \
-  APR_LINK="${EXTERNAL_PREFIX}/apr/lib" \
-  cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} ${TOOLCHAIN}
+cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B ${BUILD_DIR} ${TOOLCHAIN}
 cmake --build ${BUILD_DIR} --verbose --parallel $(nproc)
 
 if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then

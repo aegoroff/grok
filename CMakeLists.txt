@@ -3,6 +3,7 @@ project(grok)
 
 set(SRC src)
 set(GEN generated)
+set(EXTERNAL external_lib/lib)
 set(GROK grok)
 set(TST _tst)
 set(LIB srclib)
@@ -125,7 +126,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     include_directories($ENV{APR_HOME16}/${APR}/include)
     include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
 else ()
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external_lib/lib/apr/include/apr-1)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/apr/include/apr-1)
 endif ()
 
 add_definitions(-DPCRE2_STATIC)
@@ -218,7 +219,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     endif ()
 else ()
     link_directories(
-        "${CMAKE_CURRENT_SOURCE_DIR}/external_lib/lib/apr/lib/"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/apr/lib/"
     )
 endif ()
 
