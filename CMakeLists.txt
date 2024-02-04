@@ -124,13 +124,6 @@ include_directories(${SRC}/${GROK})
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     include_directories($ENV{APR_HOME16}/${APR}/include)
     include_directories($ENV{APR_HOME16}/${APR_UTIL}/include)
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    if (DEFINED ENV{APR_INCLUDE})
-        include_directories($ENV{APR_INCLUDE})
-    else ()
-        include_directories($ENV{APR_HOME}/apr/include/apr-1)
-        include_directories($ENV{APR_HOME}/apr-util/include/apr-1)
-    endif ()
 else ()
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external_lib/lib/apr/include/apr-1)
 endif ()
@@ -222,19 +215,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
                 "${APR_X64}/${LIBR}"
                 "${APR_UTIL_X64}/${LIBR}"
         )
-    endif ()
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    if (DEFINED ENV{APR_LINK})
-        link_directories(
-            "$ENV{APR_LINK}"
-        )
-        set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-    else ()
-        link_directories(
-                "$ENV{APR_HOME}/apr/lib/"
-                "$ENV{APR_HOME}/apr-util/lib/"
-        )
-        set(CMAKE_FIND_LIBRARY_SUFFIXES .a .dylib)
     endif ()
 else ()
     link_directories(
