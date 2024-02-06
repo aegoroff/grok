@@ -46,7 +46,7 @@ jobs:
           msbuild-architecture: x64
           vs-version: '17.7'
 
-      - name: Get APR
+      - name: Get third party libs
         run: |
           Invoke-WebRequest -Uri https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-win32bin-2.5.0.zip -OutFile expat-win32bin-2.5.0.zip
           Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-1.7.4-win32-src.zip -OutFile apr-1.7.4-win32-src.zip
@@ -65,15 +65,15 @@ jobs:
           LINK: /cgthreads:8
         run: |
           cd ./Expat/Source/
-          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ runner.temp }}/external_lib/expat" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
+          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/expat" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
           nmake install
           cd ../../apr-1.7.4/
-          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ runner.temp }}/external_lib/apr" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
+          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
           nmake install
           cd ../apr-util-1.6.3/
-          set CMAKE_LIBRARY_PATH=${{ runner.temp }}/external_lib/apr/lib;${{ runner.temp }}/external_lib/expat/lib
-          set CMAKE_INCLUDE_PATH=${{ runner.temp }}/external_lib/apr/include;${{ runner.temp }}/external_lib/expat/include
-          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ runner.temp }}/external_lib/apr" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
+          set CMAKE_LIBRARY_PATH=${{ github.workspace }}/external_lib/lib/apr/lib;${{ github.workspace }}/external_lib/lib/expat/lib
+          set CMAKE_INCLUDE_PATH=${{ github.workspace }}/external_lib/lib/apr/include;${{ github.workspace }}/external_lib/lib/expat/include
+          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
           nmake install
 
       - name: Build
