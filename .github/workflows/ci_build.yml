@@ -52,10 +52,10 @@ jobs:
           Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-1.7.4-win32-src.zip -OutFile apr-1.7.4-win32-src.zip
           Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-util-1.6.3-win32-src.zip -OutFile apr-util-1.6.3-win32-src.zip
           Invoke-WebRequest -Uri https://github.com/openssl/openssl/archive/refs/tags/openssl-3.2.1.zip -OutFile openssl-3.2.1.zip
-          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/expat-win32bin-2.5.0.zip", "$PWD/Expat")
-          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-1.7.4-win32-src.zip", "$PWD")
-          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-util-1.6.3-win32-src.zip", "$PWD")
-          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/openssl-3.2.1.zip", "$PWD")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/expat-win32bin-2.5.0.zip", "$PWD/external_lib/src/Expat")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-1.7.4-win32-src.zip", "$PWD/external_lib/src")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-util-1.6.3-win32-src.zip", "$PWD/external_lib/src")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/openssl-3.2.1.zip", "$PWD/external_lib/src")
 
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Build third party libs
@@ -63,7 +63,7 @@ jobs:
         env:
           LINK: /cgthreads:8
         run: |
-          cd ./Expat/Source/
+          cd ./external_lib/src/Expat/Source/
           cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/expat" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
           nmake install
           cd ../../apr-1.7.4/
