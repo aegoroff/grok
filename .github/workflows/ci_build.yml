@@ -40,15 +40,42 @@ jobs:
       - name: Install Winflexbison
         run: |
           choco install winflexbison
-      - name: Download APR
-        run: |
-          curl -L  -o apr-vs2022.zip "https://drive.google.com/uc?export=download&id=1S0K5zTTn-Y_X2Di1racXPy4yLQ0kwHT4"
-          7z x -o${{ env.APR_HOME16 }} apr-vs2022.zip
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3.1
+        uses: microsoft/setup-msbuild@v2
         with:
           msbuild-architecture: x64
           vs-version: '17.7'
+
+      - name: Get APR
+        run: |
+          Invoke-WebRequest -Uri https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-win32bin-2.5.0.zip -OutFile expat-win32bin-2.5.0.zip
+          Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-1.7.4-win32-src.zip -OutFile apr-1.7.4-win32-src.zip
+          Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-util-1.6.3-win32-src.zip -OutFile apr-util-1.6.3-win32-src.zip
+          Invoke-WebRequest -Uri https://github.com/openssl/openssl/archive/refs/tags/openssl-3.2.1.zip -OutFile openssl-3.2.1.zip
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/expat-win32bin-2.5.0.zip", "$PWD/Expat")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-1.7.4-win32-src.zip", "$PWD")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-util-1.6.3-win32-src.zip", "$PWD")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/openssl-3.2.1.zip", "$PWD")
+
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build third party libs
+        shell: cmd
+        env:
+          CL: /MP
+          LINK: /cgthreads:8
+        run: |
+          cd ./Expat/Source/
+          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ runner.temp }}/external_lib/expat" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
+          nmake install
+          cd ../../apr-1.7.4/
+          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ runner.temp }}/external_lib/apr" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
+          nmake install
+          cd ../apr-util-1.6.3/
+          set CMAKE_LIBRARY_PATH=${{ runner.temp }}/external_lib/apr/lib;${{ runner.temp }}/external_lib/expat/lib
+          set CMAKE_INCLUDE_PATH=${{ runner.temp }}/external_lib/apr/include;${{ runner.temp }}/external_lib/expat/include
+          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ runner.temp }}/external_lib/apr" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
+          nmake install
+
       - name: Build
         uses: lukka/run-cmake@v3
         with:
