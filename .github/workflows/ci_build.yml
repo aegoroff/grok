@@ -61,7 +61,6 @@ jobs:
       - name: Build third party libs
         shell: cmd
         env:
-          CL: /MP
           LINK: /cgthreads:8
         run: |
           cd ./Expat/Source/
