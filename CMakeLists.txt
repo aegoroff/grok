@@ -168,6 +168,7 @@ file(GLOB PATTERN_FILES "patterns/*.patterns")
 
 SET(PCRE_SOURCE_FILES
         ${SRC}/${PCRE}/pcre2_auto_possess.c
+        ${SRC}/${PCRE}/pcre2_chkdint.c
         ${SRC}/${PCRE}/pcre2_chartables.c
         ${SRC}/${PCRE}/pcre2_compile.c
         ${SRC}/${PCRE}/pcre2_config.c
