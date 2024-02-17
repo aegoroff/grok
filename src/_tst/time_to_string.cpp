@@ -9,7 +9,8 @@
  * Copyright: (c) Alexander Egorov 2015-2024
  */
 
-#include "catch_amalgamated.hpp"
+#include <memory>
+#include <catch2/catch_test_macros.hpp>
 #include "lib.h"
 
 const size_t kBufferSize = 64;

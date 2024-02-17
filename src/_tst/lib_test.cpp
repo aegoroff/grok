@@ -10,10 +10,9 @@
  */
 
 #include <cstdio>
-#include "catch_amalgamated.hpp"
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "lib.h"
-
-using namespace Catch::literals;
 
 TEST_CASE("htoi") {
     SECTION("parse one symbol") {
@@ -164,7 +163,7 @@ TEST_CASE("normalize time") {
 
         REQUIRE(result.hours == 1);
         REQUIRE(result.minutes == 56);
-        REQUIRE(result.seconds == 40.00_a);
+        REQUIRE_THAT(result.seconds, Catch::Matchers::WithinAbs(40.00, 0.001));
     }
 
     SECTION("HoursFractial")  {
@@ -174,7 +173,7 @@ TEST_CASE("normalize time") {
 
         REQUIRE(result.hours == 1);
         REQUIRE(result.minutes == 56);
-        REQUIRE(result.seconds == 40.51_a);
+        REQUIRE_THAT(result.seconds, Catch::Matchers::WithinAbs(40.51, 0.001));
     }
 
     SECTION("Minutes")  {
@@ -184,7 +183,7 @@ TEST_CASE("normalize time") {
 
         REQUIRE(result.hours == 0);
         REQUIRE(result.minutes == 3);
-        REQUIRE(result.seconds == 20.00_a);
+        REQUIRE_THAT(result.seconds, Catch::Matchers::WithinAbs(20.00, 0.001));
     }
 
     SECTION("Seconds")  {
@@ -194,7 +193,7 @@ TEST_CASE("normalize time") {
 
         REQUIRE(result.hours == 0);
         REQUIRE(result.minutes == 0);
-        REQUIRE(result.seconds == 50.00_a);
+        REQUIRE_THAT(result.seconds, Catch::Matchers::WithinAbs(50.00, 0.001));
     }
 
     SECTION("BigValue")  {
@@ -205,7 +204,7 @@ TEST_CASE("normalize time") {
         REQUIRE(result.days == 5);
         REQUIRE(result.hours == 18);
         REQUIRE(result.minutes == 53);
-        REQUIRE(result.seconds == 21.00_a);
+        REQUIRE_THAT(result.seconds, Catch::Matchers::WithinAbs(21.00, 0.001));
     }
 }
 

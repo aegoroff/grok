@@ -15,6 +15,16 @@ set(LIBR Release)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_testing()
 
+Include(FetchContent)
+
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.5.2
+)
+
+FetchContent_MakeAvailable(Catch2)
+
 set(compiler_flags)
 set(debug_compiler_flags)
 set(release_compiler_flags)
@@ -152,12 +162,10 @@ SET(GROK_SOURCE_FILES
         "${SRC}/${GROK}/pattern.c")
 
 SET(TST_SOURCE_FILES
-        "${SRC}/${TST}/_tst.cpp"
         "${SRC}/${TST}/encoding.cpp"
         "${SRC}/${TST}/lib_test.cpp"
         "${SRC}/${TST}/size_to_string.cpp"
         "${SRC}/${TST}/time_to_string.cpp"
-        "${SRC}/${TST}/catch_amalgamated.cpp"
         "${SRC}/${TST}/trim_tests.cpp")
 
 SET(LICENSE_FILE "LICENSE.txt")
@@ -257,7 +265,7 @@ else ()
     target_link_libraries(libgrok PRIVATE m PRIVATE libapr-1.a PRIVATE libaprutil-1.a)
 endif ()
 target_link_libraries(grok PRIVATE libgrok PRIVATE pcre)
-target_link_libraries(_tst PRIVATE libgrok PRIVATE pcre)
+target_link_libraries(_tst PRIVATE libgrok PRIVATE pcre PRIVATE Catch2::Catch2WithMain)
 
 add_test(NAME RunUnitTests COMMAND _tst)
 

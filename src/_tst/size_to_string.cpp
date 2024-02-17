@@ -10,7 +10,8 @@
  */
 
 #include <cstdint>
-#include "catch_amalgamated.hpp"
+#include <memory>
+#include <catch2/catch_test_macros.hpp>
 #include "lib.h"
 
 const size_t kBufferSize = 128;
