@@ -64,36 +64,34 @@ jobs:
           LINK: /cgthreads:8
         run: |
           cd ./external_lib/src/Expat/Source/
-          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/expat" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
-          nmake install
+          cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/expat" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" -B build -Ax64
+          cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
+          cmake --install build
           cd ../../apr-1.7.4/
-          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
-          nmake install
+          cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" -B build -Ax64
+          cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
+          cmake --install build
           cd ../apr-util-1.6.3/
           set CMAKE_LIBRARY_PATH=${{ github.workspace }}/external_lib/lib/apr/lib;${{ github.workspace }}/external_lib/lib/expat/lib
           set CMAKE_INCLUDE_PATH=${{ github.workspace }}/external_lib/lib/apr/include;${{ github.workspace }}/external_lib/lib/expat/include
-          cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" .
-          nmake install
+          cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" -B build -Ax64
+          cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
+          cmake --install build
 
+      - uses: ilammy/msvc-dev-cmd@v1
       - name: Build
-        uses: lukka/run-cmake@v3
-        with:
-          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-          cmakeListsTxtPath: ${{ github.workspace }}\CMakeLists.txt
-          cmakeBuildType: ${{ env.BUILD_CONFIGURATION }}
-          buildWithCMakeArgs: "-- -v:n -p:Configuration=${{ env.BUILD_CONFIGURATION }}"
-          buildDirectory: ${{ runner.temp }}\build
-          buildWithCMake: true
-          cmakeAppendedArgs: '-DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -Ax64'
+        run: |
+          cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /Zc:wchar_t /Zc:inline /Zc:preprocessor /validate-charset /D NDEBUG" -B build -Ax64
+          cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
         env:
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Unit Tests
-        working-directory: ${{ runner.temp }}\build
+        working-directory: ${{ github.workspace }}\build
         run: ctest -C ${{ env.BUILD_CONFIGURATION }} -VV
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
-        working-directory: ${{ runner.temp }}\build
+        working-directory: ${{ github.workspace }}\build
         run: cpack
       - name: Copy artefacts
         shell: bash
