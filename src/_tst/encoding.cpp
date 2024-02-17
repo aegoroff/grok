@@ -10,7 +10,7 @@
  */
 
 #include <cstdio>
-#include "catch_amalgamated.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include "apr_test_fixture.h"
 #include "encoding.h"
 
