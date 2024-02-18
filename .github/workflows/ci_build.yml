@@ -193,31 +193,31 @@ jobs:
           body: "${{ needs.generate-changelog.outputs.release_body }}"
 
       - name: Download Linux aarch64 MUSL tarball
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: linux_musl_aarch64
           path: linux_musl_aarch64
 
       - name: Download Linux x86_64 MUSL tarball
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: linux_musl_x86_64
           path: linux_musl_x86_64
 
       - name: Download Windows zip
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: windows
           path: windows
 
       - name: Download x86_64 MacOS zip
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: macos_none_x86_64
           path: macos_none_x86_64
 
       - name: Download aarch64 MacOS zip
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: macos_none_aarch64
           path: macos_none_aarch64
