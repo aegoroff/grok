@@ -245,7 +245,6 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
         with:
-          github_server: 'github.com'
           source_file: ${{ env.RELEASE_BIN }}.rb
           destination_repo: 'aegoroff/homebrew-tap'
           user_email: 'egoroff@email.com'
@@ -259,7 +258,6 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
         with:
-          github_server: 'github.com'
           source_file: ${{ env.RELEASE_BIN }}.json
           destination_repo: 'aegoroff/scoop-bucket'
           user_email: 'egoroff@email.com'
