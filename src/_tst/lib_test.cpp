@@ -12,7 +12,10 @@
 #include <cstdio>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 #include "lib.h"
+
+using Catch::Matchers::Equals;
 
 TEST_CASE("htoi") {
     SECTION("parse one symbol") {
@@ -72,7 +75,7 @@ TEST_CASE("normalize size") {
 
         REQUIRE(result.unit == size_unit_bytes);
         REQUIRE(result.size_in_bytes == size);
-        REQUIRE(result.size == 0.0);
+        REQUIRE_THAT(result.size, Catch::Matchers::WithinAbs(0.0, 0.0001));
     }
 
     SECTION("Bytes") {
@@ -82,7 +85,7 @@ TEST_CASE("normalize size") {
 
         REQUIRE(result.unit == size_unit_bytes);
         REQUIRE(result.size_in_bytes == size);
-        REQUIRE(result.size == 0.0);
+        REQUIRE_THAT(result.size, Catch::Matchers::WithinAbs(0.0, 0.0001));
     }
 
     SECTION("KBytes on boundary") {
@@ -91,7 +94,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_kbytes);
-        REQUIRE(result.size == 1.0);
+        REQUIRE_THAT(result.size, Catch::Matchers::WithinAbs(1.0, 0.0001));
     }
 
     SECTION("KBytes") {
@@ -100,7 +103,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_kbytes);
-        REQUIRE(result.size == 2.0);
+        REQUIRE_THAT(result.size, Catch::Matchers::WithinAbs(2.0, 0.0001));
     }
 
     SECTION("MBytes") {
@@ -109,7 +112,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_mbytes);
-        REQUIRE(result.size == 2.0);
+        REQUIRE_THAT(result.size, Catch::Matchers::WithinAbs(2.0, 0.0001));
     }
 
     SECTION("GBytes") {
@@ -119,7 +122,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_gbytes);
-        REQUIRE(result.size == 4.0);
+        REQUIRE_THAT(result.size, Catch::Matchers::WithinAbs(4.0, 0.0001));
     }
 
     SECTION("TBytes") {
@@ -129,7 +132,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_tbytes);
-        REQUIRE(result.size == 2.0);
+        REQUIRE_THAT(result.size, Catch::Matchers::WithinAbs(2.0, 0.0001));
     }
 
     SECTION("PBytes") {
@@ -139,7 +142,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_pbytes);
-        REQUIRE(result.size == 2.0);
+        REQUIRE_THAT(result.size, Catch::Matchers::WithinAbs(2.0, 0.0001));
     }
 
     SECTION("EBytes") {
@@ -150,7 +153,7 @@ TEST_CASE("normalize size") {
         const auto result = lib_normalize_size(size);
 
         REQUIRE(result.unit == size_unit_ebytes);
-        REQUIRE(result.size == 2.0);
+        REQUIRE_THAT(result.size, Catch::Matchers::WithinAbs(2.0, 0.0001));
     }
 
 }
@@ -277,7 +280,7 @@ SCENARIO("get file name from path") {
 
         WHEN("lib_get_file_name") {
             THEN("return only file name with extension without dir part of path") {
-                REQUIRE(lib_get_file_name(path) == std::string("file.txt"));
+                REQUIRE_THAT(std::string(lib_get_file_name(path)), Equals("file.txt"));
             }
         }
     }
@@ -287,7 +290,7 @@ SCENARIO("get file name from path") {
 
         WHEN("lib_get_file_name") {
             THEN("same result as input string") {
-                REQUIRE(lib_get_file_name(path) == std::string(path));
+                REQUIRE_THAT(std::string(lib_get_file_name(path)), Equals(path));
             }
         }
     }
