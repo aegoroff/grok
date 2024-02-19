@@ -61,23 +61,25 @@ jobs:
         shell: cmd
         run: |
           cd ./external_lib/src/Expat/Source/
-          cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/expat" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" -B build -Ax64
+          cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/expat" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="${{ env.C_FLAGS_RELEASE }}" -B build -Ax64
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
           cmake --install build
           cd ../../apr-1.7.4/
-          cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" -B build -Ax64
+          cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="${{ env.C_FLAGS_RELEASE }}" -B build -Ax64
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
           cmake --install build
           cd ../apr-util-1.6.3/
           set CMAKE_LIBRARY_PATH=${{ github.workspace }}/external_lib/lib/apr/lib;${{ github.workspace }}/external_lib/lib/expat/lib
           set CMAKE_INCLUDE_PATH=${{ github.workspace }}/external_lib/lib/apr/include;${{ github.workspace }}/external_lib/lib/expat/include
-          cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG" -B build -Ax64
+          cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="${{ env.C_FLAGS_RELEASE }}" -B build -Ax64
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
           cmake --install build
+        env:
+          C_FLAGS_RELEASE: "/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG"
 
       - name: Build
         run: |
-          cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /Zc:wchar_t /Zc:inline /Zc:preprocessor /validate-charset /D NDEBUG" -B build -Ax64
+          cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -B build -Ax64
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
         env:
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
