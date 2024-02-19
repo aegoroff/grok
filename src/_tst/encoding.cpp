@@ -46,7 +46,7 @@ TEST_CASE_METHOD(apr_test_fixture, "encoding tests") {
         char* result = enc_from_unicode_to_utf8(kUnicode, get_pool());
 
         // Assert
-        REQUIRE( result == std::string(kUtf8) );
+        REQUIRE_THAT(std::string(result), Equals(kUtf8));
         REQUIRE( enc_is_valid_utf8(result) );
     }
 
