@@ -11,7 +11,10 @@
 
 #include <memory>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 #include "lib.h"
+
+using Catch::Matchers::Equals;
 
 const size_t kBufferSize = 64;
 
@@ -26,7 +29,7 @@ SCENARIO("time to string") {
             lib_time_to_string(&result, buffer.get());
 
             THEN("result more then year") {
-                REQUIRE("1 years 213 days 16 hr 53 min 21.000 sec" == std::string(buffer.get()));
+                REQUIRE_THAT(std::string(buffer.get()), Equals("1 years 213 days 16 hr 53 min 21.000 sec"));
             }
         }
     }
@@ -39,7 +42,7 @@ SCENARIO("time to string") {
             lib_time_to_string(&result, buffer.get());
 
             THEN("result more then 5 days") {
-                REQUIRE("5 days 18 hr 53 min 21.000 sec" == std::string(buffer.get()));
+                REQUIRE_THAT(std::string(buffer.get()), Equals("5 days 18 hr 53 min 21.000 sec"));
             }
         }
     }
@@ -52,7 +55,7 @@ SCENARIO("time to string") {
             lib_time_to_string(&result, buffer.get());
 
             THEN("result more then hour") {
-                REQUIRE("1 hr 56 min 40.000 sec" == std::string(buffer.get()));
+                REQUIRE_THAT(std::string(buffer.get()), Equals("1 hr 56 min 40.000 sec"));
             }
         }
     }
@@ -65,7 +68,7 @@ SCENARIO("time to string") {
             lib_time_to_string(&result, buffer.get());
 
             THEN("result several minutes") {
-                REQUIRE("3 min 20.000 sec" == std::string(buffer.get()));
+                REQUIRE_THAT(std::string(buffer.get()), Equals("3 min 20.000 sec"));
                 REQUIRE(time == result.total_seconds);
             }
         }
@@ -79,7 +82,7 @@ SCENARIO("time to string") {
             lib_time_to_string(&result, buffer.get());
 
             THEN("result same seconds as input") {
-                REQUIRE("20.000 sec" == std::string(buffer.get()));
+                REQUIRE_THAT(std::string(buffer.get()), Equals("20.000 sec"));
             }
         }
 

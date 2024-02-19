@@ -11,8 +11,11 @@
 
 #include <cstdio>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 #include "apr_test_fixture.h"
 #include "encoding.h"
+
+using Catch::Matchers::Equals;
 
 const char* kUtf8 = "\xd1\x82\xd0\xb5\xd1\x81\xd1\x82"; // тест
 const char* kAnsi = "\xf2\xe5\xf1\xf2";                 // тест
@@ -167,7 +170,7 @@ SCENARIO("get encoding names test") {
             auto result = enc_get_encoding_name(bom);
 
             THEN("UTF-8") {
-                REQUIRE("UTF-8" == std::string(result));
+                REQUIRE_THAT(std::string(result), Equals("UTF-8"));
             }
         }
     }
@@ -179,7 +182,7 @@ SCENARIO("get encoding names test") {
             auto result = enc_get_encoding_name(bom);
 
             THEN("UTF-16 (LE)") {
-                REQUIRE("UTF-16 (LE)" == std::string(result));
+                REQUIRE_THAT(std::string(result), Equals("UTF-16 (LE)"));
             }
         }
     }
@@ -191,7 +194,7 @@ SCENARIO("get encoding names test") {
             auto result = enc_get_encoding_name(bom);
 
             THEN("UTF-16 (BE)") {
-                REQUIRE("UTF-16 (BE)" == std::string(result));
+                REQUIRE_THAT(std::string(result), Equals("UTF-16 (BE)"));
             }
         }
     }
@@ -203,7 +206,7 @@ SCENARIO("get encoding names test") {
             auto result = enc_get_encoding_name(bom);
 
             THEN("UTF-32 (BE)") {
-                REQUIRE("UTF-32 (BE)" == std::string(result));
+                REQUIRE_THAT(std::string(result), Equals("UTF-32 (BE)"));
             }
         }
     }
@@ -215,7 +218,7 @@ SCENARIO("get encoding names test") {
             auto result = enc_get_encoding_name(bom);
 
             THEN("Unknown") {
-                REQUIRE("Unknown" == std::string(result));
+                REQUIRE_THAT(std::string(result), Equals("Unknown"));
             }
         }
     }
