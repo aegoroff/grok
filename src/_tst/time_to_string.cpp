@@ -12,6 +12,7 @@
 #include <memory>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "lib.h"
 
 using Catch::Matchers::Equals;
@@ -30,6 +31,7 @@ SCENARIO("time to string") {
 
             THEN("result more then year") {
                 REQUIRE_THAT(std::string(buffer.get()), Equals("1 years 213 days 16 hr 53 min 21.000 sec"));
+                REQUIRE_THAT(result.total_seconds, Catch::Matchers::WithinAbs(time, 0.0001));
             }
         }
     }
@@ -43,6 +45,7 @@ SCENARIO("time to string") {
 
             THEN("result more then 5 days") {
                 REQUIRE_THAT(std::string(buffer.get()), Equals("5 days 18 hr 53 min 21.000 sec"));
+                REQUIRE_THAT(result.total_seconds, Catch::Matchers::WithinAbs(time, 0.0001));
             }
         }
     }
@@ -56,6 +59,7 @@ SCENARIO("time to string") {
 
             THEN("result more then hour") {
                 REQUIRE_THAT(std::string(buffer.get()), Equals("1 hr 56 min 40.000 sec"));
+                REQUIRE_THAT(result.total_seconds, Catch::Matchers::WithinAbs(time, 0.0001));
             }
         }
     }
@@ -69,7 +73,7 @@ SCENARIO("time to string") {
 
             THEN("result several minutes") {
                 REQUIRE_THAT(std::string(buffer.get()), Equals("3 min 20.000 sec"));
-                REQUIRE(time == result.total_seconds);
+                REQUIRE_THAT(result.total_seconds, Catch::Matchers::WithinAbs(time, 0.0001));
             }
         }
     }
@@ -83,6 +87,7 @@ SCENARIO("time to string") {
 
             THEN("result same seconds as input") {
                 REQUIRE_THAT(std::string(buffer.get()), Equals("20.000 sec"));
+                REQUIRE_THAT(result.total_seconds, Catch::Matchers::WithinAbs(time, 0.0001));
             }
         }
 
