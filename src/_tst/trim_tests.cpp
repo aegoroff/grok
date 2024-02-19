@@ -11,7 +11,10 @@
 
 #include <cstring>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 #include "lib.h"
+
+using Catch::Matchers::Equals;
 
 const char* kSeps = "'\"";
 
@@ -43,7 +46,7 @@ TEST_CASE_METHOD(trim_test_fixture, "trim") {
         char* result = lib_trim(get_buffer(), kSeps);
 
         // Assert
-        REQUIRE(result == std::string("test"));
+        REQUIRE_THAT(std::string(result), Equals("test"));
     }
 
     SECTION("apos both ends") {
@@ -53,7 +56,7 @@ TEST_CASE_METHOD(trim_test_fixture, "trim") {
         char* result = lib_trim(get_buffer(), kSeps);
 
         // Assert
-        REQUIRE(result == std::string("test"));
+        REQUIRE_THAT(std::string(result), Equals("test"));
     }
 
     SECTION("apos from begin only") {
@@ -63,7 +66,7 @@ TEST_CASE_METHOD(trim_test_fixture, "trim") {
         char* result = lib_trim(get_buffer(), kSeps);
 
         // Assert
-        REQUIRE(result == std::string("test"));
+        REQUIRE_THAT(std::string(result), Equals("test"));
     }
 
     SECTION("apos on end only") {
@@ -73,7 +76,7 @@ TEST_CASE_METHOD(trim_test_fixture, "trim") {
         char* result = lib_trim(get_buffer(), kSeps);
 
         // Assert
-        REQUIRE(result == std::string("test"));
+        REQUIRE_THAT(std::string(result), Equals("test"));
     }
 
     SECTION("quotes both ends") {
@@ -83,12 +86,16 @@ TEST_CASE_METHOD(trim_test_fixture, "trim") {
         char* result = lib_trim(get_buffer(), kSeps);
 
         // Assert
-        REQUIRE(result == std::string("test"));
+        REQUIRE_THAT(std::string(result), Equals("test"));
     }
 
     SECTION("only whitespaces string") {
         arrange("   ");
 
-        REQUIRE(lib_trim(get_buffer(), nullptr) == std::string(""));
+        // Act
+        char* result = lib_trim(get_buffer(), nullptr);
+
+        // Assert
+        REQUIRE_THAT(std::string(result), Equals(""));
     }
 }

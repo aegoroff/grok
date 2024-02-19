@@ -12,7 +12,10 @@
 #include <cstdint>
 #include <memory>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 #include "lib.h"
+
+using Catch::Matchers::Equals;
 
 const size_t kBufferSize = 128;
 
@@ -23,7 +26,7 @@ SCENARIO("size to string") {
         lib_size_to_string(size, buffer.get());
 
         THEN("exactly 1 KB result with bytes after it in parens") {
-            REQUIRE("1.00 Kb (1024 bytes)" == std::string(buffer.get()));
+            REQUIRE_THAT(std::string(buffer.get()), Equals("1.00 Kb (1024 bytes)"));
         }
     }
 
@@ -32,7 +35,7 @@ SCENARIO("size to string") {
         lib_size_to_string(size, buffer.get());
 
         THEN("tiny more then 2 KB result with bytes after it in parens") {
-            REQUIRE("2.01 Kb (2058 bytes)" == std::string(buffer.get()));
+            REQUIRE_THAT(std::string(buffer.get()), Equals("2.01 Kb (2058 bytes)"));
         }
     }
 
@@ -41,7 +44,7 @@ SCENARIO("size to string") {
         lib_size_to_string(size, buffer.get());
 
         THEN("only bytes value output") {
-            REQUIRE("20 bytes" == std::string(buffer.get()));
+            REQUIRE_THAT(std::string(buffer.get()), Equals("20 bytes"));
         }
     }
 
@@ -50,7 +53,7 @@ SCENARIO("size to string") {
         lib_size_to_string(size, buffer.get());
 
         THEN("0 bytes output") {
-            REQUIRE("0 bytes" == std::string(buffer.get()));
+            REQUIRE_THAT(std::string(buffer.get()), Equals("0 bytes"));
         }
     }
 
@@ -59,7 +62,7 @@ SCENARIO("size to string") {
         lib_size_to_string(size, buffer.get());
 
         THEN("16 EB output") {
-            REQUIRE("16.00 Eb (18446744073709551615 bytes)" == std::string(buffer.get()));
+            REQUIRE_THAT(std::string(buffer.get()), Equals("16.00 Eb (18446744073709551615 bytes)"));
         }
     }
 }
