@@ -11,7 +11,7 @@ env:
   MACOS_TARGET_AARCH64: aarch64-apple-darwin
   LINUX_TARGET_MUSL: x86_64-unknown-linux-musl
   LINUX_TARGET_MUSL_AARCH64: aarch64-unknown-linux-musl
-  RELEASER_VER: 0.11.3
+  RELEASER_VER: 0.11.4
   CI_BUILD_NUMBER: ${{ github.run_number }}
 
 on:
@@ -135,7 +135,7 @@ jobs:
       - name: Install Zig
         uses: goto-bus-stop/setup-zig@v2
         with:
-          version: 0.11.0
+          version: 0.12.0
       - name: Build
         run: |
           chmod +x ./linux_build.sh
