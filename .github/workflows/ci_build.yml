@@ -12,6 +12,10 @@ env:
   LINUX_TARGET_MUSL: x86_64-unknown-linux-musl
   LINUX_TARGET_MUSL_AARCH64: aarch64-unknown-linux-musl
   RELEASER_VER: 0.11.4
+  OPENSSL_VER: 3.3.0
+  APR_VER: 1.7.4
+  APR_UTIL_VER: 1.6.3
+  EXPAT_VER: 2.6.2
   CI_BUILD_NUMBER: ${{ github.run_number }}
 
 on:
@@ -48,14 +52,15 @@ jobs:
 
       - name: Get third party libs
         run: |
-          Invoke-WebRequest -Uri https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-win32bin-2.5.0.zip -OutFile expat-win32bin-2.5.0.zip
-          Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-1.7.4-win32-src.zip -OutFile apr-1.7.4-win32-src.zip
-          Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-util-1.6.3-win32-src.zip -OutFile apr-util-1.6.3-win32-src.zip
-          Invoke-WebRequest -Uri https://github.com/openssl/openssl/archive/refs/tags/openssl-3.2.1.zip -OutFile openssl-3.2.1.zip
-          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/expat-win32bin-2.5.0.zip", "$PWD/external_lib/src/Expat")
-          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-1.7.4-win32-src.zip", "$PWD/external_lib/src")
-          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-util-1.6.3-win32-src.zip", "$PWD/external_lib/src")
-          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/openssl-3.2.1.zip", "$PWD/external_lib/src")
+          $expat = "${{ env.EXPAT_VER }}".Replace('.','_')
+          Invoke-WebRequest -Uri https://github.com/libexpat/libexpat/releases/download/R_$expat/expat-win32bin-${{ env.EXPAT_VER }}.zip -OutFile expat-win32bin-${{ env.EXPAT_VER }}.zip
+          Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-${{ env.APR_VER }}-win32-src.zip -OutFile apr-${{ env.APR_VER }}-win32-src.zip
+          Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-util-${{ env.APR_UTIL_VER }}-win32-src.zip -OutFile apr-util-${{ env.APR_UTIL_VER }}-win32-src.zip
+          Invoke-WebRequest -Uri https://github.com/openssl/openssl/archive/refs/tags/openssl-${{ env.OPENSSL_VER }}.zip -OutFile openssl-${{ env.OPENSSL_VER }}.zip
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/expat-win32bin-${{ env.EXPAT_VER }}.zip", "$PWD/external_lib/src/Expat")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-${{ env.APR_VER }}-win32-src.zip", "$PWD/external_lib/src")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-util-${{ env.APR_UTIL_VER }}-win32-src.zip", "$PWD/external_lib/src")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/openssl-${{ env.OPENSSL_VER }}.zip", "$PWD/external_lib/src")
 
       - name: Build third party libs
         shell: cmd
@@ -64,11 +69,11 @@ jobs:
           cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/expat" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="${{ env.C_FLAGS_RELEASE }}" -B build -Ax64
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
           cmake --install build
-          cd ../../apr-1.7.4/
+          cd ../../apr-${{ env.APR_VER }}/
           cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="${{ env.C_FLAGS_RELEASE }}" -B build -Ax64
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
           cmake --install build
-          cd ../apr-util-1.6.3/
+          cd ../apr-util-${{ env.APR_UTIL_VER }}/
           set CMAKE_LIBRARY_PATH=${{ github.workspace }}/external_lib/lib/apr/lib;${{ github.workspace }}/external_lib/lib/expat/lib
           set CMAKE_INCLUDE_PATH=${{ github.workspace }}/external_lib/lib/apr/include;${{ github.workspace }}/external_lib/lib/expat/include
           cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/apr" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="${{ env.C_FLAGS_RELEASE }}" -B build -Ax64

@@ -11,7 +11,8 @@ LIB_INSTALL_PREFIX=./external_lib/lib
 CC_FLAGS="zig cc -target ${ARCH}-${OS}-${ABI}"
 APR_SRC=apr-1.7.4
 APR_UTIL_SRC=apr-util-1.6.3
-EXPAT_SRC=expat-2.5.0
+EXPAT_VER=2.6.2
+EXPAT_SRC=expat-${EXPAT_VER}
 
 [[ -d "${LIB_INSTALL_SRC}" ]] || mkdir -p ${LIB_INSTALL_SRC}
 [[ -d "${LIB_INSTALL_PREFIX}" ]] && rm -rf ${LIB_INSTALL_PREFIX}
@@ -49,7 +50,7 @@ if [[ "${ARCH}" = "aarch64" ]]; then
   fi
 fi
 
-(cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || wget https://github.com/libexpat/libexpat/releases/download/R_2_5_0/${EXPAT_SRC}.tar.gz)
+(cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || wget https://github.com/libexpat/libexpat/releases/download/R_${EXPAT_VER//./_}/${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && AR="zig ar" RANLIB="zig ranlib" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --enable-shared=no --prefix=${EXPAT_PREFIX} && make -j $(nproc) && make install)
 
