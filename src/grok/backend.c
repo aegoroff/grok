@@ -22,7 +22,6 @@
 #endif
 
 #include "backend.h"
-#include "../pcre/pcre2.h"
 #include "frontend.h"
 #include "lib.h"
 #include "sort.h"
@@ -53,7 +52,8 @@ void bend_cleanup(void) {
     apr_pool_destroy(bend_pool);
 }
 
-match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buffer_sz, apr_pool_t *pool) {
+match_result_t bend_match_re(pattern_t *pattern, const char *subject, prepared_t *prepared, size_t buffer_sz,
+                             apr_pool_t *pool) {
     int errornumber = 0;
     size_t erroroffset = 0;
     match_result_t result = {0};
@@ -61,29 +61,13 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buf
     if (pattern == NULL) {
         return result;
     }
-    pcre2_compile_context *compile_ctx = pcre2_compile_context_create(pcre_context);
 
-    pcre2_code *re = pcre2_compile(pattern->regex,        /* the pattern */
-                                   PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
-                                   0,                     /* default options */
-                                   &errornumber,          /* for error number */
-                                   &erroroffset,          /* for error offset */
-                                   compile_ctx);
-
-    if (re == NULL) {
-        size_t error_buff_size_in_chars = 256;
-        size_t len = error_buff_size_in_chars * sizeof(PCRE2_UCHAR);
-        PCRE2_UCHAR *buffer = (PCRE2_UCHAR *)apr_pcalloc(bend_pool, len);
-        pcre2_get_error_message(errornumber, buffer, len);
-        lib_printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
-        return result;
-    }
-    pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, pcre_context);
+    pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(prepared->re, pcre_context);
 
     int flags = PCRE2_NOTEMPTY;
 
     pcre2_match_context *match_ctx = pcre2_match_context_create(pcre_context);
-    int rc = pcre2_match(re,                          /* the compiled pattern */
+    int rc = pcre2_match(prepared->re,                          /* the compiled pattern */
                          subject,                     /* the subject string */
                          strnlen(subject, buffer_sz), /* the length of the subject */
                          0,                           /* start at offset 0 in the subject */
@@ -107,9 +91,38 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buf
     }
 
     pcre2_match_data_free(match_data);
-    pcre2_code_free(re);
     return result;
 }
+
+prepared_t bend_prepare_re(pattern_t *pattern) {
+    int errornumber = 0;
+    size_t erroroffset = 0;
+    prepared_t result = {0};
+
+    if (pattern == NULL) {
+        return result;
+    }
+    pcre2_compile_context *compile_ctx = pcre2_compile_context_create(pcre_context);
+
+    pcre2_code *re = pcre2_compile(pattern->regex,        /* the pattern */
+                                   PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
+                                   0,                     /* default options */
+                                   &errornumber,          /* for error number */
+                                   &erroroffset,          /* for error offset */
+                                   compile_ctx);
+
+    if (re == NULL) {
+        size_t error_buff_size_in_chars = 256;
+        size_t len = error_buff_size_in_chars * sizeof(PCRE2_UCHAR);
+        PCRE2_UCHAR *buffer = (PCRE2_UCHAR *)apr_pcalloc(bend_pool, len);
+        pcre2_get_error_message(errornumber, buffer, len);
+        lib_printf("PCRE2 compilation failed at offset %d: %s\n", (int)erroroffset, buffer);
+    }
+    result.re = re;
+    return result;
+}
+
+void bend_free_re(prepared_t prepared) { pcre2_code_free(prepared.re); }
 
 pattern_t *bend_create_pattern(const char *macro, apr_pool_t *pool) {
     apr_array_header_t *root_elements = fend_get_pattern(macro);

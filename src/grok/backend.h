@@ -12,6 +12,7 @@
 #ifndef GROK_BACKEND_H_
 #define GROK_BACKEND_H_
 
+#include "../pcre/pcre2.h"
 #include <apr_tables.h>
 #include <stdbool.h>
 
@@ -29,11 +30,20 @@ typedef struct match_result {
     apr_table_t *properties;
 } match_result_t;
 
+typedef struct prepared {
+    pcre2_code *re;
+} prepared_t;
+
 apr_pool_t *bend_init(apr_pool_t *pool);
 
 void bend_cleanup(void);
 
-match_result_t bend_match_re(pattern_t *pattern, const char *subject, size_t buffer_sz, apr_pool_t *pool);
+match_result_t bend_match_re(pattern_t *pattern, const char *subject, prepared_t *prepared, size_t buffer_sz,
+                             apr_pool_t *pool);
+
+prepared_t bend_prepare_re(pattern_t *pattern);
+
+void bend_free_re(prepared_t prepared);
 
 pattern_t *bend_create_pattern(const char *macro, apr_pool_t *pool);
 
