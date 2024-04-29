@@ -4,7 +4,7 @@ LIB_INSTALL_SRC=./external_lib/src
 LIB_INSTALL_PREFIX=./external_lib/lib
 CC_FLAGS="zig cc"
 AR_FLAGS="zig ar"
-RABLIB_FLAGS="zig ranlib"
+RANLIB_FLAGS="zig ranlib"
 CFLAGS="-Ofast -march=haswell -mtune=haswell"
 APR_SRC=apr-1.7.4
 APR_UTIL_SRC=apr-util-1.6.3
