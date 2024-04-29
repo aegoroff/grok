@@ -8,7 +8,8 @@ CC_FLAGS="zig cc -target x86_64-macos-${ABI}"
 CFLAGS="-Ofast -march=haswell -mtune=haswell"
 APR_SRC=apr-1.7.4
 APR_UTIL_SRC=apr-util-1.6.3
-EXPAT_SRC=expat-2.5.0
+EXPAT_VER=2.6.2
+EXPAT_SRC=expat-${EXPAT_VER}
 
 [[ -d "${LIB_INSTALL_SRC}" ]] || mkdir -p ${LIB_INSTALL_SRC}
 [[ -d "${LIB_INSTALL_PREFIX}" ]] && rm -rf ${LIB_INSTALL_PREFIX}
@@ -28,7 +29,7 @@ APR_PREFIX=${EXTERNAL_PREFIX}/apr
 echo ${EXPAT_PREFIX}
 echo ${APR_PREFIX}
 
-(cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || curl -O -L https://github.com/libexpat/libexpat/releases/download/R_2_5_0/${EXPAT_SRC}.tar.gz)
+(cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || curl -O -L https://github.com/libexpat/libexpat/releases/download/R_${EXPAT_VER//./_}/${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${EXPAT_PREFIX} && make -j $(sysctl -n hw.ncpu) && make install)
 
