@@ -1,10 +1,8 @@
 BUILD_CONF=Release
-ABI=$1
-[[ -n "${ABI}" ]] || ABI=none
-BUILD_DIR=build-${ABI}-${BUILD_CONF}
+BUILD_DIR=build-${BUILD_CONF}
 LIB_INSTALL_SRC=./external_lib/src
 LIB_INSTALL_PREFIX=./external_lib/lib
-CC_FLAGS="zig cc -target x86_64-macos-${ABI}"
+CC_FLAGS="zig cc"
 CFLAGS="-Ofast -march=haswell -mtune=haswell"
 APR_SRC=apr-1.7.4
 APR_UTIL_SRC=apr-util-1.6.3
