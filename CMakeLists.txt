@@ -130,6 +130,8 @@ else ()
 endif ()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/${PCRE}/include)
 
+add_definitions(-DPCRE2_STATIC)
+add_definitions(-DPCRE2_CODE_UNIT_WIDTH=8)
 add_definitions(-DLINK_SIZE=2)
 add_definitions(-DHAVE_CONFIG_H)
 add_definitions(-DAPR_DECLARE_STATIC)
