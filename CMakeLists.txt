@@ -121,7 +121,6 @@ else ()
 endif ()
 
 include_directories(${SRC}/${LIB})
-include_directories(${SRC}/${PCRE})
 include_directories(${SRC}/${GROK})
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -129,6 +128,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else ()
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/apr/include/apr-1)
 endif ()
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/${PCRE}/include)
 
 add_definitions(-DPCRE2_STATIC)
 add_definitions(-DPCRE2_CODE_UNIT_WIDTH=8)
@@ -173,42 +173,9 @@ SET(LICENSE_FILE "LICENSE.txt")
 file(GLOB LIB_SOURCE_FILES "${SRC}/${LIB}/*.c")
 file(GLOB PATTERN_FILES "patterns/*.patterns")
 
-
-SET(PCRE_SOURCE_FILES
-        ${SRC}/${PCRE}/pcre2_auto_possess.c
-        ${SRC}/${PCRE}/pcre2_chkdint.c
-        ${SRC}/${PCRE}/pcre2_chartables.c
-        ${SRC}/${PCRE}/pcre2_compile.c
-        ${SRC}/${PCRE}/pcre2_config.c
-        ${SRC}/${PCRE}/pcre2_context.c
-        ${SRC}/${PCRE}/pcre2_convert.c
-        ${SRC}/${PCRE}/pcre2_dfa_match.c
-        ${SRC}/${PCRE}/pcre2_error.c
-        ${SRC}/${PCRE}/pcre2_extuni.c
-        ${SRC}/${PCRE}/pcre2_find_bracket.c
-        ${SRC}/${PCRE}/pcre2_jit_compile.c
-        ${SRC}/${PCRE}/pcre2_maketables.c
-        ${SRC}/${PCRE}/pcre2_match.c
-        ${SRC}/${PCRE}/pcre2_match_data.c
-        ${SRC}/${PCRE}/pcre2_newline.c
-        ${SRC}/${PCRE}/pcre2_ord2utf.c
-        ${SRC}/${PCRE}/pcre2_pattern_info.c
-        ${SRC}/${PCRE}/pcre2_script_run.c
-        ${SRC}/${PCRE}/pcre2_serialize.c
-        ${SRC}/${PCRE}/pcre2_string_utils.c
-        ${SRC}/${PCRE}/pcre2_study.c
-        ${SRC}/${PCRE}/pcre2_substitute.c
-        ${SRC}/${PCRE}/pcre2_substring.c
-        ${SRC}/${PCRE}/pcre2_tables.c
-        ${SRC}/${PCRE}/pcre2_ucd.c
-        ${SRC}/${PCRE}/pcre2_valid_utf.c
-        ${SRC}/${PCRE}/pcre2_xclass.c
-        )
-
-add_library(pcre STATIC ${PCRE_SOURCE_FILES})
-
 link_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/apr/lib/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/${PCRE}/lib/"
 )
 
 
@@ -259,13 +226,13 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         PRIVATE rpcrt4 
         PRIVATE apr-1 
         PRIVATE aprutil-1 
-        PRIVATE pcre 
+        PRIVATE pcre2-8-static 
         PRIVATE strsafe)
 else ()
-    target_link_libraries(libgrok PRIVATE m PRIVATE libapr-1.a PRIVATE libaprutil-1.a)
+    target_link_libraries(libgrok PRIVATE m PRIVATE libapr-1.a PRIVATE libaprutil-1.a PRIVATE libpcre2-8.a)
 endif ()
-target_link_libraries(grok PRIVATE libgrok PRIVATE pcre)
-target_link_libraries(_tst PRIVATE libgrok PRIVATE pcre PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(grok PRIVATE libgrok)
+target_link_libraries(_tst PRIVATE libgrok PRIVATE Catch2::Catch2WithMain)
 
 add_test(NAME RunUnitTests COMMAND _tst)
 
