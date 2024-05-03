@@ -59,7 +59,7 @@ jobs:
           Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-${{ env.APR_VER }}-win32-src.zip -OutFile apr-${{ env.APR_VER }}-win32-src.zip
           Invoke-WebRequest -Uri https://dlcdn.apache.org/apr/apr-util-${{ env.APR_UTIL_VER }}-win32-src.zip -OutFile apr-util-${{ env.APR_UTIL_VER }}-win32-src.zip
           Invoke-WebRequest -Uri https://github.com/openssl/openssl/archive/refs/tags/openssl-${{ env.OPENSSL_VER }}.zip -OutFile openssl-${{ env.OPENSSL_VER }}.zip
-          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/pcre2-${{ env.PCRE_VER }}.zip", "$PWD")
+          Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/pcre2-${{ env.PCRE_VER }}.zip", "$PWD/external_lib/src")
           Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/expat-win32bin-${{ env.EXPAT_VER }}.zip", "$PWD/external_lib/src/Expat")
           Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-${{ env.APR_VER }}-win32-src.zip", "$PWD/external_lib/src")
           Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/apr-util-${{ env.APR_UTIL_VER }}-win32-src.zip", "$PWD/external_lib/src")
