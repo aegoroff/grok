@@ -232,6 +232,8 @@ endif ()
 target_link_libraries(grok PRIVATE libgrok)
 target_link_libraries(_tst PRIVATE libgrok PRIVATE Catch2::Catch2WithMain)
 
+target_link_options(libgrok PRIVATE "-static")
+
 add_test(NAME RunUnitTests COMMAND _tst)
 
 install(TARGETS grok DESTINATION . COMPONENT application)
