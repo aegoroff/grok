@@ -12,7 +12,7 @@
 #ifndef GROK_BACKEND_H_
 #define GROK_BACKEND_H_
 
-#include "../pcre/pcre2.h"
+#include <pcre2.h>
 #include <apr_tables.h>
 #include <stdbool.h>
 
