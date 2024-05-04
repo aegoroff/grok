@@ -43,7 +43,7 @@ echo ${APR_PREFIX}
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${APR_UTIL_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC}/${APR_UTIL_SRC} && AR="${AR_FLAGS}" RANLIB="${RANLIB_FLAGS}" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${APR_PREFIX} --with-apr=${APR_PREFIX} --with-expat=${EXPAT_PREFIX} && make -j $(sysctl -n hw.ncpu) && make install)
 
-(cd ${LIB_INSTALL_SRC} && [[ -f "${PCRE_SRC}.tar.gz" ]] || wget https://github.com/PCRE2Project/pcre2/releases/download/${PCRE_SRC}/${PCRE_SRC}.tar.gz)
+(cd ${LIB_INSTALL_SRC} && [[ -f "${PCRE_SRC}.tar.gz" ]] || curl -O -L https://github.com/PCRE2Project/pcre2/releases/download/${PCRE_SRC}/${PCRE_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xzf ${PCRE_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC}/${PCRE_SRC} && AR="${AR_FLAGS}" RANLIB="${RANLIB_FLAGS}" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --prefix=${PCRE_PREFIX} --enable-shared=no && make -j $(sysctl -n hw.ncpu) && make install)
 
