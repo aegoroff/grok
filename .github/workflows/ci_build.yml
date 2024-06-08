@@ -90,7 +90,7 @@ jobs:
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
           cmake --install build
           mkdir "${{ github.workspace }}/external_lib/lib/argtable3"
-          xcopy /F /L /I "../dist/argtable3*" "${{ github.workspace }}/external_lib/lib/argtable3"
+          xcopy /F /I "../dist/argtable3*" "${{ github.workspace }}/external_lib/lib/argtable3"
         env:
           C_FLAGS_RELEASE: "/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG"
 
