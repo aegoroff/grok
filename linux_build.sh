@@ -78,7 +78,7 @@ fi
 (cd "${LIB_INSTALL_SRC}" && tar -xzf ${PCRE_SRC}.tar.gz)
 (cd "${LIB_INSTALL_SRC}/${PCRE_SRC}" && AR="${AR_FLAGS}" RANLIB="${RANLIB_FLAGS}" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --prefix="${PCRE_PREFIX}" --enable-shared=no && make -j $(nproc) && make install)
 
-cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B "${BUILD_DIR}" ${TOOLCHAIN}
+cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B "${BUILD_DIR}" "${TOOLCHAIN}"
 cmake --build "${BUILD_DIR}" --verbose --parallel $(nproc)
 
 if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
