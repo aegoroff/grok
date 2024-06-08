@@ -11,6 +11,8 @@ APR_UTIL_SRC=apr-util-1.6.3
 EXPAT_VER=2.6.2
 EXPAT_SRC=expat-${EXPAT_VER}
 PCRE_SRC=pcre2-10.44
+ARGTABLE3_VER=v3.2.2.f25c624
+ARGTABLE3_SRC=argtable-${ARGTABLE3_VER}-amalgamation
 
 [[ -d "${LIB_INSTALL_SRC}" ]] || mkdir -p ${LIB_INSTALL_SRC}
 [[ -d "${LIB_INSTALL_PREFIX}" ]] && rm -rf ${LIB_INSTALL_PREFIX}
@@ -28,12 +30,17 @@ EXTERNAL_PREFIX=$(realpath ${LIB_INSTALL_PREFIX})
 EXPAT_PREFIX=${EXTERNAL_PREFIX}/expat
 APR_PREFIX=${EXTERNAL_PREFIX}/apr
 PCRE_PREFIX=${EXTERNAL_PREFIX}/pcre
+ARGTABLE3_PREFIX=${EXTERNAL_PREFIX}/argtable3
 echo ${EXPAT_PREFIX}
 echo ${APR_PREFIX}
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${EXPAT_SRC}.tar.gz" ]] || curl -O -L https://github.com/libexpat/libexpat/releases/download/R_${EXPAT_VER//./_}/${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${EXPAT_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC}/${EXPAT_SRC} && AR="${AR_FLAGS}" RANLIB="${RANLIB_FLAGS}" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --enable-shared=no --prefix=${EXPAT_PREFIX} && make -j $(sysctl -n hw.ncpu) && make install)
+
+(cd ${LIB_INSTALL_SRC} && [[ -f "${ARGTABLE3_SRC}.tar.gz" ]] || curl -O -L https://github.com/argtable/argtable3/releases/download/${ARGTABLE3_VER}/${ARGTABLE3_SRC}.tar.gz)
+[[ -d "${ARGTABLE3_PREFIX}" ]] || mkdir ${ARGTABLE3_PREFIX}
+(cd ${LIB_INSTALL_SRC} && tar -xzf ${ARGTABLE3_SRC}.tar.gz && cp -v ./dist/argtable3* ${ARGTABLE3_PREFIX}/)
 
 (cd ${LIB_INSTALL_SRC} && [[ -f "${APR_SRC}.tar.gz" ]] || curl -O -L https://dlcdn.apache.org/apr/${APR_SRC}.tar.gz)
 (cd ${LIB_INSTALL_SRC} && tar -xvzf ${APR_SRC}.tar.gz)
