@@ -89,7 +89,8 @@ jobs:
           cmake -G "Visual Studio 17 2022" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/external_lib/lib/pcre" -DBUILD_SHARED_LIBS=OFF -DPCRE2_STATIC=ON -DPCRE2_BUILD_TESTS=OFF -DPCRE2_BUILD_PCRE2GREP=OFF -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -DCMAKE_C_FLAGS_RELEASE="${{ env.C_FLAGS_RELEASE }} /Zc:wchar_t /Zc:inline /Zc:preprocessor /validate-charset" -B build -Ax64
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
           cmake --install build
-          copy ../dist/argtable3* "${{ github.workspace }}/external_lib/lib/argtable3"
+          mkdir "${{ github.workspace }}/external_lib/lib/argtable3"
+          copy "../dist/argtable3*" "${{ github.workspace }}/external_lib/lib/argtable3"
         env:
           C_FLAGS_RELEASE: "/MP /MT /Ox /Ob2 /Oy /Oi /Ot /GL /Qpar /D NDEBUG"
 
