@@ -30,6 +30,7 @@ pcre-*/
 /cmake-build-*/
 bin/
 zig-cache/
+.zig-cache/
 build/
 build-*/
 external_lib/
