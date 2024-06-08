@@ -1,7 +1,7 @@
 GROK
 ======
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d16744e2d18482186640ce1397d8b55)](https://app.codacy.com/manual/egoroff/grok?utm_source=github.com&utm_medium=referral&utm_content=aegoroff/grok&utm_campaign=Badge_Grade_Dashboard)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/dde2c10db42548ffafaa8b1d1ceea8a9)](https://app.codacy.com/gh/aegoroff/grok/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![CI Build](https://github.com/aegoroff/grok/actions/workflows/ci_build.yml/badge.svg)](https://github.com/aegoroff/grok/actions/workflows/ci_build.yml)
 [![](https://tokei.rs/b1/github/aegoroff/grok?category=code)](https://github.com/XAMPPRocky/tokei)
 
