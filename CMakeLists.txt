@@ -8,6 +8,7 @@ set(GROK grok)
 set(TST _tst)
 set(LIB srclib)
 set(PCRE pcre)
+set(ARGTABLE3 argtable3)
 set(APR apr)
 set(APR_UTIL apr-util)
 set(LIBD Debug)
@@ -129,6 +130,7 @@ else ()
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/apr/include/apr-1)
 endif ()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/${PCRE}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/${ARGTABLE3})
 
 add_definitions(-DPCRE2_STATIC)
 add_definitions(-DPCRE2_CODE_UNIT_WIDTH=8)
@@ -159,7 +161,9 @@ SET(GROK_SOURCE_FILES
         "${SRC}/${GROK}/configuration.c"
         "${SRC}/${GROK}/frontend.c"
         "${SRC}/${GROK}/grok.c"
-        "${SRC}/${GROK}/pattern.c")
+        "${SRC}/${GROK}/pattern.c"
+        ${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/${ARGTABLE3}/argtable3.c
+        )
 
 SET(TST_SOURCE_FILES
         "${SRC}/${TST}/encoding.cpp"
