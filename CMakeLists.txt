@@ -132,6 +132,12 @@ endif ()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/${PCRE}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL}/${ARGTABLE3})
 
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+    add_definitions(-D_DARWIN_C_SOURCE)
+else ()
+    add_definitions(-D_POSIX_C_SOURCE=201410L)
+endif ()
+
 add_definitions(-DPCRE2_STATIC)
 add_definitions(-DPCRE2_CODE_UNIT_WIDTH=8)
 add_definitions(-DLINK_SIZE=2)

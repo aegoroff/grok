@@ -16,13 +16,6 @@
 #ifndef _MSC_VER
 #define EXIT_FAILURE 1
 
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#else
-#undef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#endif
-
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
