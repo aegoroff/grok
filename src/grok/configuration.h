@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * \brief   The file contains configuration module interface
  * \author  \verbatim
             Created by: Alexander Egorov

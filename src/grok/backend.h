@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * \brief   The file contains backend interface
  * \author  \verbatim
             Created by: Alexander Egorov
@@ -12,8 +12,8 @@
 #ifndef GROK_BACKEND_H_
 #define GROK_BACKEND_H_
 
-#include <pcre2.h>
 #include <apr_tables.h>
+#include <pcre2.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus

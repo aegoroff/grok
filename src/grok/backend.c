@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * \brief   The file contains backend implementation
  * \author  \verbatim
             Created by: Alexander Egorov
@@ -67,7 +67,7 @@ match_result_t bend_match_re(pattern_t *pattern, const char *subject, prepared_t
     int flags = PCRE2_NOTEMPTY;
 
     pcre2_match_context *match_ctx = pcre2_match_context_create(pcre_context);
-    int rc = pcre2_match(prepared->re,                          /* the compiled pattern */
+    int rc = pcre2_match(prepared->re,                /* the compiled pattern */
                          subject,                     /* the subject string */
                          strnlen(subject, buffer_sz), /* the length of the subject */
                          0,                           /* start at offset 0 in the subject */
