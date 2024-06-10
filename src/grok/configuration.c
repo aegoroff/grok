@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * \brief   The file contains configuration module implementation
  * \author  \verbatim
             Created by: Alexander Egorov
@@ -103,11 +103,11 @@ void conf_configure_app(configuration_ctx_t *ctx) {
         goto cleanup;
     }
 
-    int nerrors = arg_parse(ctx->argc, (char**)ctx->argv, argtable);
-    int nerrorsF = arg_parse(ctx->argc, (char**)ctx->argv, argtableF);
-    int nerrorsS = arg_parse(ctx->argc, (char**)ctx->argv, argtableS);
-    int nerrorsI = arg_parse(ctx->argc, (char**)ctx->argv, argtableI);
-    int nerrorsT = arg_parse(ctx->argc, (char**)ctx->argv, argtableT);
+    int nerrors = arg_parse(ctx->argc, (char **)ctx->argv, argtable);
+    int nerrorsF = arg_parse(ctx->argc, (char **)ctx->argv, argtableF);
+    int nerrorsS = arg_parse(ctx->argc, (char **)ctx->argv, argtableS);
+    int nerrorsI = arg_parse(ctx->argc, (char **)ctx->argv, argtableI);
+    int nerrorsT = arg_parse(ctx->argc, (char **)ctx->argv, argtableT);
 
     if (nerrors > 0 || help->count > 0) {
         prconf_print_syntax(argtable, argtableS, argtableF, argtableI, argtableT);

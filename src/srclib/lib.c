@@ -171,7 +171,7 @@ lib_file_size_t lib_normalize_size(uint64_t size) {
     lib_file_size_t result = {0};
     result.unit = size == 0 ? size_unit_bytes : prlib_ilog(size) / prlib_ilog(BINARY_THOUSAND);
     result.size_in_bytes = size;
-    if(result.unit != size_unit_bytes) {
+    if (result.unit != size_unit_bytes) {
         result.size = size / pow(BINARY_THOUSAND, result.unit);
     }
     // ReSharper disable once CppSomeObjectMembersMightNotBeInitialized

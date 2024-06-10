@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * \brief   The file contains frontend implementation
  * \author  \verbatim
             Created by: Alexander Egorov
