@@ -126,8 +126,24 @@ int lib_wcsprintf(wchar_t *buffer, const wchar_t *format, ...);
 
 #endif
 
+/**
+* Prints the size of a given uint64_t value in various units.
+*
+* @param size The size to be printed.
+*/
 extern void lib_print_size(uint64_t size);
 
+/**
+ * Normalizes a size from bytes into a more human-readable format.
+ *
+ * This function takes a uint64_t size as input and returns a lib_file_size_t
+ * structure that represents the same size in a more understandable unit.
+ * For example, if the input size is 1024 (1 KB), this function would return
+ * a lib_file_size_t with 'size_unit_kbytes' and a size of 1.0.
+ *
+ * @param size The size to be normalized.
+ * @return A lib_file_size_t structure representing the normalized size.
+ */
 extern lib_file_size_t lib_normalize_size(uint64_t size);
 
 /*!
@@ -148,24 +164,119 @@ extern void lib_stop_timer(void);
 
 extern lib_time_t lib_read_elapsed_time(void);
 
+/**
+* Converts the size from bytes to a string.
+*
+* This function takes a uint64_t size as input and returns a character array
+* representing the same size in human-readable format (e.g., 1024 KB, 512 MB).
+*
+* @param size The size to be converted.
+* @param str The character array to store the converted size.
+*/
 extern void lib_size_to_string(uint64_t size, char *str);
 
+/**
+ * Converts time from lib_time_t structure into a string.
+ *
+ * This function takes a pointer to a lib_time_t structure as input and returns
+ * a character array representing the same time in human-readable format
+ * (e.g., 1 hour 30 minutes, 2 days 12 hours).
+ *
+ * @param time The time to be converted.
+ * @param str The character array to store the converted time.
+ */
 extern void lib_time_to_string(const lib_time_t *time, char *str);
 
+/// Converts a hexadecimal string to a byte array.
+///
+/// This function converts the input hexadecimal string into a byte array. It's
+/// useful for processing data that is represented in hexadecimal format.
+///
+/// \param str The hexadecimal string to be converted.
+/// \param bytes A pointer to the byte array where the result will be stored.
+/// \param sz The size of the byte array.
 extern void lib_hex_str_2_byte_array(const char *str, uint8_t *bytes, size_t sz);
 
+/**
+ * Converts a hexadecimal string to an unsigned 32-bit integer.
+ *
+ * This function takes a pointer to a null-terminated hexadecimal string and
+ * the size of that string. It then converts the hexadecimal representation
+ * into an unsigned 32-bit integer. The function does not perform any error
+ * checking on the input values.
+ *
+ * \param ptr A pointer to a null-terminated hexadecimal string.
+ * \param size The size of the hexadecimal string.
+ * \return An unsigned 32-bit integer representing the value of the input
+ *         hexadecimal string, or some default value if the function is not
+ *         called with valid parameters.
+ */
 extern uint32_t lib_htoi(const char *ptr, int size);
 
+/**
+* Gets the number of processors available in the system.
+*
+* @return The number of processors.
+*/
 extern uint32_t lib_get_processor_count(void);
 
+/**
+ * \brief Counts the number of digits in a given double.
+ *
+ * This function is useful when you need to know how many decimal places
+ * are present in a floating point number. It's often used for formatting
+ * numbers in certain ways.
+ *
+ * \param x The double whose digit count should be determined.
+ * \return The number of digits in the given double.
+ */
 extern int lib_count_digits_in(double x);
 
+/**
+ * \brief Retrieves the file name from a path.
+ * 
+ * This function is useful for extracting the file name from a path. It's often used
+ * to display the file name when prompting users or logging actions.
+ *
+ * \param path The path containing the file name.
+ * \return A pointer to the file name, or NULL if an error occurred.
+ */
 extern const char *lib_get_file_name(const char *path);
 
+/**
+ * Trims leading whitespace from a string.
+ *
+ * This function takes a character pointer and a separator character as input,
+ * and returns the original string with leading separators removed.
+ *
+ * @param str The input string
+ * @param seps A character array containing characters to be used as separators
+ * @return The trimmed string
+ */
 extern char *lib_ltrim(char *str, const char *seps);
 
+/**
+ * Trims trailing whitespace from a string.
+ *
+ * This function takes a character pointer and a separator character as input,
+ * and returns the original string with trailing separators removed.
+ *
+ * @param str The input string
+ * @param seps A character array containing characters to be used as separators
+ * @return The trimmed string
+ */
 extern char *lib_rtrim(char *str, const char *seps);
 
+/**
+ * Trims leading and trailing whitespace from a string.
+ *
+ * This function takes a character pointer and a separator character as input,
+ * and returns the original string with both leading and trailing separators removed.
+ *
+ * @param str The input string
+ * @param seps A character array containing characters to be used as separators
+ * @return The trimmed string
+ */
 extern char *lib_trim(char *str, const char *seps);
 
 #ifdef __cplusplus
