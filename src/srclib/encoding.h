@@ -67,12 +67,49 @@ char *enc_from_unicode_to_ansi(const wchar_t *from, apr_pool_t *pool);
  */
 char *enc_from_unicode_to_utf8(const wchar_t *from, apr_pool_t *pool);
 
+/**
+ * Checks if the given string is a valid UTF-8 encoded string.
+ *
+ * This function checks if the given string is properly encoded in UTF-8.
+ * It does not perform any decoding or conversion; it simply checks
+ * whether the string can be decoded as UTF-8 without errors.
+ *
+ * @param str The input string to check for validity.
+ * @return true if the string is valid UTF-8, false otherwise.
+ */
 bool enc_is_valid_utf8(const char *str);
 
+/**
+ * Detects the byte order mark (BOM) in a file.
+ *
+ * This function detects the presence and type of BOM at the beginning
+ * of an APR file. If no BOM is detected, it returns `bom_unknown`.
+ *
+ * @param f The APR file to check for a BOM.
+ * @return The type of BOM found, or `bom_unknown` if none was found.
+ */
 bom_t enc_detect_bom(apr_file_t *f);
 
+/**
+ * Detects the byte order mark (BOM) in a memory buffer.
+ *
+ * This function detects the presence and type of BOM at the specified
+ * offset within the given buffer. If no BOM is detected, it returns
+ * `bom_unknown`.
+ *
+ * @param buffer The buffer to check for a BOM.
+ * @param len The length of the buffer.
+ * @param offset The starting position in the buffer where the detection should start.
+ * @return The type of BOM found, or `bom_unknown` if none was found.
+ */
 bom_t enc_detect_bom_memory(const char *buffer, size_t len, size_t *offset);
 
+/**
+ * Returns the name of the encoding corresponding to a given byte order mark (BOM).
+ *
+ * @param bom The type of BOM to get the corresponding encoding name for.
+ * @return A string representing the name of the encoding.
+ */
 const char *enc_get_encoding_name(bom_t bom);
 
 #ifdef _MSC_VER

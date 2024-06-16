@@ -18,6 +18,17 @@
 extern "C" {
 #endif
 
+/**
+ * @brief Sorts an array of strings using quicksort algorithm.
+ *
+ * This function sorts the given array of strings in-place, using the quicksort
+ * sorting algorithm. The start and end indices specify the portion of the
+ * array to sort.
+ *
+ * @param array    The array of strings to be sorted.
+ * @param start     The starting index of the subarray to sort (inclusive).
+ * @param end       The ending index of the subarray to sort (exclusive).
+ */
 void sort_quicksort_strings(apr_array_header_t *array, int start, int end);
 
 #ifdef __cplusplus
