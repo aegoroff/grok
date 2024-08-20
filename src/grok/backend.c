@@ -45,8 +45,6 @@ void bend_cleanup(void) {
 
 match_result_t bend_match_re(pattern_t *pattern, const char *subject, prepared_t *prepared, size_t buffer_sz,
                              apr_pool_t *pool) {
-    int errornumber = 0;
-    size_t erroroffset = 0;
     match_result_t result = {0};
 
     if (pattern == NULL) {
