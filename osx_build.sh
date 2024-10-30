@@ -6,7 +6,7 @@ CC_FLAGS="zig cc"
 AR_FLAGS="zig ar"
 RANLIB_FLAGS="zig ranlib"
 CFLAGS="-Ofast -march=haswell -mtune=haswell"
-APR_SRC=apr-1.7.4
+APR_SRC=apr-1.7.5
 APR_UTIL_SRC=apr-util-1.6.3
 EXPAT_VER=2.6.2
 EXPAT_SRC=expat-${EXPAT_VER}
