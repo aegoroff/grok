@@ -8,7 +8,7 @@ RANLIB_FLAGS="zig ranlib"
 CFLAGS="-Ofast -march=haswell -mtune=haswell"
 APR_SRC=apr-1.7.5
 APR_UTIL_SRC=apr-util-1.6.3
-EXPAT_VER=2.6.2
+EXPAT_VER=2.6.3
 EXPAT_SRC=expat-${EXPAT_VER}
 PCRE_SRC=pcre2-10.44
 ARGTABLE3_VER=v3.2.2.f25c624
