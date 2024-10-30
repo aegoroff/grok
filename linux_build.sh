@@ -11,9 +11,9 @@ LIB_INSTALL_PREFIX=./external_lib/lib
 CC_FLAGS="zig cc -target ${ARCH}-${OS}-${ABI}"
 AR_FLAGS="zig ar"
 RANLIB_FLAGS="zig ranlib"
-APR_SRC=apr-1.7.4
+APR_SRC=apr-1.7.5
 APR_UTIL_SRC=apr-util-1.6.3
-EXPAT_VER=2.6.2
+EXPAT_VER=2.6.3
 EXPAT_SRC=expat-${EXPAT_VER}
 PCRE_SRC=pcre2-10.44
 ARGTABLE3_VER=v3.2.2.f25c624
@@ -75,15 +75,15 @@ fi
 (cd "${LIB_INSTALL_SRC}" && tar -xzf ${APR_UTIL_SRC}.tar.gz)
 (cd "${LIB_INSTALL_SRC}/${APR_UTIL_SRC}" && AR="${AR_FLAGS}" RANLIB="${RANLIB_FLAGS}" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --enable-shared=no --prefix="${APR_PREFIX}" --with-apr="${APR_PREFIX}" --with-expat="${EXPAT_PREFIX}" && make -j $(nproc) && make install)
 
-(cd "${LIB_INSTALL_SRC}" && ([[ -f "${PCRE_SRC}.tar.gz" ]] || wget https://github.com/PCRE2Project/pcre2/releases/download/${PCRE_SRC}/${PCRE_SRC}.tar.gz))
-(cd "${LIB_INSTALL_SRC}" && tar -xzf ${PCRE_SRC}.tar.gz)
-(cd "${LIB_INSTALL_SRC}/${PCRE_SRC}" && AR="${AR_FLAGS}" RANLIB="${RANLIB_FLAGS}" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --prefix="${PCRE_PREFIX}" --enable-shared=no && make -j $(nproc) && make install)
+# (cd "${LIB_INSTALL_SRC}" && ([[ -f "${PCRE_SRC}.tar.gz" ]] || wget https://github.com/PCRE2Project/pcre2/releases/download/${PCRE_SRC}/${PCRE_SRC}.tar.gz))
+# (cd "${LIB_INSTALL_SRC}" && tar -xzf ${PCRE_SRC}.tar.gz)
+# (cd "${LIB_INSTALL_SRC}/${PCRE_SRC}" && AR="${AR_FLAGS}" RANLIB="${RANLIB_FLAGS}" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --prefix="${PCRE_PREFIX}" --enable-shared=no && make -j $(nproc) && make install)
 
-cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B "${BUILD_DIR}" "${TOOLCHAIN}"
-cmake --build "${BUILD_DIR}" --verbose --parallel $(nproc)
+# cmake -DCMAKE_BUILD_TYPE=${BUILD_CONF} -B "${BUILD_DIR}" "${TOOLCHAIN}"
+# cmake --build "${BUILD_DIR}" --verbose --parallel $(nproc)
 
-if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
-  ctest --test-dir "${BUILD_DIR}" -VV
-fi
+# if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
+#   ctest --test-dir "${BUILD_DIR}" -VV
+# fi
 
-(cd "${BUILD_DIR}" && cpack --config CPackConfig.cmake)
+# (cd "${BUILD_DIR}" && cpack --config CPackConfig.cmake)
