@@ -7,7 +7,7 @@
 
 #ifdef _MSC_VER
 #ifdef _CRT_NONSTDC_NO_WARNINGS
-#define for _CRT_NONSTDC_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS
 #endif
 #endif
 
