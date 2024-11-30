@@ -20,6 +20,7 @@
 %}
 
 %option yylineno
+%option noyywrap 
 %option never-interactive
 
 COMMA   ","
