@@ -6,8 +6,8 @@
 	int yycolumn = 1;
 
 #ifdef _MSC_VER
-#ifdef __STDC_WANT_SECURE_LIB__
-#undef __STDC_WANT_SECURE_LIB__
+#ifdef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #endif
 #endif
 
