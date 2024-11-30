@@ -50,7 +50,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
         with:
           msbuild-architecture: x64
-          vs-version: '17.10'
+          vs-version: '17.12'
 
       - name: Get third party libs
         run: |
