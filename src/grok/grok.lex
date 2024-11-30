@@ -20,8 +20,6 @@
 %}
 
 %option yylineno
-%option nounput
-%option noinput
 %option never-interactive
 
 COMMA   ","
