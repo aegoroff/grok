@@ -6,9 +6,7 @@
 	int yycolumn = 1;
 
 #ifdef _MSC_VER
-#ifdef _CRT_NONSTDC_NO_WARNINGS
-#define _CRT_NONSTDC_NO_WARNINGS
-#endif
+#define read _read
 #endif
 
 #define YY_USER_ACTION \
