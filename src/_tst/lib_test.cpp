@@ -53,6 +53,14 @@ TEST_CASE("htoi") {
     SECTION("parsing only part of two bytes string") {
         REQUIRE( lib_htoi("FFFF", 2) == 255 );
     }
+    
+    SECTION("space inside") {
+        REQUIRE( lib_htoi("FF FF", 5) == 255 );
+    }
+
+    SECTION("other inside") {
+        REQUIRE( lib_htoi("FF-FF", 5) == 255 );
+    }
 
     SECTION("null string parsing") {
         REQUIRE( lib_htoi(nullptr, 2) == 0 );
