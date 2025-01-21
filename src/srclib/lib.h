@@ -6,7 +6,7 @@
  * \date    \verbatim
             Creation date: 2010-03-05
             \endverbatim
- * Copyright: (c) Alexander Egorov 2015-2024
+ * Copyright: (c) Alexander Egorov 2015-2025
  */
 
 #ifndef GROK_LIB_H_
@@ -50,7 +50,7 @@ extern "C" {
 #define ARCH "x64"
 #endif
 
-#define COPYRIGHT_FMT_TRAIL NEW_LINE "Copyright (C) 2019-2024 Alexander Egorov. All rights reserved." NEW_LINE NEW_LINE
+#define COPYRIGHT_FMT_TRAIL NEW_LINE "Copyright (C) 2019-2025 Alexander Egorov. All rights reserved." NEW_LINE NEW_LINE
 #define COPYRIGHT_FMT NEW_LINE "%s " ARCH COPYRIGHT_FMT_TRAIL
 
 #define ALLOCATION_FAIL_FMT "Failed to allocate %Iu bytes"

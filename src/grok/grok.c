@@ -6,7 +6,7 @@
  * \date    \verbatim
             Creation date: 2015-07-21
             \endverbatim
- * Copyright: (c) Alexander Egorov 2015-2024
+ * Copyright: (c) Alexander Egorov 2015-2025
  */
 
 #define PCRE2_CODE_UNIT_WIDTH 8
