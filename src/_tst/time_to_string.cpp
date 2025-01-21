@@ -6,7 +6,7 @@
  * \date    \verbatim
             Creation date: 2020-11-22
             \endverbatim
- * Copyright: (c) Alexander Egorov 2015-2024
+ * Copyright: (c) Alexander Egorov 2015-2025
  */
 
 #include <memory>
