@@ -11,7 +11,7 @@ env:
   MACOS_TARGET_AARCH64: aarch64-apple-darwin
   LINUX_TARGET_MUSL: x86_64-unknown-linux-musl
   LINUX_TARGET_MUSL_AARCH64: aarch64-unknown-linux-musl
-  RELEASER_VER: 0.11.4
+  RELEASER_VER: 0.13.0
   OPENSSL_VER: 3.3.1
   APR_VER: 1.7.5
   APR_UTIL_VER: 1.6.3
