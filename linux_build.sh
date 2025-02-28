@@ -13,9 +13,9 @@ AR_FLAGS="zig ar"
 RANLIB_FLAGS="zig ranlib"
 APR_SRC=apr-1.7.5
 APR_UTIL_SRC=apr-util-1.6.3
-EXPAT_VER=2.6.3
+EXPAT_VER=2.6.4
 EXPAT_SRC=expat-${EXPAT_VER}
-PCRE_SRC=pcre2-10.44
+PCRE_SRC=pcre2-10.45
 ARGTABLE3_VER=v3.2.2.f25c624
 ARGTABLE3_SRC=argtable-${ARGTABLE3_VER}-amalgamation
 
