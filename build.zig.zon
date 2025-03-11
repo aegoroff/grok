@@ -1,5 +1,5 @@
 .{
-    .name = "libgrok",
+    .name = .libgrok,
     .version = "0.3.0-1",
 
     .dependencies = .{
