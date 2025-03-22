@@ -15,10 +15,10 @@ pub fn build(b: *std.Build) void {
     });
     lib.linkLibrary(pcre2_dep.artifact("pcre2"));
     lib.linkLibC();
-    lib.addIncludePath(.{ .path = "src/srclib" });
-    lib.addIncludePath(.{ .path = "src/grok" });
+    lib.addIncludePath(b.path("src/srclib"));
+    lib.addIncludePath(b.path("src/grok"));
 
-    lib.addCSourceFiles(&libgrok_sources, &[_][]const u8{});
+    lib.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
     b.installArtifact(lib);
 }
 
