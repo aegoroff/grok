@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) void {
     lib.linkLibC();
     lib.addIncludePath(b.path("src/srclib"));
     lib.addIncludePath(b.path("src/grok"));
+    lib.addIncludePath(b.path("src/grok/generated"));
     lib.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
 
     lib.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
@@ -28,4 +29,6 @@ const libgrok_sources = [_][]const u8{
     "src/srclib/encoding.c",
     "src/srclib/lib.c",
     "src/srclib/sort.c",
+    "src/grok/generated/grok.flex.c",
+    "src/grok/generated/grok.tab.c",
 };
