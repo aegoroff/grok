@@ -5,8 +5,8 @@
 
     .dependencies = .{
         .pcre2 = .{
-            .url = "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.45/pcre2-10.45.tar.gz",
-            .hash = "N-V-__8AABrcxQBR42u8kDuZTFX3-p0j3JkahUL148NGzGjq",
+            .url = "https://github.com/PCRE2Project/pcre2/archive/d33251ec0fc23e763e09b24fa8875738bce85cab.tar.gz",
+            .hash = "N-V-__8AAIJn3wCRNekEiQZLx1LPCpXpluG6EMaCpPjJak4L",
         },
     },
     .paths = .{
