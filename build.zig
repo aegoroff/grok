@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) void {
     lib.linkLibC();
     lib.addIncludePath(b.path("src/srclib"));
     lib.addIncludePath(b.path("src/grok"));
+    lib.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
 
     lib.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
     b.installArtifact(lib);
