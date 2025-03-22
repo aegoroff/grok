@@ -42,7 +42,6 @@ pub fn build(b: *std.Build) void {
 
     exe.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
     exe.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
-    exe.linkage = .static;
     exe.linkLibrary(lib);
     exe.linkLibC();
 
