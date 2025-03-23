@@ -45,8 +45,37 @@ pub fn build(b: *std.Build) void {
     exe.linkLibrary(lib);
     exe.linkLibC();
 
+    const catch2_dep = b.dependency("catch2", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const catch2_lib = catch2_dep.artifact("Catch2");
+    const catch2_main = catch2_dep.artifact("Catch2WithMain");
+
+    const tst = b.addExecutable(.{
+        .name = "_tst",
+        .target = target,
+        .optimize = optimize,
+    });
+    tst.addCSourceFiles(.{ .files = &tst_sources, .flags = &[_][]const u8{} });
+    tst.addIncludePath(b.path("src/srclib"));
+    tst.addIncludePath(b.path("src/grok"));
+    tst.addIncludePath(b.path("src/grok/generated"));
+    tst.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
+    tst.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
+    tst.addIncludePath(b.path("src/srclib"));
+
+    tst.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
+    tst.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
+    tst.linkLibrary(lib);
+    tst.linkLibrary(catch2_lib);
+    tst.linkLibrary(catch2_main);
+    tst.linkLibC();
+    tst.linkLibCpp();
+
     b.installArtifact(lib);
     b.installArtifact(exe);
+    b.installArtifact(tst);
 }
 
 const libgrok_sources = [_][]const u8{
@@ -65,4 +94,12 @@ const grok_sources = [_][]const u8{
     "src/grok/grok.c",
     "src/grok/pattern.c",
     "external_lib/lib/argtable3/argtable3.c",
+};
+
+const tst_sources = [_][]const u8{
+    "src/_tst/encoding.cpp",
+    "src/_tst/lib_test.cpp",
+    "src/_tst/size_to_string.cpp",
+    "src/_tst/time_to_string.cpp",
+    "src/_tst/trim_tests.cpp",
 };

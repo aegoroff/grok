@@ -78,7 +78,8 @@ zig build -Doptimize=ReleaseFast -Dcpu=broadwell -Dtarget=${ARCH}-${OS}-${ABI} -
 
 if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
   strip ${ZIG_OUT_DIR}/grok
-  # ctest --test-dir "${BUILD_DIR}" -VV
+  strip ${ZIG_OUT_DIR}/_tst
+  ${ZIG_OUT_DIR}/_tst -s
 fi
 
 # (cd "${BUILD_DIR}" && cpack --config CPackConfig.cmake)
