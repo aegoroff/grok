@@ -38,7 +38,8 @@ PCRE_PREFIX=${EXTERNAL_PREFIX}/pcre
 ARGTABLE3_PREFIX=${EXTERNAL_PREFIX}/argtable3
 
 if [[ "${ARCH}" = "x86_64" ]]; then
-  CFLAGS="-Ofast -march=haswell -mtune=haswell"
+  CFLAGS="-Ofast"
+  [[ -n "${CPU}" ]] && CFLAGS="${CFLAGS} -march=${CPU} -mtune=${CPU}"
   if [[ "${ABI}" = "musl" ]] && [[ "${OS}" = "linux" ]]; then
     TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-x86_64-linux-musl.cmake)"
   fi
@@ -77,8 +78,10 @@ fi
 (cd "${LIB_INSTALL_SRC}" && tar -xzf ${APR_UTIL_SRC}.tar.gz)
 (cd "${LIB_INSTALL_SRC}/${APR_UTIL_SRC}" && AR="${AR_FLAGS}" RANLIB="${RANLIB_FLAGS}" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --enable-shared=no --prefix="${APR_PREFIX}" --with-apr="${APR_PREFIX}" --with-expat="${EXPAT_PREFIX}" && make -j $(nproc) && make install)
 
-[[ -n "${CPU}" ]] || zig build -Doptimize=ReleaseFast -Dtarget=${ARCH}-${OS}-${ABI} --summary all --verbose-cimport --prefix-exe-dir ${ZIG_PREFIX_DIR}
-[[ -z "${CPU}" ]] || zig build -Doptimize=ReleaseFast -Dcpu=${CPU} -Dtarget=${ARCH}-${OS}-${ABI} --summary all --verbose-cimport --prefix-exe-dir ${ZIG_PREFIX_DIR}
+DCPU=""
+[[ -n "${CPU}" ]] && DCPU="-Dcpu=${CPU}"
+
+zig build -Doptimize=ReleaseFast ${DCPU} -Dtarget=${ARCH}-${OS}-${ABI} --summary all --verbose-cimport --prefix-exe-dir ${ZIG_PREFIX_DIR}
 
 if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
   strip ${ZIG_OUT_DIR}/grok
