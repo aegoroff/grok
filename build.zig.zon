@@ -8,6 +8,10 @@
             .url = "https://github.com/PCRE2Project/pcre2/archive/d33251ec0fc23e763e09b24fa8875738bce85cab.tar.gz",
             .hash = "N-V-__8AAIJn3wCRNekEiQZLx1LPCpXpluG6EMaCpPjJak4L",
         },
+        .catch2 = .{
+            .url = "https://github.com/allyourcodebase/catch2/archive/refs/tags/3.8.0+1.tar.gz",
+            .hash = "catch2-3.8.0-UrP6znoxAAAtKLmm4Gnb4bjOpq3XaI8bpG242r0dIX74",
+        },
     },
     .paths = .{
         "LICENSE.txt",
