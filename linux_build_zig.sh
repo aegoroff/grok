@@ -2,11 +2,14 @@ BUILD_CONF=Release
 ABI=$1
 OS=$2
 ARCH=$3
+CPU=$4
 [[ -n "${ABI}" ]] || ABI=musl
 [[ -n "${OS}" ]] || OS=linux
 [[ -n "${ARCH}" ]] || ARCH=x86_64
+
 BUILD_DIR=build-${ARCH}-${OS}-${ABI}-${BUILD_CONF}
-ZIG_OUT_DIR=zig-out/bin
+ZIG_PREFIX_DIR=bin-${ARCH}-${OS}-${ABI}
+ZIG_OUT_DIR=zig-out/${ZIG_PREFIX_DIR}
 LIB_INSTALL_SRC=./external_lib/src
 LIB_INSTALL_PREFIX=./external_lib/lib
 CC_FLAGS="zig cc -target ${ARCH}-${OS}-${ABI}"
@@ -74,7 +77,8 @@ fi
 (cd "${LIB_INSTALL_SRC}" && tar -xzf ${APR_UTIL_SRC}.tar.gz)
 (cd "${LIB_INSTALL_SRC}/${APR_UTIL_SRC}" && AR="${AR_FLAGS}" RANLIB="${RANLIB_FLAGS}" CC="${CC_FLAGS}" CFLAGS="${CFLAGS}" ./configure --host=x86_64-linux --enable-shared=no --prefix="${APR_PREFIX}" --with-apr="${APR_PREFIX}" --with-expat="${EXPAT_PREFIX}" && make -j $(nproc) && make install)
 
-zig build -Doptimize=ReleaseFast -Dcpu=broadwell -Dtarget=${ARCH}-${OS}-${ABI} --summary all --verbose-cimport
+[[ -n "${CPU}" ]] || zig build -Doptimize=ReleaseFast -Dtarget=${ARCH}-${OS}-${ABI} --summary all --verbose-cimport --prefix-exe-dir ${ZIG_PREFIX_DIR}
+[[ -z "${CPU}" ]] || zig build -Doptimize=ReleaseFast -Dcpu=${CPU} -Dtarget=${ARCH}-${OS}-${ABI} --summary all --verbose-cimport --prefix-exe-dir ${ZIG_PREFIX_DIR}
 
 if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
   strip ${ZIG_OUT_DIR}/grok
