@@ -73,7 +73,7 @@ void patt_compile_pattern_file(const char *p) {
     }
 
     yyrestart(f);
-    prpatt_run_parsing();
+    prpatt_run_parsing(p);
     fclose(f);
 }
 
@@ -155,8 +155,8 @@ bool prpatt_try_compile_as_wildcard(const char *pattern) {
     return true;
 }
 
-void prpatt_run_parsing() {
+void prpatt_run_parsing(const char *p) {
     if (yyparse()) {
-        lib_printf("Parse failed\n");
+        lib_printf("Parse '%s' failed\n", p);
     }
 }
