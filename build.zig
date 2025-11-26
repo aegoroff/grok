@@ -8,10 +8,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "libgrok",
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .optimize = optimize,
+            .target = target,
+        }),
     });
     lib.linkage = .static;
 
@@ -29,8 +31,10 @@ pub fn build(b: *std.Build) void {
 
     const exe = b.addExecutable(.{
         .name = "grok",
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .optimize = optimize,
+            .target = target,
+        }),
     });
     exe.addCSourceFiles(.{ .files = &grok_sources, .flags = &[_][]const u8{} });
     exe.addIncludePath(b.path("src/srclib"));
@@ -54,8 +58,10 @@ pub fn build(b: *std.Build) void {
 
     const tst = b.addExecutable(.{
         .name = "_tst",
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .optimize = optimize,
+            .target = target,
+        }),
     });
     tst.addCSourceFiles(.{ .files = &tst_sources, .flags = &[_][]const u8{} });
     tst.addIncludePath(b.path("src/srclib"));
