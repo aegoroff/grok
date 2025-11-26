@@ -1,2 +1,3 @@
 NLOG ^\[?%{TIMESTAMP_ISO8601:Occured:DateTime}\]?%{DATA}%{LOGLEVEL:Level:LogLevel}%{DATA}
 NGINXPROXYACCESS \[%{HTTPDATE:timestamp}\] - (?:%{NUMBER:status_1}|-) (?:%{NUMBER:status}|-) - (?:%{WORD:method}|-) %{WORD:schema} %{IPORHOST:host} "(?:%{URIPATHPARAM:request}|-)" \[Client %{IPORHOST:clientip}\] \[Length %{NUMBER:length}\] \[Gzip %{DATA:gzip}\] \[Sent-to (?:%{IPORHOST:serverhost})?\] %{QS:agent} (?:"(?:%{URI:referrer}|-)"|%{QS:referrer})
+NGINXPROXYDEFAULTACCESS %{IPORHOST:clientip} (?:%{NGUSER:ident}|-) (?:%{NGUSER:auth}|-) \[%{HTTPDATE:timestamp}\] "%{WORD:verb} %{URIPATHPARAM:request} HTTP/%{NUMBER:httpversion}" %{NUMBER:response} (?:%{NUMBER:bytes}|-) (?:"(?:%{URI:referrer}|-)"|%{QS:referrer}) %{QS:agent}
