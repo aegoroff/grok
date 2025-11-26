@@ -13,7 +13,7 @@ env:
   LINUX_TARGET_MUSL_AARCH64: aarch64-unknown-linux-musl
   RELEASER_VER: 0.14.0
   OPENSSL_VER: 3.5.0
-  APR_VER: 1.7.5
+  APR_VER: 1.7.6
   APR_UTIL_VER: 1.6.3
   EXPAT_VER: 2.7.1
   PCRE_VER: 10.45
