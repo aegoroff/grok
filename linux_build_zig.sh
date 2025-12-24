@@ -84,7 +84,7 @@ DCPU=""
 zig build -Doptimize=ReleaseFast ${DCPU} -Dtarget=${ARCH}-${OS}-${ABI} --summary all --verbose-cimport --prefix-exe-dir ${ZIG_PREFIX_DIR}
 
 if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
-  ${ZIG_OUT_DIR}/_tst -s
+  zig build test -Doptimize=ReleaseFast ${DCPU} -Dtarget=${ARCH}-${OS}-${ABI} --summary all -- -s
 fi
 
 # (cd "${BUILD_DIR}" && cpack --config CPackConfig.cmake)

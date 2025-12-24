@@ -8,7 +8,6 @@ pub fn build(b: *std.Build) void {
     const pcre2_dep = b.dependency("pcre2", .{
         .target = target,
         .optimize = optimize,
-        .strip = strip,
     });
 
     const lib = b.addLibrary(.{
@@ -16,7 +15,6 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .optimize = optimize,
             .target = target,
-            .strip = strip,
         }),
     });
     lib.linkage = .static;
@@ -57,7 +55,6 @@ pub fn build(b: *std.Build) void {
     const catch2_dep = b.dependency("catch2", .{
         .target = target,
         .optimize = optimize,
-        .strip = strip,
     });
     const catch2_lib = catch2_dep.artifact("Catch2");
     const catch2_main = catch2_dep.artifact("Catch2WithMain");
@@ -115,6 +112,9 @@ pub fn build(b: *std.Build) void {
 
     const run_unit_tests = b.addRunArtifact(tst);
     run_unit_tests.step.dependOn(b.getInstallStep());
+    if (b.args) |args| {
+        run_unit_tests.addArgs(args);
+    }
 
     // Similar to creating the run step earlier, this exposes a `test` step to
     // the `zig build --help` menu, providing a way for the user to request
