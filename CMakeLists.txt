@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.27)
 project(grok)
 
 set(SRC src)
@@ -93,8 +93,8 @@ else ()
         -Og
     )
     list(APPEND release_compiler_flags
-        -Ofast
-        -s
+        -O3
+        -ffast-math
     )
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
         list(APPEND debug_compiler_flags
@@ -119,6 +119,7 @@ else ()
     set(CMAKE_CXX_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS} -std=c++17")
     set(CMAKE_C_FLAGS_RELEASE "${FLAGS} ${RELEASE_FLAGS} -std=c17")
     set(CMAKE_C_FLAGS_DEBUG "${FLAGS} ${DEBUG_FLAGS} -std=c17")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s")
 endif ()
 
 include_directories(${SRC}/${LIB})
