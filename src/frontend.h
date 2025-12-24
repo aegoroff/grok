@@ -16,14 +16,6 @@
 extern "C" {
 #endif
 
-typedef enum part { part_literal, part_reference } part_t;
-
-typedef struct info {
-    part_t type;
-    char *data;
-    char *reference;
-} info_t;
-
 typedef struct macro macro_t;
 
 extern void fend_on_definition(void);
