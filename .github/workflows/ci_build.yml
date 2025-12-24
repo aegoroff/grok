@@ -36,7 +36,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Query version number
         id: get_version
         shell: bash
@@ -111,7 +111,7 @@ jobs:
       - name: Copy artefacts
         shell: bash
         run: cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: windows
           path: .\${{ env.RELEASE_DIR }}
@@ -142,7 +142,7 @@ jobs:
 
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Query version number
         id: get_version
         shell: bash
@@ -150,7 +150,7 @@ jobs:
           echo "using version tag ${GITHUB_REF:11}"
           echo "version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
       - name: Install Zig
-        uses: goto-bus-stop/setup-zig@v2
+        uses: mlugg/setup-zig@v2
         with:
           version: 0.15.1
       - name: Build
@@ -163,7 +163,7 @@ jobs:
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
         run: cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.os }}_${{ matrix.abi }}_${{ matrix.arch }}
           path: ./${{ env.RELEASE_DIR }}
@@ -176,7 +176,7 @@ jobs:
       release_body: ${{ steps.git-cliff.outputs.content }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Generate a changelog
@@ -218,25 +218,25 @@ jobs:
           path: linux_musl_aarch64
 
       - name: Download Linux x86_64 MUSL tarball
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: linux_musl_x86_64
           path: linux_musl_x86_64
 
       - name: Download Windows zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: windows
           path: windows
 
       - name: Download x86_64 MacOS zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: macos_none_x86_64
           path: macos_none_x86_64
 
       - name: Download aarch64 MacOS zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: macos_none_aarch64
           path: macos_none_aarch64
