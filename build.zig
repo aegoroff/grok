@@ -15,13 +15,13 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .optimize = optimize,
             .target = target,
+            .link_libc = true,
         }),
     });
     lib.linkage = .static;
 
     const pcre = pcre2_dep.artifact("pcre2-8");
     lib.root_module.linkLibrary(pcre);
-    lib.root_module.link_libc = true;
     lib.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
     lib.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
     lib.root_module.addIncludePath(b.path("src/srclib"));
