@@ -20,16 +20,16 @@ pub fn build(b: *std.Build) void {
     lib.linkage = .static;
 
     const pcre = pcre2_dep.artifact("pcre2-8");
-    lib.linkLibrary(pcre);
-    lib.linkLibC();
-    lib.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
-    lib.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
-    lib.addIncludePath(b.path("src/srclib"));
-    lib.addIncludePath(b.path("src/grok"));
-    lib.addIncludePath(b.path("src/grok/generated"));
-    lib.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
+    lib.root_module.linkLibrary(pcre);
+    lib.root_module.link_libc = true;
+    lib.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
+    lib.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
+    lib.root_module.addIncludePath(b.path("src/srclib"));
+    lib.root_module.addIncludePath(b.path("src/grok"));
+    lib.root_module.addIncludePath(b.path("src/grok/generated"));
+    lib.root_module.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
 
-    lib.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
+    lib.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
 
     const exe = b.addExecutable(.{
         .name = "grok",
@@ -39,18 +39,18 @@ pub fn build(b: *std.Build) void {
             .strip = strip,
         }),
     });
-    exe.addCSourceFiles(.{ .files = &grok_sources, .flags = &[_][]const u8{} });
-    exe.addIncludePath(b.path("src/srclib"));
-    exe.addIncludePath(b.path("src/grok"));
-    exe.addIncludePath(b.path("src/grok/generated"));
-    exe.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
-    exe.addIncludePath(b.path("external_lib/lib/argtable3"));
-    exe.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
+    exe.root_module.addCSourceFiles(.{ .files = &grok_sources, .flags = &[_][]const u8{} });
+    exe.root_module.addIncludePath(b.path("src/srclib"));
+    exe.root_module.addIncludePath(b.path("src/grok"));
+    exe.root_module.addIncludePath(b.path("src/grok/generated"));
+    exe.root_module.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
+    exe.root_module.addIncludePath(b.path("external_lib/lib/argtable3"));
+    exe.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
 
-    exe.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
-    exe.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
-    exe.linkLibrary(lib);
-    exe.linkLibC();
+    exe.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
+    exe.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
+    exe.root_module.linkLibrary(lib);
+    exe.root_module.link_libc = true;
 
     const catch2_dep = b.dependency("catch2", .{
         .target = target,
@@ -67,21 +67,21 @@ pub fn build(b: *std.Build) void {
             .strip = strip,
         }),
     });
-    tst.addCSourceFiles(.{ .files = &tst_sources, .flags = &[_][]const u8{} });
-    tst.addIncludePath(b.path("src/srclib"));
-    tst.addIncludePath(b.path("src/grok"));
-    tst.addIncludePath(b.path("src/grok/generated"));
-    tst.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
-    tst.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
-    tst.addIncludePath(b.path("src/srclib"));
+    tst.root_module.addCSourceFiles(.{ .files = &tst_sources, .flags = &[_][]const u8{} });
+    tst.root_module.addIncludePath(b.path("src/srclib"));
+    tst.root_module.addIncludePath(b.path("src/grok"));
+    tst.root_module.addIncludePath(b.path("src/grok/generated"));
+    tst.root_module.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
+    tst.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
+    tst.root_module.addIncludePath(b.path("src/srclib"));
 
-    tst.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
-    tst.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
-    tst.linkLibrary(lib);
-    tst.linkLibrary(catch2_lib);
-    tst.linkLibrary(catch2_main);
-    tst.linkLibC();
-    tst.linkLibCpp();
+    tst.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
+    tst.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
+    tst.root_module.linkLibrary(lib);
+    tst.root_module.linkLibrary(catch2_lib);
+    tst.root_module.linkLibrary(catch2_main);
+    tst.root_module.link_libc = true;
+    tst.root_module.link_libcpp = true;
 
     b.installArtifact(lib);
     b.installArtifact(exe);
