@@ -3,9 +3,12 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const strip = optimize != .Debug;
+
     const pcre2_dep = b.dependency("pcre2", .{
         .target = target,
         .optimize = optimize,
+        .strip = strip,
     });
 
     const lib = b.addLibrary(.{
@@ -13,6 +16,7 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .optimize = optimize,
             .target = target,
+            .strip = strip,
         }),
     });
     lib.linkage = .static;
@@ -34,6 +38,7 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .optimize = optimize,
             .target = target,
+            .strip = strip,
         }),
     });
     exe.addCSourceFiles(.{ .files = &grok_sources, .flags = &[_][]const u8{} });
@@ -52,6 +57,7 @@ pub fn build(b: *std.Build) void {
     const catch2_dep = b.dependency("catch2", .{
         .target = target,
         .optimize = optimize,
+        .strip = strip,
     });
     const catch2_lib = catch2_dep.artifact("Catch2");
     const catch2_main = catch2_dep.artifact("Catch2WithMain");
@@ -61,6 +67,7 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .optimize = optimize,
             .target = target,
+            .strip = strip,
         }),
     });
     tst.addCSourceFiles(.{ .files = &tst_sources, .flags = &[_][]const u8{} });

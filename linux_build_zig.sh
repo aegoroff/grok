@@ -84,8 +84,6 @@ DCPU=""
 zig build -Doptimize=ReleaseFast ${DCPU} -Dtarget=${ARCH}-${OS}-${ABI} --summary all --verbose-cimport --prefix-exe-dir ${ZIG_PREFIX_DIR}
 
 if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
-  strip ${ZIG_OUT_DIR}/grok
-  strip ${ZIG_OUT_DIR}/_tst
   ${ZIG_OUT_DIR}/_tst -s
 fi
 
