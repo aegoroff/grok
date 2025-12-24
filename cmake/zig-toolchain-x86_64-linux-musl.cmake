@@ -6,6 +6,7 @@ set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR "x86_64")
 set(CMAKE_C_COMPILER "zig" cc -target x86_64-linux-musl)
 set(CMAKE_CXX_COMPILER "zig" c++ -target x86_64-linux-musl)
+set(CMAKE_LINK_DEPENDS_USE_LINKER OFF)
 
 if(WIN32)
     set(SCRIPT_SUFFIX ".cmd")
