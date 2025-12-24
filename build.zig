@@ -37,6 +37,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .target = target,
             .strip = strip,
+            .link_libc = true,
         }),
     });
     exe.root_module.addCSourceFiles(.{ .files = &grok_sources, .flags = &[_][]const u8{} });
@@ -50,7 +51,6 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
     exe.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
     exe.root_module.linkLibrary(lib);
-    exe.root_module.link_libc = true;
 
     const catch2_dep = b.dependency("catch2", .{
         .target = target,
@@ -65,6 +65,8 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .target = target,
             .strip = strip,
+            .link_libc = true,
+            .link_libcpp = true,
         }),
     });
     tst.root_module.addCSourceFiles(.{ .files = &tst_sources, .flags = &[_][]const u8{} });
@@ -80,8 +82,6 @@ pub fn build(b: *std.Build) void {
     tst.root_module.linkLibrary(lib);
     tst.root_module.linkLibrary(catch2_lib);
     tst.root_module.linkLibrary(catch2_main);
-    tst.root_module.link_libc = true;
-    tst.root_module.link_libcpp = true;
 
     b.installArtifact(lib);
     b.installArtifact(exe);
