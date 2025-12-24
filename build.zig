@@ -22,106 +22,60 @@ pub fn build(b: *std.Build) void {
 
     const pcre = pcre2_dep.artifact("pcre2-8");
     lib.root_module.linkLibrary(pcre);
-    lib.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
-    lib.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
-    lib.root_module.addIncludePath(b.path("src/srclib"));
-    lib.root_module.addIncludePath(b.path("src/grok"));
     lib.root_module.addIncludePath(b.path("src/grok/generated"));
-    lib.root_module.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
+    lib.root_module.addIncludePath(b.path("src/srclib"));
 
     lib.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
 
     const exe = b.addExecutable(.{
         .name = "grok",
         .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
             .optimize = optimize,
             .target = target,
             .strip = strip,
             .link_libc = true,
         }),
     });
-    exe.root_module.addCSourceFiles(.{ .files = &grok_sources, .flags = &[_][]const u8{} });
-    exe.root_module.addIncludePath(b.path("src/srclib"));
-    exe.root_module.addIncludePath(b.path("src/grok"));
-    exe.root_module.addIncludePath(b.path("src/grok/generated"));
-    exe.root_module.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
-    exe.root_module.addIncludePath(b.path("external_lib/lib/argtable3"));
+    //exe.root_module.addIncludePath(b.path("src/grok/generated"));
     exe.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
-
-    exe.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
-    exe.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
     exe.root_module.linkLibrary(lib);
+    //exe.root_module.linkLibrary(pcre);
 
-    const catch2_dep = b.dependency("catch2", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    const catch2_lib = catch2_dep.artifact("Catch2");
-    const catch2_main = catch2_dep.artifact("Catch2WithMain");
+    // const tst = b.addExecutable(.{
+    //     .name = "_tst",
+    //     .root_module = b.createModule(.{
+    //         .optimize = optimize,
+    //         .target = target,
+    //         .strip = strip,
+    //         .link_libc = true,
+    //         .link_libcpp = true,
+    //     }),
+    // });
+    // tst.root_module.addIncludePath(b.path("src/grok/generated"));
+    // tst.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
+    // tst.root_module.addIncludePath(b.path("src/srclib"));
+    // tst.root_module.linkLibrary(lib);
 
-    const tst = b.addExecutable(.{
-        .name = "_tst",
-        .root_module = b.createModule(.{
-            .optimize = optimize,
-            .target = target,
-            .strip = strip,
-            .link_libc = true,
-            .link_libcpp = true,
-        }),
-    });
-    tst.root_module.addCSourceFiles(.{ .files = &tst_sources, .flags = &[_][]const u8{} });
-    tst.root_module.addIncludePath(b.path("src/srclib"));
-    tst.root_module.addIncludePath(b.path("src/grok"));
-    tst.root_module.addIncludePath(b.path("src/grok/generated"));
-    tst.root_module.addIncludePath(b.path("external_lib/lib/apr/include/apr-1"));
-    tst.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
-    tst.root_module.addIncludePath(b.path("src/srclib"));
-
-    tst.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libapr-1.a"));
-    tst.root_module.addObjectFile(b.path("external_lib/lib/apr/lib/libaprutil-1.a"));
-    tst.root_module.linkLibrary(lib);
-    tst.root_module.linkLibrary(catch2_lib);
-    tst.root_module.linkLibrary(catch2_main);
-
-    b.installArtifact(lib);
+    //b.installArtifact(lib);
     b.installArtifact(exe);
-    b.installArtifact(tst);
+    //b.installArtifact(tst);
 
-    const run_unit_tests = b.addRunArtifact(tst);
-    run_unit_tests.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_unit_tests.addArgs(args);
-    }
+    // const run_unit_tests = b.addRunArtifact(tst);
+    // run_unit_tests.step.dependOn(b.getInstallStep());
+    // if (b.args) |args| {
+    //     run_unit_tests.addArgs(args);
+    // }
 
     // Similar to creating the run step earlier, this exposes a `test` step to
     // the `zig build --help` menu, providing a way for the user to request
     // running the unit tests.
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&run_unit_tests.step);
+    // const test_step = b.step("test", "Run unit tests");
+    // test_step.dependOn(&run_unit_tests.step);
 }
 
 const libgrok_sources = [_][]const u8{
-    "src/srclib/dbg_helpers.c",
-    "src/srclib/encoding.c",
-    "src/srclib/lib.c",
-    "src/srclib/sort.c",
     "src/grok/generated/grok.flex.c",
     "src/grok/generated/grok.tab.c",
-};
-
-const grok_sources = [_][]const u8{
-    "src/grok/backend.c",
-    "src/grok/configuration.c",
-    "src/grok/frontend.c",
-    "src/grok/grok.c",
-    "src/grok/pattern.c",
-    "external_lib/lib/argtable3/argtable3.c",
-};
-
-const tst_sources = [_][]const u8{
-    "src/_tst/encoding.cpp",
-    "src/_tst/lib_test.cpp",
-    "src/_tst/size_to_string.cpp",
-    "src/_tst/time_to_string.cpp",
-    "src/_tst/trim_tests.cpp",
+    "src/srclib/lib.c",
 };
