@@ -42,7 +42,7 @@ extern void yyrestart(FILE *input_file);
 
 bool prpatt_try_compile_as_wildcard(const char *pattern);
 
-void prpatt_run_parsing();
+void prpatt_run_parsing(const char *p);
 
 // Implementation
 
