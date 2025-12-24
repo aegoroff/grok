@@ -17,8 +17,8 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .link_libc = true,
         }),
+        .linkage = .static,
     });
-    lib.linkage = .static;
 
     const pcre = pcre2_dep.artifact("pcre2-8");
     lib.root_module.linkLibrary(pcre);
