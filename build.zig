@@ -24,6 +24,7 @@ pub fn build(b: *std.Build) void {
     lib.root_module.linkLibrary(pcre);
     lib.root_module.addIncludePath(b.path("src/grok/generated"));
     lib.root_module.addIncludePath(b.path("src/srclib"));
+    lib.root_module.addIncludePath(b.path("src"));
 
     lib.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
 

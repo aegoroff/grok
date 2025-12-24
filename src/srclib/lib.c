@@ -14,7 +14,6 @@
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
 
 #include <math.h>
-#include <stdarg.h>
 #include <string.h>
 
 #ifdef _MSC_VER

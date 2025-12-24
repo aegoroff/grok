@@ -14,6 +14,7 @@
 
 #include "types.h"
 #include <stdio.h>
+#include <stdarg.h>
 
 #ifndef _MSC_VER
 
