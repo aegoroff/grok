@@ -3,6 +3,7 @@ const re = @cImport({
     @cDefine("PCRE2_CODE_UNIT_WIDTH", "8");
     @cInclude("pcre2.h");
 });
+const front = @import("frontend.zig");
 
 const PCRE2_ZERO_TERMINATED = ~@as(re.PCRE2_SIZE, 0);
 
@@ -14,6 +15,9 @@ pub fn main() void {
     std.debug.print("Pattern is: {s}\n", .{pattern});
     std.debug.print("Haystack is: {s}\n", .{subject});
     std.debug.print("Match is: {?s}\n", .{match});
+
+    fend_on_literal("Hello, World!");
+    try front.compile_file("path/to/file");
 }
 
 /// Compiles a regex pattern string and returns a pattern code you can use
@@ -54,4 +58,8 @@ fn find(regexp: *re.pcre2_code_8, haystack: []const u8) ?[]const u8 {
     }
     const match = haystack[ovector[0]..ovector[1]]; // First match only
     return match;
+}
+
+pub fn fend_on_literal(_: []const u8) void {
+    // Implementation of fend_on_literal function
 }

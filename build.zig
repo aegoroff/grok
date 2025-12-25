@@ -13,6 +13,7 @@ pub fn build(b: *std.Build) void {
     const lib = b.addLibrary(.{
         .name = "libgrok",
         .root_module = b.createModule(.{
+            .root_source_file = b.path("src/frontend.zig"),
             .optimize = optimize,
             .target = target,
             .link_libc = true,
@@ -37,7 +38,6 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
-    //exe.root_module.addIncludePath(b.path("src/grok/generated"));
     exe.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
     exe.root_module.linkLibrary(lib);
     exe.root_module.linkLibrary(pcre);
