@@ -1,9 +1,12 @@
-const grok = @cImport({
+const std = @import("std");
+
+const groktab = @cImport({
     @cInclude("grok.tab.h");
 });
 
 const c = @cImport({
     @cInclude("stdio.h");
+    @cInclude("grok.h");
 });
 
 pub fn compile_file(path: [*c]const u8) !void {
@@ -11,12 +14,12 @@ pub fn compile_file(path: [*c]const u8) !void {
 
     if (c_file_ptr == null) {
         // Handle error
-        @panic("Failed to open file");
+        std.debug.print("Failed to open file: {s}\n", .{path});
     }
 
-    //grok.yyrestart(c_file_ptr);
-    if(grok.yyparse() > 0){
-        @panic("Failed to parse file");
+    c.yyrestart(c_file_ptr);
+    if(groktab.yyparse() > 0){
+        std.debug.print("Failed to parse file: {s}\n", .{path});
     }
 
 }
@@ -38,11 +41,11 @@ pub export fn fend_strdup(s: [*c]const u8) [*c]const u8 {
     return s;
 }
 
-pub export fn fend_on_macro(_: [*c]const u8, _: [*c]const u8) *grok.macro_t {
+pub export fn fend_on_macro(_: [*c]const u8, _: [*c]const u8) *groktab.macro_t {
     // Implementation of fend_on_macro function
-    return @as(?*grok.macro_t, null) orelse @as(*grok.macro_t, undefined);
+    return @as(?*groktab.macro_t, null) orelse @as(*groktab.macro_t, undefined);
 }
 
-pub export fn fend_on_grok(_: *grok.macro_t) void {
+pub export fn fend_on_grok(_: *groktab.macro_t) void {
     // Implementation of fend_on_grok function
 }
