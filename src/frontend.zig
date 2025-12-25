@@ -21,6 +21,12 @@ pub fn compile_file(path: [*c]const u8) !void {
     }
 }
 
+var allocator: std.mem.Allocator = undefined;
+
+pub fn init(a: std.mem.Allocator) void {
+    allocator = a;
+}
+
 pub export fn fend_on_literal(str: [*c]const u8) void {
     std.debug.print("Literal: {s}\n", .{str});
 }
@@ -34,8 +40,13 @@ pub export fn fend_on_definition_end(str: [*c]const u8) void {
 }
 
 pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
-    std.debug.print("fend_strdup: {s}\n", .{str});
-    return str;
+    const slice = std.mem.span(str);
+
+    // Allocate memory for string + null terminator
+    const mem = allocator.alloc(u8, slice.len + 1) catch return null;
+    @memcpy(mem[0..slice.len], slice);
+    mem[slice.len] = 0; // Null terminator
+    return @ptrCast(mem.ptr);
 }
 
 pub export fn fend_on_macro(name: [*c]u8, property: [*c]u8) *c.macro_t {

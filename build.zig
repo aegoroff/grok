@@ -22,6 +22,11 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
+    const clap_dep = b.dependency("clap", .{
+        .optimize = optimize,
+        .target = target,
+    });
+    exe.root_module.addImport("clap", clap_dep.module("clap"));
     exe.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
     exe.root_module.addIncludePath(b.path("src/grok/generated"));
     exe.root_module.addIncludePath(b.path("src/srclib"));
@@ -45,7 +50,6 @@ pub fn build(b: *std.Build) void {
     // tst.root_module.linkLibrary(lib);
 
     b.installArtifact(exe);
-    //b.installArtifact(tst);
 
     // const run_unit_tests = b.addRunArtifact(tst);
     // run_unit_tests.step.dependOn(b.getInstallStep());

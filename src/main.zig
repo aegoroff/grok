@@ -4,20 +4,45 @@ const re = @cImport({
     @cInclude("pcre2.h");
 });
 const front = @import("frontend.zig");
+const clap = @import("clap");
 
 const PCRE2_ZERO_TERMINATED = ~@as(re.PCRE2_SIZE, 0);
 
-pub fn main() void {
-    const pattern = "your\\s(.*)\\s";
-    const subject = "all of your codebase are belong to us!";
-    const rxp = compile(pattern);
-    const match = find(rxp.?, subject);
-    std.debug.print("Pattern is: {s}\n", .{pattern});
-    std.debug.print("Haystack is: {s}\n", .{subject});
-    std.debug.print("Match is: {?s}\n", .{match});
+pub fn main() !void {
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_writer.interface;
+    defer {
+        stdout.flush() catch {};
+    }
 
-    front.fend_on_literal("Hello, World!");
-    try front.compile_file("./patterns/grok.patterns");
+    const params = comptime clap.parseParamsComptime(
+        \\-h, --help             Display this help and exit.
+        \\-f, --file <str>       Full path to file to read data from.
+    );
+
+    const allocator = std.heap.c_allocator;
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    var diag = clap.Diagnostic{};
+    var res = clap.parse(clap.Help, &params, clap.parsers.default, .{
+        .diagnostic = &diag,
+        .allocator = arena.allocator(),
+    }) catch |err| {
+        // Report useful error and exit
+        diag.report(stdout, err) catch {};
+        return err;
+    };
+    defer res.deinit();
+
+    if (res.args.help != 0) {
+        return clap.help(stdout, clap.Help, &params, .{});
+    }
+
+    front.init(arena.allocator());
+    const target = res.args.file orelse "";
+    return front.compile_file(target.ptr);
 }
 
 /// Compiles a regex pattern string and returns a pattern code you can use
