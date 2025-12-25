@@ -21,7 +21,7 @@ pub fn main() !void {
         \\-h, --help                 Display this help and exit.
         \\-f, --file     <str>       Full path to file to read data from.
         \\-p, --patterns <str>...    One or more pattern files. You can also use
-        \\                           wildcards like path\*.patterns. If not set, current
+        \\                           wildcards like path/*.patterns. If not set, current
         \\                           directory used to search all *.patterns files
     );
 
