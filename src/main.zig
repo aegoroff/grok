@@ -4,6 +4,7 @@ const re = @cImport({
     @cInclude("pcre2.h");
 });
 const front = @import("frontend.zig");
+const back = @import("backend.zig");
 const clap = @import("clap");
 const glob = @import("glob");
 
@@ -20,6 +21,7 @@ pub fn main() !void {
     const params = comptime clap.parseParamsComptime(
         \\-h, --help                 Display this help and exit.
         \\-f, --file     <str>       Full path to file to read data from.
+        \\-m, --macro     <str>      Pattern macros to build regexp.
         \\-p, --patterns <str>...    One or more pattern files. You can also use
         \\                           wildcards like path/*.patterns. If not set, current
         \\                           directory used to search all *.patterns files
@@ -45,6 +47,12 @@ pub fn main() !void {
     }
 
     try compile_lib(res.args.patterns, arena.allocator());
+
+    const macro = res.args.macro orelse {
+        return;
+    };
+    const m = back.create_pattern(arena.allocator(), macro).?;
+    std.debug.print("{s}\n", .{m.regex});
 }
 
 fn compile_lib(files: []const []const u8, allocator: std.mem.Allocator) !void {
