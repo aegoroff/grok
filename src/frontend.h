@@ -4,7 +4,7 @@
             Created by: Alexander Egorov
             \endverbatim
  * \date    \verbatim
-            Creation date: 2015-07-21
+            Creation date: 2025-12-24
             \endverbatim
  * Copyright: (c) Alexander Egorov 2015-2025
  */
