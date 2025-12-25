@@ -21,7 +21,6 @@ pub fn build(b: *std.Build) void {
     });
 
     const pcre = pcre2_dep.artifact("pcre2-8");
-    lib.root_module.linkLibrary(pcre);
     lib.root_module.addIncludePath(b.path("src/grok/generated"));
     lib.root_module.addIncludePath(b.path("src/srclib"));
     lib.root_module.addIncludePath(b.path("src"));
@@ -41,7 +40,7 @@ pub fn build(b: *std.Build) void {
     //exe.root_module.addIncludePath(b.path("src/grok/generated"));
     exe.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
     exe.root_module.linkLibrary(lib);
-    //exe.root_module.linkLibrary(pcre);
+    exe.root_module.linkLibrary(pcre);
 
     // const tst = b.addExecutable(.{
     //     .name = "_tst",
@@ -58,7 +57,7 @@ pub fn build(b: *std.Build) void {
     // tst.root_module.addIncludePath(b.path("src/srclib"));
     // tst.root_module.linkLibrary(lib);
 
-    //b.installArtifact(lib);
+    b.installArtifact(lib);
     b.installArtifact(exe);
     //b.installArtifact(tst);
 
