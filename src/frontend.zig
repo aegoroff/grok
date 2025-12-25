@@ -12,6 +12,7 @@ pub fn compile_file(path: [*c]const u8) !void {
     if (c_file_ptr == null) {
         // Handle error
         std.debug.print("Failed to open file: {s}\n", .{path});
+        return;
     }
 
     c.yyrestart(c_file_ptr);
