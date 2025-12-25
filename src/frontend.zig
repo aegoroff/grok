@@ -31,9 +31,11 @@ pub fn compile_file(path: [*c]const u8) !void {
 
 var allocator: std.mem.Allocator = undefined;
 var composition: std.ArrayList(Info) = undefined;
+var definitions: std.AutoHashMap([*c]const u8, std.ArrayList(Info)) = undefined;
 
 pub fn init(a: std.mem.Allocator) void {
     allocator = a;
+    definitions = std.AutoHashMap([*c]const u8, std.ArrayList(Info)).init(allocator);
 }
 
 pub export fn fend_on_literal(str: [*c]const u8) void {
@@ -47,7 +49,9 @@ pub export fn fend_on_definition() void {
 }
 
 pub export fn fend_on_definition_end(str: [*c]const u8) void {
-    std.debug.print("Definition end: {s}\n", .{str});
+    definitions.put(str, composition) catch |e| {
+        std.debug.print("Error: {t}\n", .{e});
+    };
 }
 
 pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
