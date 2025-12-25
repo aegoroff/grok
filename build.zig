@@ -10,23 +10,23 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const lib = b.addLibrary(.{
-        .name = "libgrok",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/frontend.zig"),
-            .optimize = optimize,
-            .target = target,
-            .link_libc = true,
-        }),
-        .linkage = .static,
-    });
+    // const lib = b.addLibrary(.{
+    //     .name = "libgrok",
+    //     .root_module = b.createModule(.{
+    //         .root_source_file = b.path("src/frontend.zig"),
+    //         .optimize = optimize,
+    //         .target = target,
+    //         .link_libc = true,
+    //     }),
+    //     .linkage = .static,
+    // });
 
     const pcre = pcre2_dep.artifact("pcre2-8");
-    lib.root_module.addIncludePath(b.path("src/grok/generated"));
-    lib.root_module.addIncludePath(b.path("src/srclib"));
-    lib.root_module.addIncludePath(b.path("src"));
+    // lib.root_module.addIncludePath(b.path("src/grok/generated"));
+    // lib.root_module.addIncludePath(b.path("src/srclib"));
+    // lib.root_module.addIncludePath(b.path("src"));
 
-    lib.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
+    // lib.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
 
     const exe = b.addExecutable(.{
         .name = "grok",
@@ -39,7 +39,11 @@ pub fn build(b: *std.Build) void {
         }),
     });
     exe.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
-    exe.root_module.linkLibrary(lib);
+    exe.root_module.addIncludePath(b.path("src/grok/generated"));
+    exe.root_module.addIncludePath(b.path("src/srclib"));
+    exe.root_module.addIncludePath(b.path("src"));
+    exe.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
+    //exe.root_module.linkLibrary(lib);
     exe.root_module.linkLibrary(pcre);
 
     // const tst = b.addExecutable(.{
@@ -57,7 +61,7 @@ pub fn build(b: *std.Build) void {
     // tst.root_module.addIncludePath(b.path("src/srclib"));
     // tst.root_module.linkLibrary(lib);
 
-    b.installArtifact(lib);
+    //b.installArtifact(lib);
     b.installArtifact(exe);
     //b.installArtifact(tst);
 

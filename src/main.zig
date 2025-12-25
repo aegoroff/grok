@@ -16,7 +16,7 @@ pub fn main() void {
     std.debug.print("Haystack is: {s}\n", .{subject});
     std.debug.print("Match is: {?s}\n", .{match});
 
-    fend_on_literal("Hello, World!");
+    front.fend_on_literal("Hello, World!");
     try front.compile_file("path/to/file");
 }
 
@@ -58,8 +58,4 @@ fn find(regexp: *re.pcre2_code_8, haystack: []const u8) ?[]const u8 {
     }
     const match = haystack[ovector[0]..ovector[1]]; // First match only
     return match;
-}
-
-pub fn fend_on_literal(_: []const u8) void {
-    // Implementation of fend_on_literal function
 }

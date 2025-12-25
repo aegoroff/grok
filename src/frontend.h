@@ -16,7 +16,10 @@
 extern "C" {
 #endif
 
-typedef struct macro macro_t;
+typedef struct macro {
+    char *name;
+    char *property;
+} macro_t;
 
 extern void fend_on_definition(void);
 
