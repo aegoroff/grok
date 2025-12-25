@@ -1,3 +1,14 @@
+/*!
+ * \brief   The file contains lexer C interface
+ * \author  \verbatim
+            Created by: Alexander Egorov
+            \endverbatim
+ * \date    \verbatim
+            Creation date: 2025-12-25
+            \endverbatim
+ * Copyright: (c) Alexander Egorov 2015-2025
+ */
+
 #ifndef GROK_GROK_H_
 #define GROK_GROK_H_
 
