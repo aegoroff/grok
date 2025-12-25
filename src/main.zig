@@ -21,7 +21,8 @@ pub fn main() !void {
     const params = comptime clap.parseParamsComptime(
         \\-h, --help                 Display this help and exit.
         \\-f, --file     <str>       Full path to file to read data from.
-        \\-m, --macro     <str>      Pattern macros to build regexp.
+        \\-m, --macro    <str>       Pattern macros to build regexp.
+        \\-s, --string   <str>       String to match.
         \\-p, --patterns <str>...    One or more pattern files. You can also use
         \\                           wildcards like path/*.patterns. If not set, current
         \\                           directory used to search all *.patterns files
@@ -51,8 +52,13 @@ pub fn main() !void {
     const macro = res.args.macro orelse {
         return;
     };
+    const haystack = res.args.string orelse {
+        return;
+    };
     const m = (try back.create_pattern(arena.allocator(), macro)).?;
-    std.debug.print("{s}\n", .{m.regex});
+    const regex = compile(m.regex).?;
+    const match = find(regex, haystack).?;
+    std.debug.print("Match: {s}\n", .{match});
 }
 
 fn compile_lib(files: []const []const u8, allocator: std.mem.Allocator) !void {
