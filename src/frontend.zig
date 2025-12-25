@@ -15,36 +15,38 @@ pub fn compile_file(path: [*c]const u8) !void {
     }
 
     c.yyrestart(c_file_ptr);
-    if(c.yyparse() > 0){
+    if (c.yyparse() > 0) {
         std.debug.print("Failed to parse file: {s}\n", .{path});
     }
-
 }
 
-pub export fn fend_on_literal(_: [*c]const u8) void {
-    // Implementation of fend_on_literal function
+pub export fn fend_on_literal(str: [*c]const u8) void {
+    std.debug.print("Literal: {s}\n", .{str});
 }
 
 pub export fn fend_on_definition() void {
-    // Implementation of fend_on_definition function
-
+    std.debug.print("Definition\n", .{});
 }
 
 pub export fn fend_on_definition_end(str: [*c]const u8) void {
-    // Implementation of fend_on_definition_end function
     std.debug.print("Definition end: {s}\n", .{str});
 }
 
 pub export fn fend_strdup(s: [*c]const u8) [*c]const u8 {
-    // Implementation of fend_strdup function
     return s;
 }
 
-pub export fn fend_on_macro(_: [*c]const u8, _: [*c]const u8) *c.macro_t {
-    // Implementation of fend_on_macro function
-    return @as(?*c.macro_t, null) orelse @as(*c.macro_t, undefined);
+pub export fn fend_on_macro(name: [*c]u8, property: [*c]u8) *c.macro_t {
+    std.debug.print("Macro name: {s}", .{name});
+    if (property != null) {
+        std.debug.print(" Macro property: {s}\n", .{property});
+    } else {
+        std.debug.print("\n", .{});
+    }
+    var m = c.macro_t{ .name = name, .property = property };
+    return &m;
 }
 
-pub export fn fend_on_grok(_: *c.macro_t) void {
-    // Implementation of fend_on_grok function
+pub export fn fend_on_grok(m: *c.macro_t) void {
+    std.debug.print("On grok: {s}\n", .{m.name});
 }
