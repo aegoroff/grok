@@ -26,6 +26,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .target = target,
     });
+    const glob_dep = b.dependency("glob", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.root_module.addImport("glob", glob_dep.module("glob"));
     exe.root_module.addImport("clap", clap_dep.module("clap"));
     exe.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
     exe.root_module.addIncludePath(b.path("src/grok/generated"));

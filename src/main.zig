@@ -5,6 +5,7 @@ const re = @cImport({
 });
 const front = @import("frontend.zig");
 const clap = @import("clap");
+const glob = @import("glob");
 
 const PCRE2_ZERO_TERMINATED = ~@as(re.PCRE2_SIZE, 0);
 
@@ -17,8 +18,11 @@ pub fn main() !void {
     }
 
     const params = comptime clap.parseParamsComptime(
-        \\-h, --help             Display this help and exit.
-        \\-f, --file <str>       Full path to file to read data from.
+        \\-h, --help                 Display this help and exit.
+        \\-f, --file     <str>       Full path to file to read data from.
+        \\-p, --patterns <str>...    One or more pattern files. You can also use
+        \\                           wildcards like path\*.patterns. If not set, current
+        \\                           directory used to search all *.patterns files
     );
 
     const allocator = std.heap.c_allocator;
@@ -40,9 +44,41 @@ pub fn main() !void {
         return clap.help(stdout, clap.Help, &params, .{});
     }
 
-    front.init(arena.allocator());
-    const target = res.args.file orelse "";
-    try front.compile_file(target.ptr);
+    try compile_lib(res.args.patterns, arena.allocator());
+}
+
+fn compile_lib(files: []const []const u8, allocator: std.mem.Allocator) !void {
+    front.init(allocator);
+    const patterns = files;
+    if (patterns.len == 0) {
+        // Use default
+        const lib_path = "/usr/share/grok/patterns";
+        var dir = try std.fs.openDirAbsolute(lib_path, .{ .iterate = true });
+        var walker = try dir.walk(allocator);
+        defer walker.deinit();
+        while (true) {
+            const entry_or_null = walker.next() catch {
+                continue;
+            };
+            const entry = entry_or_null orelse {
+                break;
+            };
+            switch (entry.kind) {
+                std.fs.Dir.Entry.Kind.file => {
+                    const matches = glob.match("*.patterns", entry.basename);
+                    if (matches) {
+                        const p = try entry.dir.realpathAlloc(allocator, entry.basename);
+                        try front.compile_file(p.ptr);
+                    }
+                },
+                else => {},
+            }
+        }
+    } else {
+        for (patterns) |pattern| {
+            try front.compile_file(pattern.ptr);
+        }
+    }
 }
 
 /// Compiles a regex pattern string and returns a pattern code you can use

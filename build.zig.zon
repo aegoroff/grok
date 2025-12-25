@@ -13,6 +13,10 @@
             .url = "https://github.com/Hejsil/zig-clap/archive/refs/tags/0.11.0.tar.gz",
             .hash = "clap-0.11.0-oBajB-HnAQDPCKYzwF7rO3qDFwRcD39Q0DALlTSz5H7e",
         },
+        .glob = .{
+            .url = "https://github.com/xcaeser/glob.zig/archive/v0.1.0.tar.gz",
+            .hash = "glob-0.1.0-AymqdJQ4AABqoaLWCtZyfQh4_bEh7c8bhffcZNp7HWsL",
+        },
     },
     .paths = .{
         "LICENSE.txt",
