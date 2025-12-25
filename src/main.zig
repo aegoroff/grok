@@ -51,7 +51,7 @@ pub fn main() !void {
     const macro = res.args.macro orelse {
         return;
     };
-    const m = back.create_pattern(arena.allocator(), macro).?;
+    const m = (try back.create_pattern(arena.allocator(), macro)).?;
     std.debug.print("{s}\n", .{m.regex});
 }
 
