@@ -42,7 +42,7 @@ pub fn main() !void {
 
     front.init(arena.allocator());
     const target = res.args.file orelse "";
-    return front.compile_file(target.ptr);
+    try front.compile_file(target.ptr);
 }
 
 /// Compiles a regex pattern string and returns a pattern code you can use

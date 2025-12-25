@@ -31,11 +31,11 @@ pub fn compile_file(path: [*c]const u8) !void {
 
 var allocator: std.mem.Allocator = undefined;
 var composition: std.ArrayList(Info) = undefined;
-var definitions: std.AutoHashMap([*c]const u8, std.ArrayList(Info)) = undefined;
+var definitions: std.StringHashMap(std.ArrayList(Info)) = undefined;
 
 pub fn init(a: std.mem.Allocator) void {
     allocator = a;
-    definitions = std.AutoHashMap([*c]const u8, std.ArrayList(Info)).init(allocator);
+    definitions = std.StringHashMap(std.ArrayList(Info)).init(allocator);
 }
 
 pub export fn fend_on_literal(str: [*c]const u8) void {
@@ -49,7 +49,9 @@ pub export fn fend_on_definition() void {
 }
 
 pub export fn fend_on_definition_end(str: [*c]const u8) void {
-    definitions.put(str, composition) catch |e| {
+    const slice = std.mem.span(str);
+    const len = slice.len;
+    definitions.put(slice[0..len], composition) catch |e| {
         std.debug.print("Error: {t}\n", .{e});
     };
 }
@@ -73,4 +75,12 @@ pub export fn fend_on_grok(m: *c.macro_t) void {
     composition.append(allocator, .{ .data = m.name, .reference = m.property, .part = .reference }) catch |e| {
         std.debug.print("Error: {t}\n", .{e});
     };
+}
+
+pub fn get_pattern(key: []const u8) ?std.ArrayList(Info) {
+    return definitions.get(key);
+}
+
+pub fn get_patterns() std.StringHashMap(std.ArrayList(Info)) {
+    return definitions;
 }
