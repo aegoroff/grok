@@ -15,14 +15,14 @@ pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) ?Pattern 
         stack.append(allocator, value) catch return null;
         while (stack.items.len > 0) {
             const current = stack.pop().?;
+            const current_slice = std.mem.sliceTo(current.data, 0);
             if (current.part == .literal) {
                 // plain literal case
-                const data_slice = std.mem.span(current.data);
-                composition.appendSlice(allocator, data_slice) catch return null;
+                composition.appendSlice(allocator, current_slice) catch return null;
             } else {
                 if (current.reference != null) {
                     // leading (?<name> immediately into composition
-                    const reference = std.mem.span(current.reference);
+                    const reference = std.mem.sliceTo(current.reference, 0);
                     composition.appendSlice(allocator, "(?<") catch return null;
                     composition.appendSlice(allocator, reference) catch return null;
                     composition.appendSlice(allocator, ">") catch return null;
@@ -32,8 +32,9 @@ pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) ?Pattern 
                     const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
                     stack.append(allocator, trail_paren) catch return null;
                 }
-                const curr = std.mem.span(current.data);
-                const childs = front.get_pattern(curr).?;
+                const childs = front.get_pattern(current_slice) orelse {
+                    continue;
+                };
                 var rev_iter = std.mem.reverseIterator(childs.items);
                 while (rev_iter.next()) |child| {
                     stack.append(allocator, child) catch return null;

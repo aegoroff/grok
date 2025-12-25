@@ -39,7 +39,11 @@ pub fn init(a: std.mem.Allocator) void {
 }
 
 pub export fn fend_on_literal(str: [*c]const u8) void {
-    composition.append(allocator, .{ .data = str, .reference = null, .part = .literal }) catch |e| {
+    composition.append(allocator, Info{
+        .data = str,
+        .reference = null,
+        .part = .literal,
+    }) catch |e| {
         std.debug.print("Error: {t}\n", .{e});
     };
 }
@@ -66,13 +70,21 @@ pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
     return @ptrCast(mem.ptr);
 }
 
-pub export fn fend_on_macro(name: [*c]u8, property: [*c]u8) *c.macro_t {
-    var m = c.macro_t{ .name = name, .property = property };
-    return &m;
+pub export fn fend_on_macro(name: [*c]u8, property: [*c]u8) ?*c.macro_t {
+    const ptr = allocator.create(c.macro_t) catch return null;
+    ptr.* = c.macro_t{
+        .name = name,
+        .property = property,
+    };
+    return ptr;
 }
 
 pub export fn fend_on_grok(m: *c.macro_t) void {
-    composition.append(allocator, .{ .data = m.name, .reference = m.property, .part = .reference }) catch |e| {
+    composition.append(allocator, Info{
+        .data = m.name,
+        .reference = m.property,
+        .part = .reference,
+    }) catch |e| {
         std.debug.print("Error: {t}\n", .{e});
     };
 }
