@@ -27,10 +27,12 @@ pub export fn fend_on_literal(_: [*c]const u8) void {
 
 pub export fn fend_on_definition() void {
     // Implementation of fend_on_definition function
+
 }
 
-pub export fn fend_on_definition_end(_: [*c]const u8) void {
+pub export fn fend_on_definition_end(str: [*c]const u8) void {
     // Implementation of fend_on_definition_end function
+    std.debug.print("Definition end: {s}\n", .{str});
 }
 
 pub export fn fend_strdup(s: [*c]const u8) [*c]const u8 {

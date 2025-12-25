@@ -17,7 +17,7 @@ pub fn main() void {
     std.debug.print("Match is: {?s}\n", .{match});
 
     front.fend_on_literal("Hello, World!");
-    try front.compile_file("path/to/file");
+    try front.compile_file("./patterns/grok.patterns");
 }
 
 /// Compiles a regex pattern string and returns a pattern code you can use
