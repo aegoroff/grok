@@ -32,8 +32,9 @@ pub export fn fend_on_definition_end(str: [*c]const u8) void {
     std.debug.print("Definition end: {s}\n", .{str});
 }
 
-pub export fn fend_strdup(s: [*c]const u8) [*c]const u8 {
-    return s;
+pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
+    std.debug.print("fend_strdup: {s}\n", .{str});
+    return str;
 }
 
 pub export fn fend_on_macro(name: [*c]u8, property: [*c]u8) *c.macro_t {
