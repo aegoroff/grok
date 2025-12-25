@@ -6,6 +6,14 @@ const c = @cImport({
     @cInclude("grok.tab.h");
 });
 
+pub const Info = struct {
+    data: [*c]const u8,
+    reference: [*c]const u8,
+    part: Part,
+};
+
+pub const Part = enum { literal, reference };
+
 pub fn compile_file(path: [*c]const u8) !void {
     const c_file_ptr = c.fopen(path, "r");
 
@@ -22,17 +30,20 @@ pub fn compile_file(path: [*c]const u8) !void {
 }
 
 var allocator: std.mem.Allocator = undefined;
+var composition: std.ArrayList(Info) = undefined;
 
 pub fn init(a: std.mem.Allocator) void {
     allocator = a;
 }
 
 pub export fn fend_on_literal(str: [*c]const u8) void {
-    std.debug.print("Literal: {s}\n", .{str});
+    composition.append(allocator, .{ .data = str, .reference = null, .part = .literal }) catch |e| {
+        std.debug.print("Error: {t}\n", .{e});
+    };
 }
 
 pub export fn fend_on_definition() void {
-    std.debug.print("Definition\n", .{});
+    composition = std.ArrayList(Info){};
 }
 
 pub export fn fend_on_definition_end(str: [*c]const u8) void {
@@ -50,16 +61,12 @@ pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
 }
 
 pub export fn fend_on_macro(name: [*c]u8, property: [*c]u8) *c.macro_t {
-    std.debug.print("Macro name: {s}", .{name});
-    if (property != null) {
-        std.debug.print(" Macro property: {s}\n", .{property});
-    } else {
-        std.debug.print("\n", .{});
-    }
     var m = c.macro_t{ .name = name, .property = property };
     return &m;
 }
 
 pub export fn fend_on_grok(m: *c.macro_t) void {
-    std.debug.print("On grok: {s}\n", .{m.name});
+    composition.append(allocator, .{ .data = m.name, .reference = m.property, .part = .reference }) catch |e| {
+        std.debug.print("Error: {t}\n", .{e});
+    };
 }
