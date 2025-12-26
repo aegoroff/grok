@@ -28,15 +28,49 @@ pub fn init(a: std.mem.Allocator) void {
     general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, null).?;
 }
 
+const AllocationHeader = extern struct {
+    original_ptr: [*]u8,
+    size: usize,
+};
+
 pub export fn pcre_alloc(size: usize, _: ?*anyopaque) ?*anyopaque {
-    const aligned_size = std.mem.alignForward(usize, size, 8);
-    const slice = backend_allocator.alloc(u8, aligned_size) catch {
-        return null;
+    // Allocate space for header + data + padding for alignment
+    const header_size = @sizeOf(AllocationHeader);
+    const total_size = header_size + size + 7; // +7 for guaranteed alignment
+
+    const raw_mem = backend_allocator.alloc(u8, total_size) catch return null;
+
+    // Find aligned pointer for data
+    const data_start_ptr = raw_mem.ptr + header_size;
+    const data_start_addr = @intFromPtr(data_start_ptr);
+    const aligned_data_addr = std.mem.alignForward(usize, data_start_addr, 8);
+    const aligned_data_ptr = @as([*]u8, @ptrFromInt(aligned_data_addr));
+
+    // Save header before data
+    const header_addr = aligned_data_addr - header_size;
+    const header_ptr = @as(*AllocationHeader, @ptrFromInt(header_addr));
+    header_ptr.* = .{
+        .original_ptr = raw_mem.ptr,
+        .size = total_size,
     };
-    return @ptrCast(slice.ptr);
+
+    return @ptrCast(aligned_data_ptr);
 }
 
-pub export fn pcre_free(_: ?*anyopaque, _: ?*anyopaque) void {}
+pub export fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) void {
+    if (ptr) |p| {
+        const data_ptr = @as([*]u8, @ptrCast(p));
+        const data_addr = @intFromPtr(data_ptr);
+
+        // Find header before data
+        const header_addr = data_addr - @sizeOf(AllocationHeader);
+        const header = @as(*const AllocationHeader, @ptrFromInt(header_addr));
+
+        // Free original memory
+        const slice = header.original_ptr[0..header.size];
+        backend_allocator.free(slice);
+    }
+}
 
 pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern {
     const m = front.get_pattern(macro).?;
