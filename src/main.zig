@@ -119,6 +119,7 @@ fn find(regexp: *re.pcre2_code_8, haystack: []const u8) ?[]const u8 {
     const rc: c_int = re.pcre2_match_8(regexp, subject, subjLen, 0, 0, matchData.?, null);
 
     if (rc < 0) {
+        std.debug.print("Return code: {d}\n", .{rc});
         return null;
     }
 
