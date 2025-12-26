@@ -6,8 +6,6 @@ const re = @cImport({
     @cInclude("pcre2.h");
 });
 
-const PCRE2_ZERO_TERMINATED = ~@as(re.PCRE2_SIZE, 0);
-
 pub const Pattern = struct {
     regex: []const u8,
     properties: std.ArrayList([]const u8),
@@ -96,7 +94,7 @@ pub fn prepare_re(pattern: Pattern) !Prepared {
 
     const compile_ctx = re.pcre2_compile_context_create_8(general_context);
 
-    const regex = re.pcre2_compile_8(pattern.regex.ptr, PCRE2_ZERO_TERMINATED, 0, &errornumber, &erroroffset, compile_ctx) orelse {
+    const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
         const len = 256;
         const buffer = backend_allocator.alloc(u8, len) catch {
             return grok.GrokError.MemoryAllocationError;
@@ -114,7 +112,7 @@ pub fn match_re(pattern: *const Pattern, subject: []const u8, prepared: *const P
     defer re.pcre2_match_data_free_8(match_data);
     const match_ctx = re.pcre2_match_context_create_8(general_context);
 
-    const rc: c_int = re.pcre2_match_8(prepared.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
+    const rc: c_int = re.pcre2_match_8(prepared.re, subject.ptr, subject.len, 0, 0, match_data, match_ctx);
     const matched = rc > 0;
     if (rc < 0) {
         std.debug.print("Return code: {d}\n", .{rc});

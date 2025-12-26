@@ -53,7 +53,9 @@ pub fn main() !void {
     const pattern = (try back.create_pattern(arena.allocator(), macro)).?;
     const prepared = try back.prepare_re(pattern);
     const matched = back.match_re(&pattern, haystack, &prepared);
-    if (!matched.matched) {
+    if (matched.matched) {
+        std.debug.print("Match found\n", .{});
+    } else {
         std.debug.print("No match found\n", .{});
     }
 }
