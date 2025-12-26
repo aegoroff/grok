@@ -55,6 +55,14 @@ pub fn main() !void {
     const matched = back.match_re(&pattern, haystack, &prepared);
     if (matched.matched) {
         std.debug.print("Match found\n", .{});
+        if (matched.properties != null) {
+            var it = matched.properties.?.iterator();
+            while (it.next()) |entry| {
+                const key = entry.key_ptr.*;
+                const val = entry.value_ptr.*;
+                std.debug.print("\t{s}: {s}\n", .{ key, val });
+            }
+        }
     } else {
         std.debug.print("No match found\n", .{});
     }

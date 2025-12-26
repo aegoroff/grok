@@ -17,7 +17,7 @@ pub const Prepared = struct {
 
 pub const MatchResult = struct {
     matched: bool,
-    properties: std.StringHashMap([]const u8),
+    properties: ?std.StringHashMap([]const u8),
 };
 
 var backend_allocator: std.mem.Allocator = undefined;
@@ -169,7 +169,7 @@ pub fn match_re(pattern: *const Pattern, subject: []const u8, prepared: *const P
     } else {
         return MatchResult{
             .matched = matched,
-            .properties = undefined,
+            .properties = null,
         };
     }
 }
