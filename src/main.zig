@@ -1,14 +1,8 @@
 const std = @import("std");
-const re = @cImport({
-    @cDefine("PCRE2_CODE_UNIT_WIDTH", "8");
-    @cInclude("pcre2.h");
-});
 const front = @import("frontend.zig");
 const back = @import("backend.zig");
 const clap = @import("clap");
 const glob = @import("glob");
-
-const PCRE2_ZERO_TERMINATED = ~@as(re.PCRE2_SIZE, 0);
 
 pub fn main() !void {
     var stdout_buffer: [1024]u8 = undefined;
@@ -55,13 +49,13 @@ pub fn main() !void {
     const haystack = res.args.string orelse {
         return;
     };
-    const m = (try back.create_pattern(arena.allocator(), macro)).?;
-    const regex = compile(m.regex).?;
-    const match = find(regex, haystack) orelse {
+    back.init(arena.allocator());
+    const pattern = (try back.create_pattern(arena.allocator(), macro)).?;
+    const prepared = try back.prepare_re(pattern);
+    const matched = back.match_re(&pattern, haystack, &prepared);
+    if (!matched.matched) {
         std.debug.print("No match found\n", .{});
-        return;
-    };
-    std.debug.print("Match: {s}\n", .{match});
+    }
 }
 
 fn compile_lib(files: []const []const u8, allocator: std.mem.Allocator) !void {
@@ -96,45 +90,4 @@ fn compile_lib(files: []const []const u8, allocator: std.mem.Allocator) !void {
             try front.compile_file(pattern.ptr);
         }
     }
-}
-
-/// Compiles a regex pattern string and returns a pattern code you can use
-/// to match subjects. Returns `null` if something is wrong with the pattern
-fn compile(needle: []const u8) ?*re.pcre2_code_8 {
-    const pattern: re.PCRE2_SPTR8 = &needle[0];
-    var errornumber: c_int = undefined;
-    var erroroffset: re.PCRE2_SIZE = undefined;
-
-    const regex = re.pcre2_compile_8(pattern, PCRE2_ZERO_TERMINATED, 0, &errornumber, &erroroffset, null);
-    return regex;
-}
-
-/// Takes in a compiled regexp pattern from `compile` and a string of test which is the haystack
-/// and returns the first match from the haystack.
-fn find(regexp: *re.pcre2_code_8, haystack: []const u8) ?[]const u8 {
-    const subject: re.PCRE2_SPTR8 = &haystack[0];
-    const subjLen: re.PCRE2_SIZE = haystack.len;
-
-    const matchData: ?*re.pcre2_match_data_8 = re.pcre2_match_data_create_from_pattern_8(regexp, null);
-    const rc: c_int = re.pcre2_match_8(regexp, subject, subjLen, 0, 0, matchData.?, null);
-
-    if (rc < 0) {
-        std.debug.print("Return code: {d}\n", .{rc});
-        return null;
-    }
-
-    const ovector = re.pcre2_get_ovector_pointer_8(matchData);
-    if (rc == 0) {
-        std.debug.print("ovector was not big enough for all the captured substrings\n", .{});
-        return null;
-    }
-
-    if (ovector[0] > ovector[1]) {
-        std.debug.print("error with ovector\n", .{});
-        re.pcre2_match_data_free_8(matchData);
-        re.pcre2_code_free_8(regexp);
-        return null;
-    }
-    const match = haystack[ovector[0]..ovector[1]]; // First match only
-    return match;
 }
