@@ -123,7 +123,7 @@ pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern
     return result;
 }
 
-pub fn prepare_re(pattern: Pattern) !Prepared {
+pub fn prepare_re(allocator: std.mem.Allocator, pattern: Pattern) !Prepared {
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
 
@@ -131,10 +131,10 @@ pub fn prepare_re(pattern: Pattern) !Prepared {
 
     const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
         const len = 256;
-        const buffer = backend_allocator.alloc(u8, len) catch {
+        const buffer = allocator.alloc(u8, len) catch {
             return grok.GrokError.MemoryAllocationError;
         };
-        defer backend_allocator.free(buffer);
+        defer allocator.free(buffer);
         _ = re.pcre2_get_error_message_8(errornumber, buffer.ptr, len);
         std.debug.print("PCRE2 compilation failed at offset {d}: {s}\n", .{ erroroffset, buffer });
         return grok.GrokError.InvalidRegex;

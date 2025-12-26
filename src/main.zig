@@ -64,7 +64,7 @@ pub fn main() !void {
 fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, subject: []const u8, info_mode: bool) !void {
     back.init(allocator);
     const pattern = (try back.create_pattern(allocator, macro)).?;
-    const prepared = try back.prepare_re(pattern);
+    const prepared = try back.prepare_re(allocator, pattern);
     const matched = back.match_re(&pattern, subject, &prepared);
     if (info_mode) {
         if (matched.matched) {
@@ -86,9 +86,8 @@ fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []cons
 }
 
 fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, path: []const u8, info_mode: bool) !void {
-    back.init(allocator);
     const pattern = (try back.create_pattern(allocator, macro)).?;
-    const prepared = try back.prepare_re(pattern);
+    const prepared = try back.prepare_re(allocator, pattern);
     var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
     defer file.close();
 
@@ -99,7 +98,10 @@ fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const 
     var line_no: usize = 1;
 
     while (true) {
-        var aw = std.Io.Writer.Allocating.init(allocator);
+        var arena = std.heap.ArenaAllocator.init(allocator);
+        defer arena.deinit();
+        back.init(arena.allocator());
+        var aw = std.Io.Writer.Allocating.init(arena.allocator());
         defer aw.deinit();
         _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
             error.EndOfStream => {
