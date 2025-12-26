@@ -21,6 +21,7 @@ pub fn main() !void {
 
     const params = comptime clap.parseParamsComptime(
         \\-h, --help                 Display this help and exit.
+        \\-i, --info                 Dont work like grep i.e. output matched string with additional info
         \\-f, --file     <str>       Full path to file to read data from.
         \\-m, --macro    <str>       Pattern macros to build regexp.
         \\-s, --string   <str>       String to match.
@@ -28,7 +29,6 @@ pub fn main() !void {
         \\                           wildcards like path/*.patterns. If not set, current
         \\                           directory used to search all *.patterns files
     );
-
 
     var diag = clap.Diagnostic{};
     var res = clap.parse(clap.Help, &params, clap.parsers.default, .{
@@ -44,31 +44,94 @@ pub fn main() !void {
     if (res.args.help != 0) {
         return clap.help(stdout, clap.Help, &params, .{});
     }
+    const info_mode = res.args.info != 0;
 
     try compile_lib(res.args.patterns, arena.allocator());
 
     const macro = res.args.macro orelse {
         return;
     };
-    const haystack = res.args.string orelse {
-        return;
-    };
-    back.init(arena.allocator());
-    const pattern = (try back.create_pattern(arena.allocator(), macro)).?;
+
+    if (res.args.string != null) {
+        try on_string(arena.allocator(), stdout, macro, res.args.string.?, info_mode);
+    }
+
+    if (res.args.file != null) {
+        try on_file(allocator, stdout, macro, res.args.file.?, info_mode);
+    }
+}
+
+fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, subject: []const u8, info_mode: bool) !void {
+    back.init(allocator);
+    const pattern = (try back.create_pattern(allocator, macro)).?;
     const prepared = try back.prepare_re(pattern);
-    const matched = back.match_re(&pattern, haystack, &prepared);
-    if (matched.matched) {
-        std.debug.print("Match found\n", .{});
-        if (matched.properties != null) {
-            var it = matched.properties.?.iterator();
-            while (it.next()) |entry| {
-                const key = entry.key_ptr.*;
-                const val = entry.value_ptr.*;
-                std.debug.print("\t{s}: {s}\n", .{ key, val });
+    const matched = back.match_re(&pattern, subject, &prepared);
+    if (info_mode) {
+        if (matched.matched) {
+            std.debug.print("Match found\n", .{});
+            if (matched.properties != null) {
+                var it = matched.properties.?.iterator();
+                while (it.next()) |entry| {
+                    const key = entry.key_ptr.*;
+                    const val = entry.value_ptr.*;
+                    std.debug.print("\t{s}: {s}\n", .{ key, val });
+                }
+            }
+        } else {
+            std.debug.print("No match found\n", .{});
+        }
+    } else if (matched.matched) {
+        try stdout.print("{s}", .{subject});
+    }
+}
+
+fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, path: []const u8, info_mode: bool) !void {
+    back.init(allocator);
+    const pattern = (try back.create_pattern(allocator, macro)).?;
+    const prepared = try back.prepare_re(pattern);
+    var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
+    defer file.close();
+
+    var file_buffer: [4096]u8 = undefined;
+    var file_reader = file.reader(&file_buffer);
+    var reader = &file_reader.interface;
+
+    var line_no: usize = 1;
+
+    while (true) {
+        var aw = std.Io.Writer.Allocating.init(allocator);
+        defer aw.deinit();
+        _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
+            error.EndOfStream => {
+                if (aw.written().len == 0) break;
+                // Process the very last line if it doesn't end with \n
+                break;
+            },
+            else => return err,
+        };
+
+        reader.toss(1);
+
+        const line = aw.written();
+        const matched = back.match_re(&pattern, line, &prepared);
+        if (info_mode) {
+            try stdout.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, matched.matched, macro });
+            if (matched.properties != null) {
+                try stdout.print("\n  Meta properties found:\n", .{});
+                var it = matched.properties.?.iterator();
+                while (it.next()) |entry| {
+                    const key = entry.key_ptr.*;
+                    const val = entry.value_ptr.*;
+                    try stdout.print("\t{s}: {s}\n", .{ key, val });
+                }
+                try stdout.print("\n\n", .{});
+            }
+        } else {
+            if (matched.matched) {
+                try stdout.print("{s}\n", .{line});
             }
         }
-    } else {
-        std.debug.print("No match found\n", .{});
+        line_no += 1;
     }
 }
 
