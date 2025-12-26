@@ -90,14 +90,13 @@ pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern
     return result;
 }
 
-pub fn prepare_re(pat: Pattern) !Prepared {
-    const pattern: re.PCRE2_SPTR8 = &pat.regex[0];
+pub fn prepare_re(pattern: Pattern) !Prepared {
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
 
     const compile_ctx = re.pcre2_compile_context_create_8(general_context);
 
-    const regex = re.pcre2_compile_8(pattern, PCRE2_ZERO_TERMINATED, 0, &errornumber, &erroroffset, compile_ctx) orelse {
+    const regex = re.pcre2_compile_8(pattern.regex.ptr, PCRE2_ZERO_TERMINATED, 0, &errornumber, &erroroffset, compile_ctx) orelse {
         const len = 256;
         const buffer = backend_allocator.alloc(u8, len) catch {
             return grok.GrokError.MemoryAllocationError;
