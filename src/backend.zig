@@ -95,7 +95,8 @@ pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern
                         try concat.appendSlice(allocator, current_slice);
                         try concat.appendSlice(allocator, "_");
                         try concat.appendSlice(allocator, reference);
-                        reference = concat.items[0.. :0];
+                        try concat.append(allocator, 0);
+                        reference = concat.items[0 .. concat.items.len - 1 :0];
                     }
                     try used_properties.put(reference, true);
 
