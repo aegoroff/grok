@@ -105,7 +105,7 @@ fn compile(needle: []const u8) ?*re.pcre2_code_8 {
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
 
-    const regex: ?*re.pcre2_code_8 = re.pcre2_compile_8(pattern, PCRE2_ZERO_TERMINATED, 0, &errornumber, &erroroffset, null);
+    const regex = re.pcre2_compile_8(pattern, PCRE2_ZERO_TERMINATED, 0, &errornumber, &erroroffset, null);
     return regex;
 }
 
