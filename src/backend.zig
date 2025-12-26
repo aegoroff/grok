@@ -114,9 +114,6 @@ pub fn match_re(pattern: *const Pattern, subject: []const u8, prepared: *const P
 
     const rc: c_int = re.pcre2_match_8(prepared.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
     const matched = rc > 0;
-    if (rc < 0) {
-        std.debug.print("Return code: {d}\n", .{rc});
-    }
 
     if (matched and pattern.properties.items.len > 0) {
         var properties = std.StringHashMap([]const u8).init(backend_allocator);
