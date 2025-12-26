@@ -91,7 +91,7 @@ fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const 
     var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
     defer file.close();
 
-    var file_buffer: [4096]u8 = undefined;
+    var file_buffer: [16384]u8 = undefined;
     var file_reader = file.reader(&file_buffer);
     var reader = &file_reader.interface;
 
