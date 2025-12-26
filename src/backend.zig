@@ -112,7 +112,7 @@ pub fn match_re(pattern: *const Pattern, subject: []const u8, prepared: *const P
     defer re.pcre2_match_data_free_8(match_data);
     const match_ctx = re.pcre2_match_context_create_8(general_context);
 
-    const rc: c_int = re.pcre2_match_8(prepared.re, subject.ptr, subject.len, 0, 0, match_data, match_ctx);
+    const rc: c_int = re.pcre2_match_8(prepared.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
     const matched = rc > 0;
     if (rc < 0) {
         std.debug.print("Return code: {d}\n", .{rc});
