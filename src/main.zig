@@ -12,6 +12,13 @@ pub fn main() !void {
         stdout.flush() catch {};
     }
 
+    const allocator = std.heap.c_allocator;
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    var iter = try std.process.ArgIterator.initWithAllocator(allocator);
+    defer iter.deinit();
+
     const params = comptime clap.parseParamsComptime(
         \\-h, --help                 Display this help and exit.
         \\-f, --file     <str>       Full path to file to read data from.
@@ -22,9 +29,6 @@ pub fn main() !void {
         \\                           directory used to search all *.patterns files
     );
 
-    const allocator = std.heap.c_allocator;
-    var arena = std.heap.ArenaAllocator.init(allocator);
-    defer arena.deinit();
 
     var diag = clap.Diagnostic{};
     var res = clap.parse(clap.Help, &params, clap.parsers.default, .{
