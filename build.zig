@@ -5,6 +5,20 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const strip = optimize != .Debug;
 
+    const flex_step = b.addSystemCommand(&[_][:0]const u8{
+        "flex",
+        "--fast",
+        "--outfile=src/grok/generated/grok.flex.c",
+        "src/grok/grok.lex",
+    });
+    const bison_step = b.addSystemCommand(&[_][:0]const u8{
+        "bison",
+        "--output=src/grok/generated/grok.tab.c",
+        "-dy",
+        "src/grok/grok.y",
+    });
+    bison_step.step.dependOn(&flex_step.step);
+
     const pcre2_dep = b.dependency("pcre2", .{
         .target = target,
         .optimize = optimize,
@@ -22,6 +36,7 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
+    exe.step.dependOn(&bison_step.step);
     const clap_dep = b.dependency("clap", .{
         .optimize = optimize,
         .target = target,
