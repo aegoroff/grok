@@ -57,7 +57,10 @@ pub fn main() !void {
     };
     const m = (try back.create_pattern(arena.allocator(), macro)).?;
     const regex = compile(m.regex).?;
-    const match = find(regex, haystack).?;
+    const match = find(regex, haystack) orelse {
+        std.debug.print("No match found\n", .{});
+        return;
+    };
     std.debug.print("Match: {s}\n", .{match});
 }
 
