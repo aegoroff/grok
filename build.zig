@@ -5,13 +5,13 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const strip = optimize != .Debug;
 
-    const flex_step = b.addSystemCommand(&[_][:0]const u8{
+    const flex_step = b.addSystemCommand(&[_][]const u8{
         "flex",
         "--fast",
         "--outfile=src/grok/generated/grok.flex.c",
         "src/grok/grok.lex",
     });
-    const bison_step = b.addSystemCommand(&[_][:0]const u8{
+    const bison_step = b.addSystemCommand(&[_][]const u8{
         "bison",
         "--output=src/grok/generated/grok.tab.c",
         "-dy",
