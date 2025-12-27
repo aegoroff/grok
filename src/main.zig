@@ -121,10 +121,10 @@ fn on_template(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []co
 }
 
 fn on_templates(allocator: std.mem.Allocator, stdout: *std.io.Writer) !void {
-    var it = front.get_patterns().iterator();
+    var it = front.get_patterns().keyIterator();
     var macroses = std.ArrayList([]const u8){};
     while (it.next()) |item| {
-        try macroses.append(allocator, item.key_ptr.*);
+        try macroses.append(allocator, item.*);
     }
     std.mem.sort([]const u8, macroses.items, {}, string_less_than);
     for (macroses.items) |item| {
