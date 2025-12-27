@@ -69,20 +69,20 @@ pub fn main() !void {
     const matches = try app.parseProcess();
     const patterns = matches.getMultiValues("patterns");
 
-    try compile_lib(patterns, arena.allocator());
+    try compileLib(patterns, arena.allocator());
 
     if (matches.subcommandMatches("info")) |info_cmd_matches| {
         if (info_cmd_matches.getSingleValue("macro")) |macro| {
-            try on_template(allocator, stdout, macro);
+            try onTemplate(allocator, stdout, macro);
         } else {
-            try on_templates(allocator, stdout);
+            try onTemplates(allocator, stdout);
         }
     }
     if (matches.subcommandMatches("string")) |info_cmd_matches| {
         if (info_cmd_matches.getSingleValue("macro")) |macro| {
             if (info_cmd_matches.getSingleValue("STRING")) |str| {
                 const info_mode = info_cmd_matches.containsArg("info");
-                try on_string(arena.allocator(), stdout, macro, str, info_mode);
+                try onString(arena.allocator(), stdout, macro, str, info_mode);
             }
         }
     }
@@ -90,7 +90,7 @@ pub fn main() !void {
         if (info_cmd_matches.getSingleValue("macro")) |macro| {
             if (info_cmd_matches.getSingleValue("PATH")) |path| {
                 const info_mode = info_cmd_matches.containsArg("info");
-                try on_file(allocator, stdout, macro, path, info_mode);
+                try onFile(allocator, stdout, macro, path, info_mode);
             }
         }
     }
@@ -98,16 +98,22 @@ pub fn main() !void {
     if (matches.subcommandMatches("stdin")) |info_cmd_matches| {
         if (info_cmd_matches.getSingleValue("macro")) |macro| {
             const info_mode = info_cmd_matches.containsArg("info");
-            try on_stdin(allocator, stdout, macro, info_mode);
+            try onStdin(allocator, stdout, macro, info_mode);
         }
     }
 }
 
-fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, subject: []const u8, info_mode: bool) !void {
+fn onString(
+    allocator: std.mem.Allocator,
+    stdout: *std.io.Writer,
+    macro: []const u8,
+    subject: []const u8,
+    info_mode: bool,
+) !void {
     back.init(allocator);
-    const pattern = (try back.create_pattern(allocator, macro)).?;
-    const prepared = try back.prepare_re(pattern);
-    const matched = back.match_re(allocator, &pattern, subject, &prepared);
+    const pattern = (try back.createPattern(allocator, macro)).?;
+    const prepared = try back.prepareRegex(pattern);
+    const matched = back.matchRegex(allocator, &pattern, subject, &prepared);
     if (info_mode) {
         if (matched.matched) {
             try stdout.print("Match found\n", .{});
@@ -127,14 +133,20 @@ fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []cons
     }
 }
 
-fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, path: []const u8, info_mode: bool) !void {
+fn onFile(
+    allocator: std.mem.Allocator,
+    stdout: *std.io.Writer,
+    macro: []const u8,
+    path: []const u8,
+    info_mode: bool,
+) !void {
     var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
     defer file.close();
     var file_buffer: [16384]u8 = undefined;
     var file_reader = file.reader(&file_buffer);
     const reader = &file_reader.interface;
     const encoding_buffer = try reader.take(4);
-    const detection = encoding.detect_bom_memory(encoding_buffer);
+    const detection = encoding.detectBomMemory(encoding_buffer);
     try file_reader.seekTo(detection.offset);
     var file_encoding: encoding.Encoding = undefined;
     if (detection.encoding == .unknown) {
@@ -142,38 +154,43 @@ fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const 
     } else {
         file_encoding = detection.encoding;
     }
-    return read_from_reader(allocator, stdout, macro, reader, info_mode, file_encoding);
+    return readFromReader(allocator, stdout, macro, reader, info_mode, file_encoding);
 }
 
-fn on_stdin(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, info_mode: bool) !void {
+fn onStdin(
+    allocator: std.mem.Allocator,
+    stdout: *std.io.Writer,
+    macro: []const u8,
+    info_mode: bool,
+) !void {
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.fs.File.stdin().reader(&file_buffer);
     const reader = &file_reader.interface;
-    return read_from_reader(allocator, stdout, macro, reader, info_mode, null);
+    return readFromReader(allocator, stdout, macro, reader, info_mode, null);
 }
 
-fn on_template(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8) !void {
-    const pattern = (try back.create_pattern(allocator, macro)).?;
+fn onTemplate(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8) !void {
+    const pattern = (try back.createPattern(allocator, macro)).?;
     return stdout.print("{s}\n", .{pattern.regex});
 }
 
-fn on_templates(allocator: std.mem.Allocator, stdout: *std.io.Writer) !void {
-    var it = front.get_patterns().keyIterator();
+fn onTemplates(allocator: std.mem.Allocator, stdout: *std.io.Writer) !void {
+    var it = front.getPatterns().keyIterator();
     var macroses = std.ArrayList([]const u8){};
     while (it.next()) |item| {
         try macroses.append(allocator, item.*);
     }
-    std.mem.sort([]const u8, macroses.items, {}, string_less_than);
+    std.mem.sort([]const u8, macroses.items, {}, stringLessThan);
     for (macroses.items) |item| {
         try stdout.print("{s}\n", .{item});
     }
 }
 
-fn string_less_than(_: void, lhs: []const u8, rhs: []const u8) bool {
+fn stringLessThan(_: void, lhs: []const u8, rhs: []const u8) bool {
     return std.mem.order(u8, lhs, rhs) == .lt;
 }
 
-fn read_from_reader(
+fn readFromReader(
     allocator: std.mem.Allocator,
     stdout: *std.io.Writer,
     macro: []const u8,
@@ -182,8 +199,8 @@ fn read_from_reader(
     file_encoding: ?encoding.Encoding, // null means reading from stdin
 ) !void {
     back.init(allocator);
-    const pattern = (try back.create_pattern(allocator, macro)).?;
-    const prepared = try back.prepare_re(pattern);
+    const pattern = (try back.createPattern(allocator, macro)).?;
+    const prepared = try back.prepareRegex(pattern);
 
     var line_no: usize = 1;
 
@@ -210,7 +227,7 @@ fn read_from_reader(
         } else {
             // stdin case. Detect encoding on each line because stdin can be
             // concatenated from several files using cat
-            const detected = encoding.detect_bom_memory(line);
+            const detected = encoding.detectBomMemory(line);
             if (detected.encoding != .unknown) {
                 current_encoding = detected.encoding;
             }
@@ -218,13 +235,13 @@ fn read_from_reader(
 
         if (current_encoding == .utf16be or current_encoding == .utf16le) {
             reader.toss(2); // IMPORTANT: or we damage lines after the first one
-            const wide = try encoding.char_to_wchar(arena.allocator(), line, current_encoding);
+            const wide = try encoding.charToWchar(arena.allocator(), line, current_encoding);
             line = try std.unicode.utf16LeToUtf8Alloc(arena.allocator(), wide);
         } else {
             reader.toss(1);
         }
 
-        const matched = back.match_re(arena.allocator(), &pattern, line, &prepared);
+        const matched = back.matchRegex(arena.allocator(), &pattern, line, &prepared);
         if (info_mode) {
             try stdout.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, matched.matched, macro });
             if (matched.properties) |properties| {
@@ -246,7 +263,7 @@ fn read_from_reader(
     }
 }
 
-fn compile_lib(files: ?[][]const u8, allocator: std.mem.Allocator) !void {
+fn compileLib(files: ?[][]const u8, allocator: std.mem.Allocator) !void {
     front.init(allocator);
     if (files == null or files.?.len == 0) {
         // Use default
@@ -266,7 +283,7 @@ fn compile_lib(files: ?[][]const u8, allocator: std.mem.Allocator) !void {
                     const matches = glob.match("*.patterns", entry.basename);
                     if (matches) {
                         const p = try entry.dir.realpathAlloc(allocator, entry.basename);
-                        try front.compile_file(p.ptr);
+                        try front.compileFile(p.ptr);
                     }
                 },
                 else => {},
@@ -274,7 +291,7 @@ fn compile_lib(files: ?[][]const u8, allocator: std.mem.Allocator) !void {
         }
     } else {
         for (files.?) |file| {
-            try front.compile_file(file.ptr);
+            try front.compileFile(file.ptr);
         }
     }
 }

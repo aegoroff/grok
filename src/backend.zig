@@ -72,8 +72,8 @@ pub export fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) void {
     }
 }
 
-pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern {
-    const m = front.get_pattern(macro).?;
+pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern {
+    const m = front.getPattern(macro).?;
     var stack = std.ArrayList(front.Info){};
     var composition = std.ArrayList(u8){};
     var used_properties = std.StringHashMap(bool).init(allocator);
@@ -109,7 +109,7 @@ pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern
                     const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
                     try stack.append(allocator, trail_paren);
                 }
-                const childs = front.get_pattern(current_slice) orelse {
+                const childs = front.getPattern(current_slice) orelse {
                     continue;
                 };
                 var rev_iter = std.mem.reverseIterator(childs.items);
@@ -123,7 +123,7 @@ pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern
     return result;
 }
 
-pub fn prepare_re(pattern: Pattern) !Prepared {
+pub fn prepareRegex(pattern: Pattern) !Prepared {
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
 
@@ -143,7 +143,7 @@ pub fn prepare_re(pattern: Pattern) !Prepared {
     return Prepared{ .re = regex };
 }
 
-pub fn match_re(allocator: std.mem.Allocator, pattern: *const Pattern, subject: []const u8, prepared: *const Prepared) MatchResult {
+pub fn matchRegex(allocator: std.mem.Allocator, pattern: *const Pattern, subject: []const u8, prepared: *const Prepared) MatchResult {
     backend_allocator = allocator; // IMPORTANT
     const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, general_context);
     defer re.pcre2_match_data_free_8(match_data);

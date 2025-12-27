@@ -14,7 +14,7 @@ pub const Info = struct {
 
 pub const Part = enum { literal, reference };
 
-pub fn compile_file(path: [*c]const u8) !void {
+pub fn compileFile(path: [*c]const u8) !void {
     const c_file_ptr = c.fopen(path, "r");
 
     if (c_file_ptr == null) {
@@ -89,10 +89,10 @@ pub export fn fend_on_grok(m: *c.macro_t) void {
     };
 }
 
-pub fn get_pattern(key: []const u8) ?std.ArrayList(Info) {
+pub fn getPattern(key: []const u8) ?std.ArrayList(Info) {
     return definitions.get(key);
 }
 
-pub fn get_patterns() std.StringHashMap(std.ArrayList(Info)) {
+pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
     return definitions;
 }

@@ -41,7 +41,7 @@ pub const DetectResult = struct {
     offset: usize,
 };
 
-pub fn detect_bom_memory(buffer: []const u8) DetectResult {
+pub fn detectBomMemory(buffer: []const u8) DetectResult {
     for (signatures) |bom| {
         if (bom.signature.len == 0) continue;
 
@@ -58,7 +58,7 @@ pub fn detect_bom_memory(buffer: []const u8) DetectResult {
     return .{ .encoding = .unknown, .offset = 0 };
 }
 
-pub fn char_to_wchar(allocator: std.mem.Allocator, buffer: []const u8, encoding: Encoding) ![]u16 {
+pub fn charToWchar(allocator: std.mem.Allocator, buffer: []const u8, encoding: Encoding) ![]u16 {
     const len = buffer.len / 2;
 
     var wide_buffer = try allocator.alloc(u16, len);
