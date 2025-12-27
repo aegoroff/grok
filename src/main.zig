@@ -21,6 +21,7 @@ pub fn main() !void {
 
     var root_cmd = app.rootCommand();
     root_cmd.setProperty(.help_on_empty_args);
+    root_cmd.setProperty(.subcommand_required);
 
     var macro_opt = yazap.Arg.singleValueOption("macro", 'm', "Pattern macros to build regexp");
     macro_opt.setValuePlaceholder("STRING");
@@ -28,20 +29,20 @@ pub fn main() !void {
 
     var str_cmd = app.createCommand("string", "Single string matching mode");
     str_cmd.setProperty(.help_on_empty_args);
-    var string_opt = yazap.Arg.singleValueOption("string", 's', "String to match");
-    string_opt.setValuePlaceholder("STRING");
+    str_cmd.setProperty(.positional_arg_required);
+    const string_opt = yazap.Arg.positional("STRING", "String to match", null);
     try str_cmd.addArg(macro_opt);
-    try str_cmd.addArg(string_opt);
     try str_cmd.addArg(info_opt);
+    try str_cmd.addArg(string_opt);
 
     var file_cmd = app.createCommand("file", "File matching mode");
     file_cmd.setProperty(.help_on_empty_args);
-    var file_opt = yazap.Arg.singleValueOption("file", 'f', "Full path to file to read data from");
-    file_opt.setValuePlaceholder("PATH");
+    file_cmd.setProperty(.positional_arg_required);
+    const file_opt = yazap.Arg.positional("PATH", "Full path to file to read data from", null);
 
     try file_cmd.addArg(macro_opt);
-    try file_cmd.addArg(file_opt);
     try file_cmd.addArg(info_opt);
+    try file_cmd.addArg(file_opt);
 
     var stdin_cmd = app.createCommand("stdin", "Standard input (stdin) matching mode");
     stdin_cmd.setProperty(.help_on_empty_args);
@@ -78,7 +79,7 @@ pub fn main() !void {
     }
     if (matches.subcommandMatches("string")) |info_cmd_matches| {
         if (info_cmd_matches.getSingleValue("macro")) |macro| {
-            if (info_cmd_matches.getSingleValue("string")) |str| {
+            if (info_cmd_matches.getSingleValue("STRING")) |str| {
                 const info_mode = info_cmd_matches.containsArg("info");
                 try on_string(arena.allocator(), stdout, macro, str, info_mode);
             }
@@ -86,7 +87,7 @@ pub fn main() !void {
     }
     if (matches.subcommandMatches("file")) |info_cmd_matches| {
         if (info_cmd_matches.getSingleValue("macro")) |macro| {
-            if (info_cmd_matches.getSingleValue("file")) |path| {
+            if (info_cmd_matches.getSingleValue("PATH")) |path| {
                 const info_mode = info_cmd_matches.containsArg("info");
                 try on_file(allocator, stdout, macro, path, info_mode);
             }
