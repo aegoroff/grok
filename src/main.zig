@@ -59,6 +59,10 @@ pub fn main() !void {
     if (res.args.file != null) {
         try on_file(allocator, stdout, macro, res.args.file.?, info_mode);
     }
+
+    if (res.args.file == null and res.args.string == null) {
+        try on_stdin(allocator, stdout, macro, info_mode);
+    }
 }
 
 fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, subject: []const u8, info_mode: bool) !void {
@@ -90,6 +94,13 @@ fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const 
     defer file.close();
     var file_buffer: [16384]u8 = undefined;
     var file_reader = file.reader(&file_buffer);
+    const reader = &file_reader.interface;
+    return read_from_reader(allocator, stdout, macro, reader, info_mode);
+}
+
+fn on_stdin(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, info_mode: bool) !void {
+    var file_buffer: [16384]u8 = undefined;
+    var file_reader = std.fs.File.stdin().reader(&file_buffer);
     const reader = &file_reader.interface;
     return read_from_reader(allocator, stdout, macro, reader, info_mode);
 }
