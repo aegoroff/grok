@@ -51,13 +51,14 @@ pub fn main() !void {
     try stdin_cmd.addArg(macro_opt);
     try stdin_cmd.addArg(info_opt);
 
-    var info_cmd = app.createCommand("info", "Macro information mode");
-    try info_cmd.addArg(macro_opt);
+    var macro_cmd = app.createCommand("macro", "Macro information mode where a macro real regexp can be displayed or to get all supported macroses");
+    const macro_name_opt = yazap.Arg.positional("MACRO", "Macro name to expand real regular expression", null);
+    try macro_cmd.addArg(macro_name_opt);
 
     try root_cmd.addSubcommand(str_cmd);
     try root_cmd.addSubcommand(file_cmd);
     try root_cmd.addSubcommand(stdin_cmd);
-    try root_cmd.addSubcommand(info_cmd);
+    try root_cmd.addSubcommand(macro_cmd);
 
     try root_cmd.addArg(yazap.Arg.multiValuesOption(
         "patterns",
@@ -71,8 +72,8 @@ pub fn main() !void {
 
     try compileLib(patterns, arena.allocator());
 
-    if (matches.subcommandMatches("info")) |info_cmd_matches| {
-        if (info_cmd_matches.getSingleValue("macro")) |macro| {
+    if (matches.subcommandMatches("macro")) |info_cmd_matches| {
+        if (info_cmd_matches.getSingleValue("MACRO")) |macro| {
             try onTemplate(allocator, stdout, macro);
         } else {
             try onTemplates(allocator, stdout);
