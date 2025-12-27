@@ -8,8 +8,8 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug",
-            "program": "${workspaceFolder}/build/grok",
-            "args": ["-i", "-m", "NGINXPROXYACCESS", "-f", "/home/egr/proxy-host-1_access.log"],
+            "program": "${workspaceFolder}/zig-out/bin/grok",
+            "args": ["file", "-m", "NLOG", "/home/egr/code/logviewerULE.log"],
             "cwd": "${workspaceFolder}"
         }
     ]
