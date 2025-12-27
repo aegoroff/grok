@@ -25,6 +25,7 @@ pub fn main() !void {
 
     var macro_opt = yazap.Arg.singleValueOption("macro", 'm', "Pattern macros to build regexp");
     macro_opt.setValuePlaceholder("STRING");
+    macro_opt.setProperty(.takes_value);
     const info_opt = yazap.Arg.booleanOption("info", 'i', "Dont work like grep i.e. output matched string with additional info");
 
     var str_cmd = app.createCommand("string", "Single string matching mode");
@@ -75,7 +76,6 @@ pub fn main() !void {
         } else {
             try on_templates(allocator, stdout);
         }
-        return;
     }
     if (matches.subcommandMatches("string")) |info_cmd_matches| {
         if (info_cmd_matches.getSingleValue("macro")) |macro| {
@@ -122,7 +122,7 @@ fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []cons
             try stdout.print("No match found\n", .{});
         }
     } else if (matched.matched) {
-        try stdout.print("{s}", .{subject});
+        try stdout.print("{s}\n", .{subject});
     }
 }
 
@@ -144,7 +144,7 @@ fn on_stdin(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const
 
 fn on_template(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8) !void {
     const pattern = (try back.create_pattern(allocator, macro)).?;
-    return stdout.print("{s}", .{pattern.regex});
+    return stdout.print("{s}\n", .{pattern.regex});
 }
 
 fn on_templates(allocator: std.mem.Allocator, stdout: *std.io.Writer) !void {
