@@ -51,6 +51,12 @@ pub fn main() !void {
     try compile_lib(res.args.patterns, arena.allocator());
 
     const macro = res.args.macro orelse {
+        if (template_mode) {
+            var it = front.get_patterns().iterator();
+            while (it.next()) |item| {
+                try stdout.print("{s}\n", .{item.key_ptr.*});
+            }
+        }
         return;
     };
 
@@ -79,17 +85,17 @@ fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []cons
     const matched = back.match_re(&pattern, subject, &prepared);
     if (info_mode) {
         if (matched.matched) {
-            std.debug.print("Match found\n", .{});
+            try stdout.print("Match found\n", .{});
             if (matched.properties != null) {
                 var it = matched.properties.?.iterator();
                 while (it.next()) |entry| {
                     const key = entry.key_ptr.*;
                     const val = entry.value_ptr.*;
-                    std.debug.print("\t{s}: {s}\n", .{ key, val });
+                    try stdout.print("\t{s}: {s}\n", .{ key, val });
                 }
             }
         } else {
-            std.debug.print("No match found\n", .{});
+            try stdout.print("No match found\n", .{});
         }
     } else if (matched.matched) {
         try stdout.print("{s}", .{subject});
