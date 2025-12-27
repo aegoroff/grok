@@ -112,6 +112,11 @@ fn on_stdin(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const
     return read_from_reader(allocator, stdout, macro, reader, info_mode);
 }
 
+fn on_template(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8) !void {
+    const pattern = (try back.create_pattern(allocator, macro)).?;
+    return stdout.print("{s}", .{pattern.regex});
+}
+
 fn read_from_reader(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, reader: *std.Io.Reader, info_mode: bool) !void {
     const pattern = (try back.create_pattern(allocator, macro)).?;
     const prepared = try back.prepare_re(allocator, pattern);
