@@ -78,5 +78,5 @@ pub fn charToWchar(allocator: std.mem.Allocator, buffer: []const u8, encoding: E
         counter += 1;
     }
 
-    return wide_buffer[0..counter];
+    return wide_buffer;
 }
