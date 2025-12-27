@@ -1,6 +1,7 @@
 const std = @import("std");
 const front = @import("frontend.zig");
 const back = @import("backend.zig");
+const encoding = @import("encoding.zig");
 const glob = @import("glob");
 const yazap = @import("yazap");
 
@@ -126,91 +127,6 @@ fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []cons
     }
 }
 
-const Encoding = enum {
-    unknown,
-    utf8,
-    utf16le,
-    utf16be,
-    utf32be,
-};
-
-const Bom = struct {
-    encoding: Encoding,
-    signature: []const u8,
-};
-
-const signatures: []const Bom = &[_]Bom{
-    Bom{
-        .encoding = .utf8,
-        .signature = &[_]u8{ 0xEF, 0xBB, 0xBF },
-    },
-    Bom{
-        .encoding = .utf16le,
-        .signature = &[_]u8{ 0xFF, 0xFE },
-    },
-    Bom{
-        .encoding = .utf16be,
-        .signature = &[_]u8{ 0xFE, 0xFF },
-    },
-    Bom{
-        .encoding = .utf32be,
-        .signature = &[_]u8{ 0x00, 0x00, 0xFE, 0xFF },
-    },
-    Bom{
-        .encoding = .unknown,
-        .signature = &[_]u8{},
-    },
-};
-
-const DetectResult = struct {
-    encoding: Encoding,
-    offset: usize,
-};
-
-fn detect_bom_memory(buffer: []const u8) DetectResult {
-    for (signatures) |bom| {
-        if (bom.signature.len == 0) continue;
-
-        if (buffer.len >= bom.signature.len and
-            std.mem.startsWith(u8, buffer, bom.signature))
-        {
-            return .{
-                .encoding = bom.encoding,
-                .offset = bom.signature.len,
-            };
-        }
-    }
-
-    return .{ .encoding = .unknown, .offset = 0 };
-}
-
-fn char_to_wchar(
-    allocator: std.mem.Allocator,
-    buffer: []const u8,
-    encoding: Encoding,
-) ![]u16 {
-    const len = buffer.len / 2;
-
-    var wide_buffer = try allocator.alloc(u16, len);
-
-    var i: usize = 0;
-    var counter: usize = 0;
-    while (i + 1 < buffer.len) : (i += 2) {
-        const b1 = buffer[i];
-        const b2 = buffer[i + 1];
-
-        const val: u16 = switch (encoding) {
-            .utf16le => @as(u16, b2) << 8 | b1,
-            else => @as(u16, b1) << 8 | b2,
-        };
-
-        wide_buffer[counter] = val;
-        counter += 1;
-    }
-
-    return wide_buffer[0..counter];
-}
-
 fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, path: []const u8, info_mode: bool) !void {
     var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
     defer file.close();
@@ -218,15 +134,15 @@ fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const 
     var file_reader = file.reader(&file_buffer);
     const reader = &file_reader.interface;
     const encoding_buffer = try reader.take(4);
-    const detection = detect_bom_memory(encoding_buffer);
+    const detection = encoding.detect_bom_memory(encoding_buffer);
     try file_reader.seekTo(detection.offset);
-    var encoding: Encoding = undefined;
+    var file_encoding: encoding.Encoding = undefined;
     if (detection.encoding == .unknown) {
-        encoding = .utf8; // set default to utf-8
+        file_encoding = .utf8; // set default to utf-8
     } else {
-        encoding = detection.encoding;
+        file_encoding = detection.encoding;
     }
-    return read_from_reader(allocator, stdout, macro, reader, info_mode, encoding);
+    return read_from_reader(allocator, stdout, macro, reader, info_mode, file_encoding);
 }
 
 fn on_stdin(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, info_mode: bool) !void {
@@ -263,7 +179,7 @@ fn read_from_reader(
     macro: []const u8,
     reader: *std.Io.Reader,
     info_mode: bool,
-    encoding: ?Encoding, // null means reading from stdin
+    file_encoding: ?encoding.Encoding, // null means reading from stdin
 ) !void {
     back.init(allocator);
     const pattern = (try back.create_pattern(allocator, macro)).?;
@@ -272,7 +188,7 @@ fn read_from_reader(
     var line_no: usize = 1;
 
     var arena = std.heap.ArenaAllocator.init(allocator);
-    var current_encoding: Encoding = undefined;
+    var current_encoding: encoding.Encoding = undefined;
 
     while (true) {
         defer _ = arena.reset(.retain_capacity);
@@ -287,27 +203,25 @@ fn read_from_reader(
             else => return err,
         };
 
-        reader.toss(1);
-
         var line = aw.written();
 
-        if (encoding) |e| {
+        if (file_encoding) |e| {
             current_encoding = e;
         } else {
             // stdin case. Detect encoding on each line because stdin can be
             // concatenated from several files using cat
-            const detected = detect_bom_memory(line);
+            const detected = encoding.detect_bom_memory(line);
             if (detected.encoding != .unknown) {
                 current_encoding = detected.encoding;
             }
         }
 
         if (current_encoding == .utf16be or current_encoding == .utf16le) {
-            const wide = try char_to_wchar(arena.allocator(), line, current_encoding);
-            //std.debug.print("Encoding: {}\nOriginal: {s}\nWide: {any}\n", .{ current_encoding, line, wide });
-            const converted: []u8 = undefined;
-            _ = try std.unicode.utf16LeToUtf8(converted, wide);
-            line = converted;
+            reader.toss(2); // IMPORTANT: or we damage lines after the first one
+            const wide = try encoding.char_to_wchar(arena.allocator(), line, current_encoding);
+            line = try std.unicode.utf16LeToUtf8Alloc(arena.allocator(), wide);
+        } else {
+            reader.toss(1);
         }
 
         const matched = back.match_re(arena.allocator(), &pattern, line, &prepared);
