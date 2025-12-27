@@ -97,9 +97,9 @@ fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const 
 
     var line_no: usize = 1;
 
+    var arena = std.heap.ArenaAllocator.init(allocator);
     while (true) {
-        var arena = std.heap.ArenaAllocator.init(allocator);
-        defer arena.deinit();
+        defer _ = arena.reset(.retain_capacity);
         back.init(arena.allocator());
         var aw = std.Io.Writer.Allocating.init(arena.allocator());
         defer aw.deinit();
