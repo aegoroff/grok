@@ -209,7 +209,8 @@ fn readFromReader(
 
     while (true) {
         defer _ = arena.reset(.retain_capacity);
-        var aw = std.Io.Writer.Allocating.init(arena.allocator());
+        const loop_allocator = arena.allocator();
+        var aw = std.Io.Writer.Allocating.init(loop_allocator);
         defer aw.deinit();
         _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
             error.EndOfStream => {
@@ -235,12 +236,12 @@ fn readFromReader(
 
         if (current_encoding == .utf16be or current_encoding == .utf16le) {
             reader.toss(2); // IMPORTANT: or we damage lines after the first one
-            line = try encoding.convertRawUtf16ToUtf8(arena.allocator(), line, current_encoding);
+            line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line, current_encoding);
         } else {
             reader.toss(1);
         }
 
-        const matched = back.matchRegex(arena.allocator(), &pattern, line, &prepared);
+        const matched = back.matchRegex(loop_allocator, &pattern, line, &prepared);
         if (info_mode) {
             try stdout.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, matched.matched, macro });
             if (matched.properties) |properties| {
