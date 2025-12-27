@@ -105,8 +105,8 @@ pub fn main() !void {
 fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, subject: []const u8, info_mode: bool) !void {
     back.init(allocator);
     const pattern = (try back.create_pattern(allocator, macro)).?;
-    const prepared = try back.prepare_re(allocator, pattern);
-    const matched = back.match_re(&pattern, subject, &prepared);
+    const prepared = try back.prepare_re(pattern);
+    const matched = back.match_re(allocator, &pattern, subject, &prepared);
     if (info_mode) {
         if (matched.matched) {
             try stdout.print("Match found\n", .{});
@@ -219,6 +219,7 @@ fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const 
     const reader = &file_reader.interface;
     const encoding_buffer = try reader.take(4);
     const detection = detect_bom_memory(encoding_buffer);
+    try file_reader.seekTo(detection.offset);
     var encoding: Encoding = undefined;
     if (detection.encoding == .unknown) {
         encoding = .utf8; // set default to utf-8
@@ -264,8 +265,9 @@ fn read_from_reader(
     info_mode: bool,
     encoding: ?Encoding, // null means reading from stdin
 ) !void {
+    back.init(allocator);
     const pattern = (try back.create_pattern(allocator, macro)).?;
-    const prepared = try back.prepare_re(allocator, pattern);
+    const prepared = try back.prepare_re(pattern);
 
     var line_no: usize = 1;
 
@@ -274,7 +276,6 @@ fn read_from_reader(
 
     while (true) {
         defer _ = arena.reset(.retain_capacity);
-        back.init(arena.allocator());
         var aw = std.Io.Writer.Allocating.init(arena.allocator());
         defer aw.deinit();
         _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
@@ -303,13 +304,13 @@ fn read_from_reader(
 
         if (current_encoding == .utf16be or current_encoding == .utf16le) {
             const wide = try char_to_wchar(arena.allocator(), line, current_encoding);
-            //std.debug.print("Encoding {}: {any}\n", .{ current_encoding, wide });
+            //std.debug.print("Encoding: {}\nOriginal: {s}\nWide: {any}\n", .{ current_encoding, line, wide });
             const converted: []u8 = undefined;
             _ = try std.unicode.utf16LeToUtf8(converted, wide);
             line = converted;
         }
 
-        const matched = back.match_re(&pattern, line, &prepared);
+        const matched = back.match_re(arena.allocator(), &pattern, line, &prepared);
         if (info_mode) {
             try stdout.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, matched.matched, macro });
             if (matched.properties) |properties| {

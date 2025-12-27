@@ -123,18 +123,19 @@ pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern
     return result;
 }
 
-pub fn prepare_re(allocator: std.mem.Allocator, pattern: Pattern) !Prepared {
+pub fn prepare_re(pattern: Pattern) !Prepared {
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
 
     const compile_ctx = re.pcre2_compile_context_create_8(general_context);
+    defer re.pcre2_compile_context_free_8(compile_ctx);
 
     const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
         const len = 256;
-        const buffer = allocator.alloc(u8, len) catch {
+        const buffer = backend_allocator.alloc(u8, len) catch {
             return grok.GrokError.MemoryAllocationError;
         };
-        defer allocator.free(buffer);
+        defer backend_allocator.free(buffer);
         _ = re.pcre2_get_error_message_8(errornumber, buffer.ptr, len);
         std.debug.print("PCRE2 compilation failed at offset {d}: {s}\n", .{ erroroffset, buffer });
         return grok.GrokError.InvalidRegex;
@@ -142,16 +143,18 @@ pub fn prepare_re(allocator: std.mem.Allocator, pattern: Pattern) !Prepared {
     return Prepared{ .re = regex };
 }
 
-pub fn match_re(pattern: *const Pattern, subject: []const u8, prepared: *const Prepared) MatchResult {
+pub fn match_re(allocator: std.mem.Allocator, pattern: *const Pattern, subject: []const u8, prepared: *const Prepared) MatchResult {
+    backend_allocator = allocator; // IMPORTANT
     const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, general_context);
     defer re.pcre2_match_data_free_8(match_data);
     const match_ctx = re.pcre2_match_context_create_8(general_context);
+    defer re.pcre2_match_context_free_8(match_ctx);
 
     const rc: c_int = re.pcre2_match_8(prepared.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
     const matched = rc > 0;
 
     if (matched and pattern.properties.items.len > 0) {
-        var properties = std.StringHashMap([]const u8).init(backend_allocator);
+        var properties = std.StringHashMap([]const u8).init(allocator);
         for (pattern.properties.items) |value| {
             var buffer: [*c]re.PCRE2_UCHAR8 = undefined;
             var buffer_size_in_chars: re.PCRE2_SIZE = undefined;
