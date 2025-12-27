@@ -86,14 +86,17 @@ fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []cons
 }
 
 fn on_file(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, path: []const u8, info_mode: bool) !void {
-    const pattern = (try back.create_pattern(allocator, macro)).?;
-    const prepared = try back.prepare_re(allocator, pattern);
     var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
     defer file.close();
-
     var file_buffer: [16384]u8 = undefined;
     var file_reader = file.reader(&file_buffer);
-    var reader = &file_reader.interface;
+    const reader = &file_reader.interface;
+    return read_from_reader(allocator, stdout, macro, reader, info_mode);
+}
+
+fn read_from_reader(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, reader: *std.Io.Reader, info_mode: bool) !void {
+    const pattern = (try back.create_pattern(allocator, macro)).?;
+    const prepared = try back.prepare_re(allocator, pattern);
 
     var line_no: usize = 1;
 
