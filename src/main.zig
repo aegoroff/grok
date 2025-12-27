@@ -235,8 +235,7 @@ fn readFromReader(
 
         if (current_encoding == .utf16be or current_encoding == .utf16le) {
             reader.toss(2); // IMPORTANT: or we damage lines after the first one
-            const wide = try encoding.charToWchar(arena.allocator(), line, current_encoding);
-            line = try std.unicode.utf16LeToUtf8Alloc(arena.allocator(), wide);
+            line = try encoding.convertRawUtf16ToUtf8(arena.allocator(), line, current_encoding);
         } else {
             reader.toss(1);
         }
