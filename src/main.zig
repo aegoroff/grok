@@ -22,6 +22,7 @@ pub fn main() !void {
     const params = comptime clap.parseParamsComptime(
         \\-h, --help                 Display this help and exit.
         \\-i, --info                 Dont work like grep i.e. output matched string with additional info
+        \\-t, --template             Show template(s) information
         \\-f, --file     <str>       Full path to file to read data from.
         \\-m, --macro    <str>       Pattern macros to build regexp.
         \\-s, --string   <str>       String to match.
@@ -45,12 +46,18 @@ pub fn main() !void {
         return clap.help(stdout, clap.Help, &params, .{});
     }
     const info_mode = res.args.info != 0;
+    const template_mode = res.args.template != 0;
 
     try compile_lib(res.args.patterns, arena.allocator());
 
     const macro = res.args.macro orelse {
         return;
     };
+
+    if (template_mode) {
+        try on_template(allocator, stdout, macro);
+        return;
+    }
 
     if (res.args.string != null) {
         try on_string(arena.allocator(), stdout, macro, res.args.string.?, info_mode);
