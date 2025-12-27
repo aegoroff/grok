@@ -52,10 +52,7 @@ pub fn main() !void {
 
     const macro = res.args.macro orelse {
         if (template_mode) {
-            var it = front.get_patterns().iterator();
-            while (it.next()) |item| {
-                try stdout.print("{s}\n", .{item.key_ptr.*});
-            }
+            try on_templates(allocator, stdout);
         }
         return;
     };
@@ -121,6 +118,22 @@ fn on_stdin(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const
 fn on_template(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8) !void {
     const pattern = (try back.create_pattern(allocator, macro)).?;
     return stdout.print("{s}", .{pattern.regex});
+}
+
+fn on_templates(allocator: std.mem.Allocator, stdout: *std.io.Writer) !void {
+    var it = front.get_patterns().iterator();
+    var macroses = std.ArrayList([]const u8){};
+    while (it.next()) |item| {
+        try macroses.append(allocator, item.key_ptr.*);
+    }
+    std.mem.sort([]const u8, macroses.items, {}, string_less_than);
+    for (macroses.items) |item| {
+        try stdout.print("{s}\n", .{item});
+    }
+}
+
+fn string_less_than(_: void, lhs: []const u8, rhs: []const u8) bool {
+    return std.mem.order(u8, lhs, rhs) == .lt;
 }
 
 fn read_from_reader(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8, reader: *std.Io.Reader, info_mode: bool) !void {
