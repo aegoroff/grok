@@ -87,9 +87,9 @@ pub fn create_pattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern
                 // plain literal case
                 try composition.appendSlice(allocator, current_slice);
             } else {
-                if (current.reference != null) {
+                if (current.reference) |current_reference| {
                     // leading (?<name> immediately into composition
-                    var reference = std.mem.span(current.reference);
+                    var reference = std.mem.span(current_reference);
                     if (used_properties.contains(reference)) {
                         var concat = std.ArrayList(u8){};
                         try concat.appendSlice(allocator, current_slice);

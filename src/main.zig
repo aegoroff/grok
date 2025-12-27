@@ -109,8 +109,8 @@ fn on_string(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []cons
     if (info_mode) {
         if (matched.matched) {
             try stdout.print("Match found\n", .{});
-            if (matched.properties != null) {
-                var it = matched.properties.?.iterator();
+            if (matched.properties) |properties| {
+                var it = properties.iterator();
                 while (it.next()) |entry| {
                     const key = entry.key_ptr.*;
                     const val = entry.value_ptr.*;
@@ -189,9 +189,9 @@ fn read_from_reader(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro:
         const matched = back.match_re(&pattern, line, &prepared);
         if (info_mode) {
             try stdout.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, matched.matched, macro });
-            if (matched.properties != null) {
+            if (matched.properties) |properties| {
                 try stdout.print("\n  Meta properties found:\n", .{});
-                var it = matched.properties.?.iterator();
+                var it = properties.iterator();
                 while (it.next()) |entry| {
                     const key = entry.key_ptr.*;
                     const val = entry.value_ptr.*;
