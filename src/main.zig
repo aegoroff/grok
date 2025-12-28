@@ -19,13 +19,13 @@ pub fn main() !void {
     defer arena.deinit();
     const query = std.Target.Query.fromTarget(&builtin.target);
 
-    const appDescr = try std.fmt.allocPrint(
+    const app_descr = try std.fmt.allocPrint(
         allocator,
         "Grok regexp macro processor. {s}\nCopyright (C) 2019-2025 Alexander Egorov. All rights reserved.",
         .{@tagName(query.cpu_arch.?)},
     );
 
-    var app = yazap.App.init(allocator, "grok", appDescr);
+    var app = yazap.App.init(allocator, "grok", app_descr);
     defer app.deinit();
 
     var root_cmd = app.rootCommand();
