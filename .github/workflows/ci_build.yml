@@ -113,7 +113,7 @@ jobs:
       - name: Build
         run: |
           chmod +x ./linux_build_zig.sh
-          ./linux_build_zig.sh ${{ matrix.abi }} ${{ matrix.os }} ${{ matrix.arch }} ${{ matrix.processor }}
+          ./linux_build_zig.sh ${{ matrix.abi }} ${{ matrix.os }} ${{ matrix.arch }} "${{ steps.get_version.outputs.VERSION }}" ${{ matrix.processor }}
         env:
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Create artifact directory
