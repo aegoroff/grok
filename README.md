@@ -74,12 +74,12 @@ File matching mode
 Usage: grok file [OPTIONS] <ARGS>
 
 Args:
-    PATH                                          Full path to file to read data from
+    PATH                      Full path to file to read data from
 
 Options:
-    -m, --macro=<STRING>                          Pattern macros to build regexp
-    -i, --info                                    Dont work like grep i.e. output matched string with additional info
-    -h, --help                                    Print this help and exit
+    -m, --macro=<STRING>      Pattern macros to build regexp
+    -i, --info                Dont work like grep i.e. output matched string with additional info
+    -h, --help                Print this help and exit
 ```
 String command
 ```
@@ -88,12 +88,12 @@ Single string matching mode
 Usage: grok string [OPTIONS] <ARGS>
 
 Args:
-    STRING                                        String to match
+    STRING                    String to match
 
 Options:
-    -m, --macro=<STRING>                          Pattern macros to build regexp
-    -i, --info                                    Dont work like grep i.e. output matched string with additional info
-    -h, --help                                    Print this help and exit
+    -m, --macro=<STRING>      Pattern macros to build regexp
+    -i, --info                Dont work like grep i.e. output matched string with additional info
+    -h, --help                Print this help and exit
 ```
 Stdin command
 ```
@@ -102,9 +102,9 @@ Standard input (stdin) matching mode
 Usage: grok stdin [OPTIONS]
 
 Options:
-    -m, --macro=<STRING>                          Pattern macros to build regexp
-    -i, --info                                    Dont work like grep i.e. output matched string with additional info
-    -h, --help                                    Print this help and exit
+    -m, --macro=<STRING>      Pattern macros to build regexp
+    -i, --info                Dont work like grep i.e. output matched string with additional info
+    -h, --help                Print this help and exit
 ```
 Macro command
 ```
