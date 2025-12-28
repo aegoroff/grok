@@ -53,6 +53,7 @@ jobs:
 
       - name: Build
         run: |
+          zig build -Doptimize=ReleaseFast -Dversion=${{ steps.get_version.outputs.VERSION }} -Dcpu=haswell -Dtarget=${{ env.WINDOWS_TARGET }} --summary all --verbose-cimport --prefix-exe-dir bin-${{ env.WINDOWS_TARGET }}
           cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -B build -Ax64
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
         env:
