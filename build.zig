@@ -29,57 +29,58 @@ pub fn build(b: *std.Build) void {
     };
 
     var flex_args: []const []const u8 = undefined;
-    const os_tag = builtin.os.tag;
-    if (os_tag == .linux) {
-        flex_args = &[_][]const u8{
-            "flex",
-            "--fast",
-            flex_out_opt,
-            flex_input,
-        };
-    } else if (os_tag == .windows) {
-        flex_args = &[_][]const u8{
-            "win_flex.exe",
-            "--fast",
-            "--wincompat",
-            flex_out_opt,
-            flex_input,
-        };
-    } else if (os_tag == .macos) {
-        flex_args = &[_][]const u8{
-            "/usr/local/opt/flex/bin/flex",
-            "--fast",
-            flex_out_opt,
-            flex_input,
-        };
+    var bison_args: []const []const u8 = undefined;
+
+    switch (builtin.os.tag) {
+        .linux => {
+            flex_args = &[_][]const u8{
+                "flex",
+                "--fast",
+                flex_out_opt,
+                flex_input,
+            };
+            bison_args = &[_][]const u8{
+                "bison",
+                bison_out_opt,
+                "-dy",
+                bison_input,
+            };
+        },
+        .windows => {
+            flex_args = &[_][]const u8{
+                "win_flex.exe",
+                "--fast",
+                "--wincompat",
+                flex_out_opt,
+                flex_input,
+            };
+            bison_args = &[_][]const u8{
+                "win_bison.exe",
+                bison_out_opt,
+                "-dy",
+                bison_input,
+            };
+        },
+        .macos => {
+            flex_args = &[_][]const u8{
+                "/usr/local/opt/flex/bin/flex",
+                "--fast",
+                flex_out_opt,
+                flex_input,
+            };
+            bison_args = &[_][]const u8{
+                "/usr/local/opt/bison/bin/bison",
+                bison_out_opt,
+                "-dy",
+                bison_input,
+            };
+        },
+        else => {
+            @panic("Unsupported operating system");
+        },
     }
 
     const flex_step = b.addSystemCommand(flex_args);
-
-    var bison_args: []const []const u8 = undefined;
-    if (os_tag == .linux) {
-        bison_args = &[_][]const u8{
-            "bison",
-            bison_out_opt,
-            "-dy",
-            bison_input,
-        };
-    } else if (os_tag == .windows) {
-        bison_args = &[_][]const u8{
-            "win_bison.exe",
-            bison_out_opt,
-            "-dy",
-            bison_input,
-        };
-    } else if (os_tag == .macos) {
-        bison_args = &[_][]const u8{
-            "/usr/local/opt/flex/bin/flex",
-            bison_out_opt,
-            "-dy",
-            bison_input,
-        };
-    }
-
     const bison_step = b.addSystemCommand(bison_args);
     bison_step.step.dependOn(&flex_step.step);
 
@@ -149,9 +150,7 @@ pub fn build(b: *std.Build) void {
 fn ensureDirExists(b: *std.Build, dir_path: []const u8) !void {
     const full_path = b.pathFromRoot(dir_path);
     std.fs.cwd().makePath(full_path) catch |err| {
-        std.debug.print("Failed to create directory '{s}': {s}\n", .{
-            full_path, @errorName(err)
-        });
+        std.debug.print("Failed to create directory '{s}': {s}\n", .{ full_path, @errorName(err) });
         return err;
     };
 }
