@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const front = @import("frontend.zig");
 const back = @import("backend.zig");
 const encoding = @import("encoding.zig");
@@ -16,8 +17,15 @@ pub fn main() !void {
     const allocator = std.heap.c_allocator;
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
+    const query = std.Target.Query.fromTarget(&builtin.target);
 
-    var app = yazap.App.init(allocator, "grok", "Grok regexp macro processor\nCopyright (C) 2019-2025 Alexander Egorov. All rights reserved.");
+    const appDescr = try std.fmt.allocPrint(
+        allocator,
+        "Grok regexp macro processor. {s}\nCopyright (C) 2019-2025 Alexander Egorov. All rights reserved.",
+        .{@tagName(query.cpu_arch.?)},
+    );
+
+    var app = yazap.App.init(allocator, "grok", appDescr);
     defer app.deinit();
 
     var root_cmd = app.rootCommand();
