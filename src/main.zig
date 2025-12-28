@@ -8,6 +8,11 @@ const glob = @import("glob");
 const yazap = @import("yazap");
 
 pub fn main() !void {
+    if (builtin.os.tag == .windows) {
+        // Windows-specific UTF-8 setup
+        _ = std.os.windows.SetConsoleOutputCP(65001);
+        _ = std.os.windows.SetConsoleCP(65001);
+    }
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
     const stdout = &stdout_writer.interface;
