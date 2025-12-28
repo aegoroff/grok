@@ -6,7 +6,7 @@ env:
   RELEASE_DIR: artifacts
   RELEASE_BIN: grok
   BUILD_CONFIGURATION: Release
-  WINDOWS_TARGET: x86_64-windows-msvc
+  WINDOWS_TARGET: x86_64-windows-gnu
   MACOS_TARGET: x86_64-macos-none
   MACOS_TARGET_AARCH64: aarch64-macos-none
   LINUX_TARGET_MUSL: x86_64-linux-musl
