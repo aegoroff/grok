@@ -53,36 +53,78 @@ Create it if not exists. On other platforms grok searches files within executabl
 
 **SYNTAX**:
 ```
-grok [-hi] -s <string> -m <string> [-p <file>]...
+Usage: grok [OPTIONS] <COMMAND>
 
-grok [-hi] -f <file> -m <string> [-p <file>]...
+Commands:
+    string                           Single string matching mode
+    file                             File matching mode
+    stdin                            Standard input (stdin) matching mode
+    macro                            Macro information mode where a macro real regexp can be displayed or to get all supported macroses
 
-grok [-hi] -m <string> [-p <file>]...
+Options:
+    -p, --patterns=<patterns>...     One or more pattern files. If not set, current directory used to search all *.patterns files
+    -h, --help                       Print this help and exit
 
-grok -t[h] [-m <string>] [-p <file>]...
+Run 'grok <command>` with `-h/--h' flag to get help of any command.
+```
+File command
+```
+File matching mode
 
-  -h, --help                print this help and exit
-  -i, --info                dont work like grep i.e. output matched string with
-                            additional info
-  -s, --string=<string>     string to match
-  -f, --file=<file>         full path to file to read data from. If not set and
-                            string option not set too data read from stdin
-  -m, --macro=<string>      pattern macros to build regexp
-  -p, --patterns=<file>     one or more pattern files. You can also use
-                            wildcards like path\*.patterns. If not set, current
-                            directory used to search all *.patterns files
-  -t, --template            show template(s) information
-``` 
+Usage: grok file [OPTIONS] <ARGS>
+
+Args:
+    PATH                                          Full path to file to read data from
+
+Options:
+    -m, --macro=<STRING>                          Pattern macros to build regexp
+    -i, --info                                    Dont work like grep i.e. output matched string with additional info
+    -h, --help                                    Print this help and exit
+```
+String command
+```
+Single string matching mode
+
+Usage: grok string [OPTIONS] <ARGS>
+
+Args:
+    STRING                                        String to match
+
+Options:
+    -m, --macro=<STRING>                          Pattern macros to build regexp
+    -i, --info                                    Dont work like grep i.e. output matched string with additional info
+    -h, --help                                    Print this help and exit
+```
+Stdin command
+```
+Standard input (stdin) matching mode
+
+Usage: grok stdin [OPTIONS]
+
+Options:
+    -m, --macro=<STRING>                          Pattern macros to build regexp
+    -i, --info                                    Dont work like grep i.e. output matched string with additional info
+    -h, --help                                    Print this help and exit
+```
+Macro command
+```
+Macro information mode where a macro real regexp can be displayed or to get all supported macroses
+
+Usage: grok macro [ARGS]
+
+Args:
+    MACRO      Macro name to expand real regular expression
+```
 **EXAMPLES**
 
 Output all possible macro names (to pass as -m parameter)
 ```shell
-grok -t
+grok macro
 ```
 
 Output regular expression a macro will be expanded to
 ```shell
-grok -t -m UNIXPATH
+grok macro -m UNIXPATH
 ```
 This will output
 ```
@@ -91,10 +133,10 @@ This will output
 
 Output first log messages lines from system.log
 ```shell
-grok -m SYSLOGBASE -f /var/log/system.log
+grok file -m SYSLOGBASE /var/log/system.log
 ```
 
 Same as above but input from stdin
 ```shell
-cat /var/log/system.log | grok -m SYSLOGBASE
+cat /var/log/system.log | grok stdin -m SYSLOGBASE
 ```
