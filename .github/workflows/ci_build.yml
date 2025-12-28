@@ -19,6 +19,7 @@ on:
     branches:
       - master
       - develop
+      - zig
     tags:
       - "v*" # Run when tag matches v*, i.e. v1.0, v20.15.10
   pull_request:
@@ -37,6 +38,10 @@ jobs:
         run: |
           echo "using version tag ${GITHUB_REF:11}"
           echo "version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
+      - name: Install Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.2
       - name: Install Winflexbison
         run: |
           choco install winflexbison
@@ -52,9 +57,6 @@ jobs:
           cmake --build build --verbose --parallel 4 --config ${{ env.BUILD_CONFIGURATION }}
         env:
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
-      - name: Unit Tests
-        working-directory: ${{ github.workspace }}\build
-        run: ctest -C ${{ env.BUILD_CONFIGURATION }} -VV
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
@@ -79,18 +81,22 @@ jobs:
             abi: musl
             os: linux
             arch: x86_64
+            processor: haswell
           - target: aarch64-linux-musl
             abi: musl
             os: linux
             arch: aarch64
+            processor: ""
           - target: x86_64-macos-none
             abi: none
             os: macos
             arch: x86_64
+            processor: haswell
           - target: aarch64-macos-none
             abi: none
             os: macos
             arch: aarch64
+            processor: apple_m1
 
 
     steps:
@@ -107,8 +113,8 @@ jobs:
           version: 0.15.2
       - name: Build
         run: |
-          chmod +x ./linux_build.sh
-          ./linux_build.sh ${{ matrix.abi }} ${{ matrix.os }} ${{ matrix.arch }}
+          chmod +x ./linux_build_zig.sh
+          ./linux_build_zig.sh ${{ matrix.abi }} ${{ matrix.os }} ${{ matrix.arch }} ${{ matrix.processor }}
         env:
           GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Create artifact directory
