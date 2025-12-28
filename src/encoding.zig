@@ -85,3 +85,38 @@ fn charToWchar(allocator: std.mem.Allocator, buffer: []const u8, encoding: Encod
 
     return wide_buffer;
 }
+
+test "detect Utf8" {
+    const buffer = &[_]u8{ 0xEF, 0xBB, 0xBF, 0xD1, 0x82, 0xD0, 0xB5, 0xD1, 0x81, 0xD1, 0x82 };
+    const result = detectBomMemory(buffer);
+    try std.testing.expectEqual(.utf8, result.encoding);
+    try std.testing.expectEqual(3, result.offset);
+}
+
+test "detect Utf16le" {
+    const buffer = &[_]u8{ 0xFF, 0xFE, 0x00, 0x00, 0x00, 0x00, 0x00, 0xD1, 0x81, 0xD1, 0x82 };
+    const result = detectBomMemory(buffer);
+    try std.testing.expectEqual(.utf16le, result.encoding);
+    try std.testing.expectEqual(2, result.offset);
+}
+
+test "detect Utf16be" {
+    const buffer = &[_]u8{ 0xFE, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0xD1, 0x81, 0xD1, 0x82 };
+    const result = detectBomMemory(buffer);
+    try std.testing.expectEqual(.utf16be, result.encoding);
+    try std.testing.expectEqual(2, result.offset);
+}
+
+test "detect Utf32be" {
+    const buffer = &[_]u8{ 0x00, 0x00, 0xFE, 0xFF, 0x00, 0x00, 0x00, 0xD1, 0x81, 0xD1, 0x82 };
+    const result = detectBomMemory(buffer);
+    try std.testing.expectEqual(.utf32be, result.encoding);
+    try std.testing.expectEqual(4, result.offset);
+}
+
+test "detect no bom" {
+    const buffer = &[_]u8{ 0xD1, 0x82, 0xD0, 0xB5, 0xD1, 0x81, 0xD1, 0x82 };
+    const result = detectBomMemory(buffer);
+    try std.testing.expectEqual(.unknown, result.encoding);
+    try std.testing.expectEqual(0, result.offset);
+}

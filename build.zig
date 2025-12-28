@@ -77,34 +77,34 @@ pub fn build(b: *std.Build) void {
     exe.root_module.linkLibrary(pcre2_dep.artifact("pcre2-8"));
     exe.root_module.addImport("build_options", options.createModule());
 
-    // const tst = b.addExecutable(.{
-    //     .name = "_tst",
-    //     .root_module = b.createModule(.{
-    //         .optimize = optimize,
-    //         .target = target,
-    //         .strip = strip,
-    //         .link_libc = true,
-    //         .link_libcpp = true,
-    //     }),
-    // });
-    // tst.root_module.addIncludePath(b.path("src/grok/generated"));
-    // tst.root_module.addIncludePath(pcre.installed_headers.items[0].getSource().dirname());
-    // tst.root_module.addIncludePath(b.path("src/srclib"));
-    // tst.root_module.linkLibrary(lib);
-
     b.installArtifact(exe);
 
-    // const run_unit_tests = b.addRunArtifact(tst);
-    // run_unit_tests.step.dependOn(b.getInstallStep());
-    // if (b.args) |args| {
-    //     run_unit_tests.addArgs(args);
-    // }
+    // Creates a step for unit testing. This only builds the test executable
+    // but does not run it.
+    const unit_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .optimize = optimize,
+            .target = target,
+            .link_libc = true,
+        }),
+    });
+    unit_tests.root_module.addImport("glob", glob_dep.module("glob"));
+    unit_tests.root_module.addImport("yazap", yazap.module("yazap"));
+    unit_tests.root_module.addIncludePath(b.path(generated_path));
+    unit_tests.root_module.addIncludePath(b.path("src/srclib"));
+    unit_tests.root_module.addIncludePath(b.path("src"));
+    unit_tests.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
+    unit_tests.root_module.linkLibrary(pcre2_dep.artifact("pcre2-8"));
+    unit_tests.root_module.addImport("build_options", options.createModule());
+
+    const run_unit_tests = b.addRunArtifact(unit_tests);
 
     // Similar to creating the run step earlier, this exposes a `test` step to
     // the `zig build --help` menu, providing a way for the user to request
     // running the unit tests.
-    // const test_step = b.step("test", "Run unit tests");
-    // test_step.dependOn(&run_unit_tests.step);
+    const test_step = b.step("test", "Run unit tests");
+    test_step.dependOn(&run_unit_tests.step);
 }
 
 fn ensureDirExists(b: *std.Build, dir_path: []const u8) !void {

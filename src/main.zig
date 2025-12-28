@@ -312,3 +312,7 @@ fn compileLib(files: ?[][]const u8, allocator: std.mem.Allocator) !void {
         }
     }
 }
+
+test {
+    @import("std").testing.refAllDecls(@This());
+}
