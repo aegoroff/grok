@@ -25,7 +25,7 @@ pub fn build(b: *std.Build) void {
     const libgrok_sources = [_][]const u8{
         flex_output,
         bison_output,
-        "src/srclib/lib.c",
+        "src/lib.c",
     };
 
     var flex_args: []const []const u8 = undefined;
