@@ -33,51 +33,18 @@ pub fn build(b: *std.Build) void {
 
     switch (builtin.os.tag) {
         .linux => {
-            flex_args = &[_][]const u8{
-                "flex",
-                "--fast",
-                flex_out_opt,
-                flex_input,
-            };
-            bison_args = &[_][]const u8{
-                "bison",
-                bison_out_opt,
-                "-dy",
-                bison_input,
-            };
+            flex_args = &[_][]const u8{ "flex", "--fast", flex_out_opt, flex_input };
+            bison_args = &[_][]const u8{ "bison", bison_out_opt, "-dy", bison_input };
         },
         .windows => {
-            flex_args = &[_][]const u8{
-                "win_flex.exe",
-                "--fast",
-                "--wincompat",
-                flex_out_opt,
-                flex_input,
-            };
-            bison_args = &[_][]const u8{
-                "win_bison.exe",
-                bison_out_opt,
-                "-dy",
-                bison_input,
-            };
+            flex_args = &[_][]const u8{ "win_flex.exe", "--fast", "--wincompat", flex_out_opt, flex_input };
+            bison_args = &[_][]const u8{ "win_bison.exe", bison_out_opt, "-dy", bison_input };
         },
         .macos => {
-            flex_args = &[_][]const u8{
-                "/usr/local/opt/flex/bin/flex",
-                "--fast",
-                flex_out_opt,
-                flex_input,
-            };
-            bison_args = &[_][]const u8{
-                "/usr/local/opt/bison/bin/bison",
-                bison_out_opt,
-                "-dy",
-                bison_input,
-            };
+            flex_args = &[_][]const u8{ "/usr/local/opt/flex/bin/flex", "--fast", flex_out_opt, flex_input };
+            bison_args = &[_][]const u8{ "/usr/local/opt/bison/bin/bison", bison_out_opt, "-dy", bison_input };
         },
-        else => {
-            @panic("Unsupported operating system");
-        },
+        else => @compileError("Unsupported OS: " ++ @tagName(builtin.os.tag)),
     }
 
     const flex_step = b.addSystemCommand(flex_args);
