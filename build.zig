@@ -4,6 +4,10 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const strip = optimize != .Debug;
+    const options = b.addOptions();
+
+    const version_opt = b.option([]const u8, "version", "The version of the app") orelse "0.3.0-dev";
+    options.addOption([]const u8, "version", version_opt);
 
     const flex_step = b.addSystemCommand(&[_][]const u8{
         "flex",
@@ -51,6 +55,7 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addIncludePath(b.path("src"));
     exe.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
     exe.root_module.linkLibrary(pcre);
+    exe.root_module.addImport("build_options", options.createModule());
 
     // const tst = b.addExecutable(.{
     //     .name = "_tst",
