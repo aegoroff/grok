@@ -15,13 +15,11 @@ pub const Info = struct {
 pub const Part = enum { literal, reference };
 
 pub fn compileFile(path: [*c]const u8) !void {
-    const c_file_ptr = c.fopen(path, "r");
-
-    if (c_file_ptr == null) {
+    const c_file_ptr = c.fopen(path, "r") orelse {
         // Handle error
         std.debug.print("Failed to open file: {s}\n", .{path});
         return;
-    }
+    };
 
     c.yyrestart(c_file_ptr);
     if (c.yyparse() > 0) {
