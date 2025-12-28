@@ -10,8 +10,23 @@ pub fn build(b: *std.Build) void {
     const version_opt = b.option([]const u8, "version", "The version of the app") orelse "0.3.0-dev";
     options.addOption([]const u8, "version", version_opt);
 
+    const generated_path = "src/grok/generated";
+
+    ensureDirExists(b, generated_path) catch unreachable;
+
     const flex_input = "src/grok/grok.lex";
-    const flex_output = "--outfile=src/grok/generated/grok.flex.c";
+    const flex_output = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.c", .{generated_path}) catch "";
+    const flex_out_opt = std.fmt.allocPrint(b.allocator, "--outfile={s}", .{flex_output}) catch "";
+
+    const bison_input = "src/grok/grok.y";
+    const bison_output = std.fmt.allocPrint(b.allocator, "{s}/grok.tab.c", .{generated_path}) catch "";
+    const bison_out_opt = std.fmt.allocPrint(b.allocator, "--output={s}", .{bison_output}) catch "";
+
+    const libgrok_sources = [_][]const u8{
+        flex_output,
+        bison_output,
+        "src/srclib/lib.c",
+    };
 
     var flex_args: []const []const u8 = undefined;
     const os_tag = builtin.os.tag;
@@ -19,7 +34,7 @@ pub fn build(b: *std.Build) void {
         flex_args = &[_][]const u8{
             "flex",
             "--fast",
-            flex_output,
+            flex_out_opt,
             flex_input,
         };
     } else if (os_tag == .windows) {
@@ -27,42 +42,39 @@ pub fn build(b: *std.Build) void {
             "win_flex.exe",
             "--fast",
             "--wincompat",
-            flex_output,
+            flex_out_opt,
             flex_input,
         };
     } else if (os_tag == .macos) {
         flex_args = &[_][]const u8{
             "/usr/local/opt/flex/bin/flex",
             "--fast",
-            flex_output,
+            flex_out_opt,
             flex_input,
         };
     }
 
     const flex_step = b.addSystemCommand(flex_args);
 
-    const bison_input = "src/grok/grok.y";
-    const bison_output = "--output=src/grok/generated/grok.tab.c";
-
     var bison_args: []const []const u8 = undefined;
     if (os_tag == .linux) {
         bison_args = &[_][]const u8{
             "bison",
-            bison_output,
+            bison_out_opt,
             "-dy",
             bison_input,
         };
     } else if (os_tag == .windows) {
         bison_args = &[_][]const u8{
             "win_bison.exe",
-            bison_output,
+            bison_out_opt,
             "-dy",
             bison_input,
         };
     } else if (os_tag == .macos) {
         bison_args = &[_][]const u8{
             "/usr/local/opt/flex/bin/flex",
-            bison_output,
+            bison_out_opt,
             "-dy",
             bison_input,
         };
@@ -97,7 +109,7 @@ pub fn build(b: *std.Build) void {
     });
     exe.root_module.addImport("glob", glob_dep.module("glob"));
     exe.root_module.addImport("yazap", yazap.module("yazap"));
-    exe.root_module.addIncludePath(b.path("src/grok/generated"));
+    exe.root_module.addIncludePath(b.path(generated_path));
     exe.root_module.addIncludePath(b.path("src/srclib"));
     exe.root_module.addIncludePath(b.path("src"));
     exe.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
@@ -134,8 +146,12 @@ pub fn build(b: *std.Build) void {
     // test_step.dependOn(&run_unit_tests.step);
 }
 
-const libgrok_sources = [_][]const u8{
-    "src/grok/generated/grok.flex.c",
-    "src/grok/generated/grok.tab.c",
-    "src/srclib/lib.c",
-};
+fn ensureDirExists(b: *std.Build, dir_path: []const u8) !void {
+    const full_path = b.pathFromRoot(dir_path);
+    std.fs.cwd().makePath(full_path) catch |err| {
+        std.debug.print("Failed to create directory '{s}': {s}\n", .{
+            full_path, @errorName(err)
+        });
+        return err;
+    };
+}
