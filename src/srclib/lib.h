@@ -215,13 +215,6 @@ extern void lib_hex_str_2_byte_array(const char *str, uint8_t *bytes, size_t sz)
 extern uint32_t lib_htoi(const char *ptr, int size);
 
 /**
-* Gets the number of processors available in the system.
-*
-* @return The number of processors.
-*/
-extern uint32_t lib_get_processor_count(void);
-
-/**
  * \brief Counts the number of digits in a given double.
  *
  * This function is useful when you need to know how many decimal places
@@ -235,7 +228,7 @@ extern int lib_count_digits_in(double x);
 
 /**
  * \brief Retrieves the file name from a path.
- * 
+ *
  * This function is useful for extracting the file name from a path. It's often used
  * to display the file name when prompting users or logging actions.
  *

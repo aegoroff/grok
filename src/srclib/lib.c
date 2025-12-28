@@ -30,8 +30,6 @@
 
 #else
 
-#include <sys/sysinfo.h>
-
 #endif
 #endif
 
@@ -73,18 +71,6 @@ static LARGE_INTEGER lib_time2 = {0};
 static struct timespec lib_start = {0};
 static struct timespec lib_finish = {0};
 #endif
-
-uint32_t lib_get_processor_count(void) {
-#ifdef _MSC_VER
-    SYSTEM_INFO sysinfo;
-    GetSystemInfo(&sysinfo);
-    return (uint32_t)sysinfo.dwNumberOfProcessors;
-#elif __APPLE_CC__
-    return (uint32_t)sysconf(_SC_NPROCESSORS_ONLN);
-#else
-    return (uint32_t)get_nprocs();
-#endif
-}
 
 void lib_print_size(uint64_t size) {
     const lib_file_size_t normalized = lib_normalize_size(size);
