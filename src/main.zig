@@ -277,7 +277,14 @@ fn compileLib(files: ?[][]const u8, allocator: std.mem.Allocator) !void {
     front.init(allocator);
     if (files == null or files.?.len == 0) {
         // Use default
-        const lib_path = "/usr/share/grok/patterns";
+        var lib_path: []const u8 = undefined;
+        const os_tag = builtin.os.tag;
+        if (os_tag == .linux) {
+            lib_path = "/usr/share/grok/patterns";
+        } else {
+            lib_path = try std.fs.selfExeDirPathAlloc(allocator);
+        }
+
         var dir = try std.fs.openDirAbsolute(lib_path, .{ .iterate = true });
         var walker = try dir.walk(allocator);
         defer walker.deinit();
