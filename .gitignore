@@ -38,3 +38,4 @@ external_lib/
 *.PVS-Studio.cfg
 .DS_Store
 .cache/
+.zed/
