@@ -1,3 +1,5 @@
+#!/bin/sh
+
 ABI=$1
 OS=$2
 ARCH=$3
