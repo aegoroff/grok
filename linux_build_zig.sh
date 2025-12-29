@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ABI=$1
 OS=$2
