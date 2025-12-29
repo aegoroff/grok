@@ -25,61 +25,21 @@ on:
     branches: [ master ]
 
 jobs:
-  windows_build:
-
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v6
-      - name: Query version number
-        id: get_version
-        shell: bash
-        run: |
-          echo "using version tag ${GITHUB_REF:11}"
-          echo "version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
-      - name: Install Zig
-        uses: mlugg/setup-zig@v2
-        with:
-          version: 0.15.2
-      - name: Install Winflexbison
-        run: |
-          choco install winflexbison
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
-        with:
-          msbuild-architecture: x64
-          vs-version: '17.12'
-
-      - name: Build
-        run: |
-          zig build -Doptimize=ReleaseFast -Dversion="${{ steps.get_version.outputs.VERSION }}" -Dcpu=haswell -Dtarget=${{ env.WINDOWS_TARGET }} --summary all --prefix-exe-dir bin-${{ env.WINDOWS_TARGET }}
-          zig build test -Doptimize=ReleaseFast -Dcpu=haswell -Dtarget=${{ env.WINDOWS_TARGET }} --summary all -- -s
-          cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIGURATION }} -B build -Ax64
-        env:
-          GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
-      - name: Create artifact directory
-        run: mkdir ${{ env.RELEASE_DIR }}
-      - name: Packaging
-        working-directory: ${{ github.workspace }}\build
-        run: cpack
-      - name: Copy artefacts
-        shell: bash
-        run: cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
-      - uses: actions/upload-artifact@v6
-        with:
-          name: windows
-          path: .\${{ env.RELEASE_DIR }}
-
   cross_build:
 
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ aarch64-linux-musl, x86_64-linux-musl, x86_64-macos-none, aarch64-macos-none ]
+        target: [ aarch64-linux-musl, x86_64-linux-musl, x86_64-windows-gnu, x86_64-macos-none, aarch64-macos-none ]
         include:
           - target: x86_64-linux-musl
             abi: musl
             os: linux
+            arch: x86_64
+            processor: haswell
+          - target: x86_64-windows-gnu
+            abi: gnu
+            os: windows
             arch: x86_64
             processor: haswell
           - target: aarch64-linux-musl
@@ -148,7 +108,7 @@ jobs:
 
   release:
     name: GitHub Release
-    needs: [ windows_build, cross_build, generate-changelog ]
+    needs: [ cross_build, generate-changelog ]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -184,8 +144,8 @@ jobs:
       - name: Download Windows zip
         uses: actions/download-artifact@v7
         with:
-          name: windows
-          path: windows
+          name: windows_gnu_x86_64
+          path: windows_gnu_x86_64
 
       - name: Download x86_64 MacOS zip
         uses: actions/download-artifact@v7
@@ -229,7 +189,7 @@ jobs:
           commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
 
       - name: Create scoop json
-        run: ${{ github.workspace }}/releaser s -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -i './windows/' -e ${{ env.RELEASE_BIN }}.exe -u ${{ env.RELEASE_BIN }}.json
+        run: ${{ github.workspace }}/releaser s -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -i './windows_gnu_x86_64/' -e ${{ env.RELEASE_BIN }}.exe -u ${{ env.RELEASE_BIN }}.json
       - name: Publish scoop json
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
@@ -267,7 +227,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./windows/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz
+          asset_path: ./windows_gnu_x86_64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz
           asset_content_type: application/gzip
           asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz
 

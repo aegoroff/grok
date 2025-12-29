@@ -24,29 +24,4 @@ if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
   zig build test -Doptimize=${OPTIMIZE} ${DCPU} -Dtarget=${ARCH}-${OS}-${ABI} --summary all -- -s
 fi
 
-if [[ "${ARCH}" = "x86_64" ]]; then
-  if [[ "${ABI}" = "musl" ]] && [[ "${OS}" = "linux" ]]; then
-    TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-x86_64-linux-musl.cmake)"
-  fi
-  if [[ "${ABI}" = "gnu" ]] && [[ "${OS}" = "linux" ]]; then
-    TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-x86_64-linux-gnu.cmake)"
-  fi
-  if [[ "${ABI}" = "none" ]] && [[ "${OS}" = "macos" ]]; then
-    TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-x86_64-macos-none.cmake)"
-  fi
-  if [[ "${ABI}" = "gnu" ]] && [[ "${OS}" = "windows" ]]; then
-    TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-x86_64-windows-gnu.cmake)"
-  fi
-fi
-
-if [[ "${ARCH}" = "aarch64" ]]; then
-  if [[ "${OS}" = "linux" ]]; then
-    TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-aarch64-linux-musl.cmake)"
-  fi
-  if [[ "${OS}" = "macos" ]]; then
-    TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=$(realpath cmake/zig-toolchain-aarch64-macos-none.cmake)"
-  fi
-fi
-
-cmake -B "${BUILD_DIR}" "${TOOLCHAIN}"
-(cd "${BUILD_DIR}" && cpack --config CPackConfig.cmake)
+zig build archive -Doptimize=${OPTIMIZE} -Dtarget=${ARCH}-${OS}-${ABI} -Dversion="${VERSION}" --summary all --prefix-exe-dir ${ZIG_PREFIX_DIR}
