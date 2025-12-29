@@ -10,9 +10,7 @@ CPU=$5
 [[ -n "${ARCH}" ]] || ARCH=x86_64
 [[ -n "${VERSION}" ]] || VERSION="0.3.0-dev"
 
-BUILD_DIR=build-${ARCH}-${OS}-${ABI}
 ZIG_PREFIX_DIR=bin-${ARCH}-${OS}-${ABI}
-ZIG_OUT_DIR=zig-out/${ZIG_PREFIX_DIR}
 OPTIMIZE=ReleaseFast
 
 DCPU=""
