@@ -25,9 +25,13 @@ pub fn main() !void {
     defer arena.deinit();
     const query = std.Target.Query.fromTarget(&builtin.target);
 
+    const app_descr_template =
+        \\Grok regexp macro processor {s} {s}
+        \\Copyright (C) 2019-2025 Alexander Egorov. All rights reserved.
+    ;
     const app_descr = try std.fmt.allocPrint(
         allocator,
-        "Grok regexp macro processor {s} {s}\nCopyright (C) 2019-2025 Alexander Egorov. All rights reserved.",
+        app_descr_template,
         .{ build_options.version, @tagName(query.cpu_arch.?) },
     );
 
