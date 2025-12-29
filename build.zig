@@ -104,22 +104,51 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_unit_tests.step);
 
-    const archive_tool = b.addExecutable(.{
-        .name = "archiver",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("tools/archiver.zig"),
-            .optimize = optimize,
-            .target = b.graph.host,
-            .link_libc = true,
-        }),
+    const tr = target.result;
+    const tar_file = std.fmt.allocPrint(b.allocator, "{s}/grok-{s}-{s}-{s}-{s}.tar", .{
+        b.install_prefix,
+        version_opt,
+        @tagName(tr.cpu.arch),
+        @tagName(tr.os.tag),
+        @tagName(tr.abi),
+    }) catch "";
+
+    const binary_step = b.addSystemCommand(&.{
+        "tar",
+        "-cvf", // c - create, f - file
+        tar_file,
+        "-C",
+        b.exe_dir,
+        ".",
+    });
+    const license_step = b.addSystemCommand(&.{
+        "tar",
+        "-rvf", // r - append, f - file
+        tar_file,
+        "-C",
+        ".",
+        "LICENSE.txt",
+    });
+    const patterns_step = b.addSystemCommand(&.{
+        "tar",
+        "-rvf", // r - append, f - file
+        tar_file,
+        "-C",
+        "patterns/",
+        ".",
+    });
+    const gzip_step = b.addSystemCommand(&.{
+        "gzip",
+        tar_file,
     });
 
-    const run_archive = b.addRunArtifact(archive_tool);
-    run_archive.addArgs(&.{ "zig-out", "project.tar.gz" });
-    run_archive.step.dependOn(b.getInstallStep());
+    binary_step.step.dependOn(b.getInstallStep());
+    license_step.step.dependOn(&binary_step.step);
+    patterns_step.step.dependOn(&license_step.step);
+    gzip_step.step.dependOn(&patterns_step.step);
 
-    const step = b.step("archive", "Generate tar.gz");
-    step.dependOn(&run_archive.step);
+    const archive_step = b.step("archive", "Create a tar.gz archive of the build");
+    archive_step.dependOn(&gzip_step.step);
 }
 
 fn ensureDirExists(b: *std.Build, dir_path: []const u8) !void {
