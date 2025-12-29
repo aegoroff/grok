@@ -21,6 +21,7 @@ pub fn compileFile(path: [*c]const u8) !void {
         std.debug.print("Failed to open file: {s}\n", .{path});
         return grok.GrokError.UnknownPatternFile;
     };
+    defer _ = c.fclose(c_file_ptr);
 
     c.yyrestart(c_file_ptr);
     if (c.yyparse() > 0) {
