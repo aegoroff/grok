@@ -126,7 +126,7 @@ fn onString(
     info_mode: bool,
 ) !void {
     back.init(allocator);
-    const pattern = (try back.createPattern(allocator, macro)).?;
+    const pattern = try back.createPattern(allocator, macro);
     const prepared = try back.prepareRegex(pattern);
     const matched = back.matchRegex(allocator, &pattern, subject, &prepared);
     if (info_mode) {
@@ -185,7 +185,7 @@ fn onStdin(
 }
 
 fn onTemplate(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8) !void {
-    const pattern = (try back.createPattern(allocator, macro)).?;
+    const pattern = try back.createPattern(allocator, macro);
     return stdout.print("{s}\n", .{pattern.regex});
 }
 
@@ -214,7 +214,7 @@ fn readFromReader(
     file_encoding: ?encoding.Encoding, // null means reading from stdin
 ) !void {
     back.init(allocator);
-    const pattern = (try back.createPattern(allocator, macro)).?;
+    const pattern = try back.createPattern(allocator, macro);
     const prepared = try back.prepareRegex(pattern);
 
     var line_no: usize = 1;

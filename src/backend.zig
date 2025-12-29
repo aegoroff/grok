@@ -72,8 +72,8 @@ pub export fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) void {
     }
 }
 
-pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern {
-    const m = front.getPattern(macro).?;
+pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !Pattern {
+    const m = try front.getPattern(macro);
     var stack = std.ArrayList(front.Info){};
     var composition = std.ArrayList(u8){};
     var used_properties = std.StringHashMap(bool).init(allocator);
@@ -109,7 +109,7 @@ pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !?Pattern 
                     const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
                     try stack.append(allocator, trail_paren);
                 }
-                const childs = front.getPattern(current_slice) orelse {
+                const childs = front.getPattern(current_slice) catch {
                     continue;
                 };
                 var rev_iter = std.mem.reverseIterator(childs.items);
