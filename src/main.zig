@@ -291,9 +291,9 @@ fn readFromReader(
     }
 }
 
-fn compileLib(files: ?[][]const u8, allocator: std.mem.Allocator) !void {
+fn compileLib(paths: ?[][]const u8, allocator: std.mem.Allocator) !void {
     front.init(allocator);
-    if (files == null or files.?.len == 0) {
+    if (paths == null or paths.?.len == 0) {
         // Use default
         var lib_path: []const u8 = undefined;
         const os_tag = builtin.os.tag;
@@ -303,30 +303,39 @@ fn compileLib(files: ?[][]const u8, allocator: std.mem.Allocator) !void {
             lib_path = try std.fs.selfExeDirPathAlloc(allocator);
         }
 
-        var dir = try std.fs.openDirAbsolute(lib_path, .{ .iterate = true });
-        var walker = try dir.walk(allocator);
-        defer walker.deinit();
-        while (true) {
-            const entry_or_null = walker.next() catch {
-                continue;
-            };
-            const entry = entry_or_null orelse {
-                break;
-            };
-            switch (entry.kind) {
-                std.fs.Dir.Entry.Kind.file => {
-                    const matches = glob.match("*.patterns", entry.basename);
-                    if (matches) {
-                        const p = try entry.dir.realpathAlloc(allocator, entry.basename);
-                        try front.compileFile(p.ptr);
-                    }
-                },
-                else => {},
+        try compileDir(lib_path, allocator);
+    } else {
+        for (paths.?) |path| {
+            const stat = try std.fs.cwd().statFile(path);
+            switch (stat.kind) {
+                .directory => try compileDir(path, allocator),
+                .file => try front.compileFile(path.ptr),
+                else => continue,
             }
         }
-    } else {
-        for (files.?) |file| {
-            try front.compileFile(file.ptr);
+    }
+}
+
+fn compileDir(lib_path: []const u8, allocator: std.mem.Allocator) !void {
+    var dir = try std.fs.openDirAbsolute(lib_path, .{ .iterate = true });
+    var walker = try dir.walk(allocator);
+    defer walker.deinit();
+    while (true) {
+        const entry_or_null = walker.next() catch {
+            continue;
+        };
+        const entry = entry_or_null orelse {
+            break;
+        };
+        switch (entry.kind) {
+            std.fs.Dir.Entry.Kind.file => {
+                const matches = glob.match("*.patterns", entry.basename);
+                if (matches) {
+                    const p = try entry.dir.realpathAlloc(allocator, entry.basename);
+                    try front.compileFile(p.ptr);
+                }
+            },
+            else => {},
         }
     }
 }
