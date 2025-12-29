@@ -103,6 +103,23 @@ pub fn build(b: *std.Build) void {
     // running the unit tests.
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_unit_tests.step);
+
+    const archive_tool = b.addExecutable(.{
+        .name = "archiver",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/archiver.zig"),
+            .optimize = optimize,
+            .target = b.graph.host,
+            .link_libc = true,
+        }),
+    });
+
+    const run_archive = b.addRunArtifact(archive_tool);
+    run_archive.addArgs(&.{ "zig-out", "project.tar.gz" });
+    run_archive.step.dependOn(b.getInstallStep());
+
+    const step = b.step("archive", "Generate tar.gz");
+    step.dependOn(&run_archive.step);
 }
 
 fn ensureDirExists(b: *std.Build, dir_path: []const u8) !void {
