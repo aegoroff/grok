@@ -1,4 +1,5 @@
 const std = @import("std");
+const grok = @import("grok.zig");
 
 const c = @cImport({
     @cInclude("stdio.h");
@@ -87,8 +88,8 @@ pub export fn fend_on_grok(m: *c.macro_t) void {
     };
 }
 
-pub fn getPattern(key: []const u8) ?std.ArrayList(Info) {
-    return definitions.get(key);
+pub fn getPattern(key: []const u8) grok.GrokError!std.ArrayList(Info) {
+    return definitions.get(key) orelse grok.GrokError.UnknownMacro;
 }
 
 pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
