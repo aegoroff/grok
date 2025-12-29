@@ -80,7 +80,7 @@ jobs:
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
-        run: cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
+        run: cp -v ./zig-out/*.gz ./${{ env.RELEASE_DIR }}/
       - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.os }}_${{ matrix.abi }}_${{ matrix.arch }}
