@@ -19,12 +19,13 @@ pub fn compileFile(path: [*c]const u8) !void {
     const c_file_ptr = c.fopen(path, "r") orelse {
         // Handle error
         std.debug.print("Failed to open file: {s}\n", .{path});
-        return;
+        return grok.GrokError.UnknownPatternFile;
     };
 
     c.yyrestart(c_file_ptr);
     if (c.yyparse() > 0) {
         std.debug.print("Failed to parse file: {s}\n", .{path});
+        return grok.GrokError.InvalidPatternFile;
     }
 }
 
