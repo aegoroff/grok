@@ -53,17 +53,13 @@ Create it if not exists. On other platforms grok searches files within executabl
 
 **SYNTAX**:
 ```
-Usage: grok [OPTIONS] <COMMAND>
+Usage: grok <COMMAND>
 
 Commands:
-    string                           Single string matching mode
-    file                             File matching mode
-    stdin                            Standard input (stdin) matching mode
-    macro                            Macro information mode where a macro real regexp can be displayed or to get all supported macroses
-
-Options:
-    -p, --patterns=<patterns>...     One or more pattern files. If not set, current directory used to search all *.patterns files
-    -h, --help                       Print this help and exit
+    string  Single string matching mode
+    file    File matching mode
+    stdin   Standard input (stdin) matching mode
+    macro   Macro information mode where a macro real regexp can be displayed or to get all supported macroses
 
 Run 'grok <command>` with `-h/--h' flag to get help of any command.
 ```
@@ -74,12 +70,13 @@ File matching mode
 Usage: grok file [OPTIONS] <ARGS>
 
 Args:
-    PATH                      Full path to file to read data from
+    PATH                           Full path to file to read data from
 
 Options:
-    -m, --macro=<STRING>      Pattern macros to build regexp
-    -i, --info                Dont work like grep i.e. output matched string with additional info
-    -h, --help                Print this help and exit
+    -p, --patterns=<patterns>...   One or more pattern files. If not set, current directory used to search all *.patterns files
+    -m, --macro=<STRING>           Pattern macros to build regexp
+    -i, --info                     Dont work like grep i.e. output matched string with additional info
+    -h, --help                     Print this help and exit
 ```
 String command
 ```
@@ -88,12 +85,13 @@ Single string matching mode
 Usage: grok string [OPTIONS] <ARGS>
 
 Args:
-    STRING                    String to match
+    STRING                         String to match
 
 Options:
-    -m, --macro=<STRING>      Pattern macros to build regexp
-    -i, --info                Dont work like grep i.e. output matched string with additional info
-    -h, --help                Print this help and exit
+    -p, --patterns=<patterns>...   One or more pattern files. If not set, current directory used to search all *.patterns files
+    -m, --macro=<STRING>           Pattern macros to build regexp
+    -i, --info                     Dont work like grep i.e. output matched string with additional info
+    -h, --help                     Print this help and exit
 ```
 Stdin command
 ```
@@ -102,18 +100,23 @@ Standard input (stdin) matching mode
 Usage: grok stdin [OPTIONS]
 
 Options:
-    -m, --macro=<STRING>      Pattern macros to build regexp
-    -i, --info                Dont work like grep i.e. output matched string with additional info
-    -h, --help                Print this help and exit
+    -p, --patterns=<patterns>...   One or more pattern files. If not set, current directory used to search all *.patterns files
+    -m, --macro=<STRING>           Pattern macros to build regexp
+    -i, --info                     Dont work like grep i.e. output matched string with additional info
+    -h, --help                     Print this help and exit
 ```
 Macro command
 ```
 Macro information mode where a macro real regexp can be displayed or to get all supported macroses
 
-Usage: grok macro [ARGS]
+Usage: grok macro [OPTIONS] [ARGS]
 
 Args:
-    MACRO      Macro name to expand real regular expression
+    MACRO                          Macro name to expand real regular expression
+
+Options:
+    -p, --patterns=<patterns>...   One or more pattern files. If not set, current directory used to search all *.patterns files
+    -h, --help                     Print this help and exit
 ```
 **EXAMPLES**
 
