@@ -38,6 +38,13 @@ pub fn main() !void {
     root_cmd.setProperty(.help_on_empty_args);
     root_cmd.setProperty(.subcommand_required);
 
+    const patterns_opt = yazap.Arg.multiValuesOption(
+        "patterns",
+        'p',
+        "One or more pattern files. If not set, current directory used to search all *.patterns files",
+        512,
+    );
+
     var macro_opt = yazap.Arg.singleValueOption("macro", 'm', "Pattern macros to build regexp");
     macro_opt.setValuePlaceholder("STRING");
     macro_opt.setProperty(.takes_value);
@@ -47,6 +54,7 @@ pub fn main() !void {
     str_cmd.setProperty(.help_on_empty_args);
     str_cmd.setProperty(.positional_arg_required);
     const string_opt = yazap.Arg.positional("STRING", "String to match", null);
+    try str_cmd.addArg(patterns_opt);
     try str_cmd.addArg(macro_opt);
     try str_cmd.addArg(info_opt);
     try str_cmd.addArg(string_opt);
@@ -56,17 +64,20 @@ pub fn main() !void {
     file_cmd.setProperty(.positional_arg_required);
     const file_opt = yazap.Arg.positional("PATH", "Full path to file to read data from", null);
 
+    try file_cmd.addArg(patterns_opt);
     try file_cmd.addArg(macro_opt);
     try file_cmd.addArg(info_opt);
     try file_cmd.addArg(file_opt);
 
     var stdin_cmd = app.createCommand("stdin", "Standard input (stdin) matching mode");
     stdin_cmd.setProperty(.help_on_empty_args);
+    try stdin_cmd.addArg(patterns_opt);
     try stdin_cmd.addArg(macro_opt);
     try stdin_cmd.addArg(info_opt);
 
     var macro_cmd = app.createCommand("macro", "Macro information mode where a macro real regexp can be displayed or to get all supported macroses");
     const macro_name_opt = yazap.Arg.positional("MACRO", "Macro name to expand real regular expression", null);
+    try macro_cmd.addArg(patterns_opt);
     try macro_cmd.addArg(macro_name_opt);
 
     try root_cmd.addSubcommand(str_cmd);
@@ -74,45 +85,43 @@ pub fn main() !void {
     try root_cmd.addSubcommand(stdin_cmd);
     try root_cmd.addSubcommand(macro_cmd);
 
-    try root_cmd.addArg(yazap.Arg.multiValuesOption(
-        "patterns",
-        'p',
-        "One or more pattern files. If not set, current directory used to search all *.patterns files",
-        512,
-    ));
-
     const matches = try app.parseProcess();
-    const patterns = matches.getMultiValues("patterns");
 
-    try compileLib(patterns, arena.allocator());
-
-    if (matches.subcommandMatches("macro")) |info_cmd_matches| {
-        if (info_cmd_matches.getSingleValue("MACRO")) |macro| {
+    if (matches.subcommandMatches("macro")) |cmd_matches| {
+        const patterns = cmd_matches.getMultiValues("patterns");
+        try compileLib(patterns, arena.allocator());
+        if (cmd_matches.getSingleValue("MACRO")) |macro| {
             try onTemplate(allocator, stdout, macro);
         } else {
             try onTemplates(allocator, stdout);
         }
     }
-    if (matches.subcommandMatches("string")) |info_cmd_matches| {
-        if (info_cmd_matches.getSingleValue("macro")) |macro| {
-            if (info_cmd_matches.getSingleValue("STRING")) |str| {
-                const info_mode = info_cmd_matches.containsArg("info");
+    if (matches.subcommandMatches("string")) |cmd_matches| {
+        const patterns = cmd_matches.getMultiValues("patterns");
+        try compileLib(patterns, arena.allocator());
+        if (cmd_matches.getSingleValue("macro")) |macro| {
+            if (cmd_matches.getSingleValue("STRING")) |str| {
+                const info_mode = cmd_matches.containsArg("info");
                 try onString(arena.allocator(), stdout, macro, str, info_mode);
             }
         }
     }
-    if (matches.subcommandMatches("file")) |info_cmd_matches| {
-        if (info_cmd_matches.getSingleValue("macro")) |macro| {
-            if (info_cmd_matches.getSingleValue("PATH")) |path| {
-                const info_mode = info_cmd_matches.containsArg("info");
+    if (matches.subcommandMatches("file")) |cmd_matches| {
+        const patterns = cmd_matches.getMultiValues("patterns");
+        try compileLib(patterns, arena.allocator());
+        if (cmd_matches.getSingleValue("macro")) |macro| {
+            if (cmd_matches.getSingleValue("PATH")) |path| {
+                const info_mode = cmd_matches.containsArg("info");
                 try onFile(allocator, stdout, macro, path, info_mode);
             }
         }
     }
 
-    if (matches.subcommandMatches("stdin")) |info_cmd_matches| {
-        if (info_cmd_matches.getSingleValue("macro")) |macro| {
-            const info_mode = info_cmd_matches.containsArg("info");
+    if (matches.subcommandMatches("stdin")) |cmd_matches| {
+        const patterns = cmd_matches.getMultiValues("patterns");
+        try compileLib(patterns, arena.allocator());
+        if (cmd_matches.getSingleValue("macro")) |macro| {
+            const info_mode = cmd_matches.containsArg("info");
             try onStdin(allocator, stdout, macro, info_mode);
         }
     }
