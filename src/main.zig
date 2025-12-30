@@ -42,14 +42,15 @@ pub fn main() !void {
     root_cmd.setProperty(.help_on_empty_args);
     root_cmd.setProperty(.subcommand_required);
 
+    const patterns_name: []const u8 = "patterns";
     const patterns_opt = yazap.Arg.multiValuesOption(
-        "patterns",
+        patterns_name,
         'p',
         "One or more pattern files. If not set, current directory used to search all *.patterns files",
         512,
     );
-
-    var macro_opt = yazap.Arg.singleValueOption("macro", 'm', "Pattern macros to build regexp");
+    const macro_name: []const u8 = "macro";
+    var macro_opt = yazap.Arg.singleValueOption(macro_name, 'm', "Pattern macros to build regexp");
     macro_opt.setValuePlaceholder("STRING");
     macro_opt.setProperty(.takes_value);
     const info_opt = yazap.Arg.booleanOption("info", 'i', "Dont work like grep i.e. output matched string with additional info");
@@ -79,7 +80,7 @@ pub fn main() !void {
     try stdin_cmd.addArg(macro_opt);
     try stdin_cmd.addArg(info_opt);
 
-    var macro_cmd = app.createCommand("macro", "Macro information mode where a macro real regexp can be displayed or to get all supported macroses");
+    var macro_cmd = app.createCommand(macro_name, "Macro information mode where a macro real regexp can be displayed or to get all supported macroses");
     const macro_name_opt = yazap.Arg.positional("MACRO", "Macro name to expand real regular expression", null);
     try macro_cmd.addArg(patterns_opt);
     try macro_cmd.addArg(macro_name_opt);
@@ -91,40 +92,36 @@ pub fn main() !void {
 
     const matches = try app.parseProcess();
 
-    if (matches.subcommandMatches("macro")) |cmd_matches| {
-        const patterns = cmd_matches.getMultiValues("patterns");
+    if (matches.subcommandMatches(macro_name)) |cmd_matches| {
+        const patterns = cmd_matches.getMultiValues(patterns_name);
         try compileLib(patterns, arena.allocator());
         if (cmd_matches.getSingleValue("MACRO")) |macro| {
             try onTemplate(allocator, stdout, macro);
         } else {
             try onTemplates(allocator, stdout);
         }
-    }
-    if (matches.subcommandMatches("string")) |cmd_matches| {
-        const patterns = cmd_matches.getMultiValues("patterns");
+    } else if (matches.subcommandMatches("string")) |cmd_matches| {
+        const patterns = cmd_matches.getMultiValues(patterns_name);
         try compileLib(patterns, arena.allocator());
-        if (cmd_matches.getSingleValue("macro")) |macro| {
+        if (cmd_matches.getSingleValue(macro_name)) |macro| {
             if (cmd_matches.getSingleValue("STRING")) |str| {
                 const info_mode = cmd_matches.containsArg("info");
                 try onString(arena.allocator(), stdout, macro, str, info_mode);
             }
         }
-    }
-    if (matches.subcommandMatches("file")) |cmd_matches| {
-        const patterns = cmd_matches.getMultiValues("patterns");
+    } else if (matches.subcommandMatches("file")) |cmd_matches| {
+        const patterns = cmd_matches.getMultiValues(patterns_name);
         try compileLib(patterns, arena.allocator());
-        if (cmd_matches.getSingleValue("macro")) |macro| {
+        if (cmd_matches.getSingleValue(macro_name)) |macro| {
             if (cmd_matches.getSingleValue("PATH")) |path| {
                 const info_mode = cmd_matches.containsArg("info");
                 try onFile(allocator, stdout, macro, path, info_mode);
             }
         }
-    }
-
-    if (matches.subcommandMatches("stdin")) |cmd_matches| {
-        const patterns = cmd_matches.getMultiValues("patterns");
+    } else if (matches.subcommandMatches("stdin")) |cmd_matches| {
+        const patterns = cmd_matches.getMultiValues(patterns_name);
         try compileLib(patterns, arena.allocator());
-        if (cmd_matches.getSingleValue("macro")) |macro| {
+        if (cmd_matches.getSingleValue(macro_name)) |macro| {
             const info_mode = cmd_matches.containsArg("info");
             try onStdin(allocator, stdout, macro, info_mode);
         }
