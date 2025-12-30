@@ -159,48 +159,6 @@ jobs:
           name: macos_none_aarch64
           path: macos_none_aarch64
 
-      - name: Create fake Cargo.toml
-        run: |
-          cat >Cargo.toml <<EOL
-          [package]
-          name = "${{ env.RELEASE_BIN }}"
-          version = "${{ steps.get_version.outputs.VERSION }}"
-          description = "Regular expressions macro engine. GROK is a tool like UNIX grep on steroids"
-          authors = ["egoroff <egoroff@gmail.com>"]
-          homepage = "https://github.com/aegoroff/grok"
-          license = "MIT"
-          EOL
-
-      - name: Download Releaser
-        run: |
-          curl -L  -o releaser.tar.gz https://github.com/aegoroff/releaser/releases/download/${{ env.RELEASER_VER }}/releaser-${{ env.RELEASER_VER }}-x86_64-unknown-linux-musl.tar.gz
-          tar -xf releaser.tar.gz
-      - name: Create brew formula
-        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux_musl_x86_64/' -m './macos_none_x86_64/' -u ${{ env.RELEASE_BIN }}.rb
-      - name: Publish brew formula
-        uses: dmnemec/copy_file_to_another_repo_action@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
-        with:
-          source_file: ${{ env.RELEASE_BIN }}.rb
-          destination_repo: 'aegoroff/homebrew-tap'
-          user_email: 'egoroff@email.com'
-          user_name: 'aegoroff'
-          commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
-
-      - name: Create scoop json
-        run: ${{ github.workspace }}/releaser s -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -i './windows_gnu_x86_64/' -e ${{ env.RELEASE_BIN }}.exe -u ${{ env.RELEASE_BIN }}.json
-      - name: Publish scoop json
-        uses: dmnemec/copy_file_to_another_repo_action@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
-        with:
-          source_file: ${{ env.RELEASE_BIN }}.json
-          destination_repo: 'aegoroff/scoop-bucket'
-          user_email: 'egoroff@email.com'
-          user_name: 'aegoroff'
-          commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
-
       - name: Release aarch64 Linux MUSL tarball
         uses: actions/upload-release-asset@v1
         env:
