@@ -2,7 +2,6 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/dde2c10db42548ffafaa8b1d1ceea8a9)](https://app.codacy.com/gh/aegoroff/grok/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![CI Build](https://github.com/aegoroff/grok/actions/workflows/ci_build.yml/badge.svg)](https://github.com/aegoroff/grok/actions/workflows/ci_build.yml)
-[![Code Size](https://tokei.rs/b1/github/aegoroff/grok?category=code)](https://github.com/XAMPPRocky/tokei)
 
 **GROK** is a powerful command-line tool like UNIX `grep` on steroids. It uses grok patterns (named regular expression macros) to simplify complex pattern matching tasks.
 
