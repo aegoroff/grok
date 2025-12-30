@@ -314,7 +314,13 @@ fn compileLib(paths: ?[][]const u8, allocator: std.mem.Allocator) !void {
 }
 
 fn compileDir(lib_path: []const u8, allocator: std.mem.Allocator) !void {
-    var dir = try std.fs.openDirAbsolute(lib_path, .{ .iterate = true });
+    var dir: std.fs.Dir = undefined;
+    const options: std.fs.Dir.OpenOptions = .{ .iterate = true };
+    if (std.fs.path.isAbsolute(lib_path)) {
+        dir = try std.fs.openDirAbsolute(lib_path, options);
+    } else {
+        dir = try std.fs.cwd().openDir(lib_path, options);
+    }
     var walker = try dir.walk(allocator);
     defer walker.deinit();
     while (true) {
