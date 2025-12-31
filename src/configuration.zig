@@ -1,4 +1,4 @@
-pub const Configuration = @This();
+pub const Grok = @This();
 
 const std = @import("std");
 const yazap = @import("yazap");
@@ -16,7 +16,7 @@ matches: yazap.ArgMatches,
 allocator: std.mem.Allocator,
 app: yazap.App,
 
-pub fn init(allocator: std.mem.Allocator) !Configuration {
+pub fn init(allocator: std.mem.Allocator) !Grok {
     const app_descr_template =
         \\Grok regexp macro processor {s} {s}
         \\Copyright (C) 2018-2026 Alexander Egorov. All rights reserved.
@@ -83,18 +83,18 @@ pub fn init(allocator: std.mem.Allocator) !Configuration {
 
     const matches = try app.parseProcess();
 
-    return Configuration{
+    return Grok{
         .matches = matches,
         .allocator = allocator,
         .app = app,
     };
 }
 
-pub fn deinit(self: *Configuration) void {
+pub fn deinit(self: *Grok) void {
     self.app.deinit();
 }
 
-pub fn run(self: *Configuration, command: []const u8, comptime action: fn (std.mem.Allocator, yazap.ArgMatches) void) bool {
+pub fn run(self: *Grok, command: []const u8, comptime action: fn (std.mem.Allocator, yazap.ArgMatches) void) bool {
     if (self.matches.subcommandMatches(command)) |cmd_matches| {
         const patterns = cmd_matches.getMultiValues(patterns_name);
         self.compileLib(patterns) catch |e| {
@@ -108,7 +108,7 @@ pub fn run(self: *Configuration, command: []const u8, comptime action: fn (std.m
     return false;
 }
 
-fn compileLib(self: *Configuration, paths: ?[][]const u8) !void {
+fn compileLib(self: *Grok, paths: ?[][]const u8) !void {
     front.init(self.allocator);
     if (paths == null or paths.?.len == 0) {
         // Use default
@@ -130,7 +130,7 @@ fn compileLib(self: *Configuration, paths: ?[][]const u8) !void {
     }
 }
 
-fn compileDir(self: *Configuration, lib_path: []const u8) !void {
+fn compileDir(self: *Grok, lib_path: []const u8) !void {
     var dir: std.fs.Dir = undefined;
     const options: std.fs.Dir.OpenOptions = .{ .iterate = true };
     if (std.fs.path.isAbsolute(lib_path)) {
