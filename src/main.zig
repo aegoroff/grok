@@ -27,7 +27,7 @@ pub fn main() !void {
 
     const app_descr_template =
         \\Grok regexp macro processor {s} {s}
-        \\Copyright (C) 2019-2025 Alexander Egorov. All rights reserved.
+        \\Copyright (C) 2018-2026 Alexander Egorov. All rights reserved.
     ;
     const app_descr = try std.fmt.allocPrint(
         allocator,
