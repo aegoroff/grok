@@ -77,5 +77,6 @@
         "__verbose_abort": "cpp",
         "ios": "cpp",
         "locale": "cpp"
-    }
+    },
+    "sarif-viewer.connectToGithubCodeScanning": "off"
 }
