@@ -303,12 +303,9 @@ fn compileLib(paths: ?[][]const u8, allocator: std.mem.Allocator) !void {
         try compileDir(lib_path, allocator);
     } else {
         for (paths.?) |path| {
-            var d = std.fs.cwd().openDir(path, .{}) catch {
+            compileDir(path, allocator) catch {
                 try front.compileFile(path.ptr);
-                continue;
             };
-            d.close();
-            try compileDir(path, allocator);
         }
     }
 }
