@@ -1,11 +1,12 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const build_options = @import("build_options");
 const front = @import("frontend.zig");
 const back = @import("backend.zig");
 const encoding = @import("encoding.zig");
-const glob = @import("glob");
+const configuration = @import("configuration.zig");
 const yazap = @import("yazap");
+
+var stdout: *std.Io.Writer = undefined;
 
 pub fn main() !void {
     if (builtin.os.tag == .windows) {
@@ -15,7 +16,7 @@ pub fn main() !void {
     }
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
-    const stdout = &stdout_writer.interface;
+    stdout = &stdout_writer.interface;
     defer {
         stdout.flush() catch {};
     }
@@ -23,114 +24,66 @@ pub fn main() !void {
     const allocator = std.heap.c_allocator;
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
-    const query = std.Target.Query.fromTarget(&builtin.target);
 
-    const app_descr_template =
-        \\Grok regexp macro processor {s} {s}
-        \\Copyright (C) 2018-2026 Alexander Egorov. All rights reserved.
-    ;
-    const app_descr = try std.fmt.allocPrint(
-        allocator,
-        app_descr_template,
-        .{ build_options.version, @tagName(query.cpu_arch.?) },
-    );
+    var config = try configuration.init(arena.allocator());
+    defer config.deinit();
+    if (config.run(configuration.string_command_name, stringAction)) {
+        return;
+    }
+    if (config.run(configuration.file_command_name, fileAction)) {
+        return;
+    }
+    if (config.run(configuration.stdin_command_name, stdinAction)) {
+        return;
+    }
+    _ = config.run(configuration.macro_name, macroAction);
+}
 
-    var app = yazap.App.init(allocator, "grok", app_descr);
-    defer app.deinit();
-
-    var root_cmd = app.rootCommand();
-    root_cmd.setProperty(.help_on_empty_args);
-    root_cmd.setProperty(.subcommand_required);
-
-    const patterns_name: []const u8 = "patterns";
-    const patterns_opt = yazap.Arg.multiValuesOption(
-        patterns_name,
-        'p',
-        "One or more pattern files. If not set, current directory used to search all *.patterns files",
-        512,
-    );
-    const macro_name: []const u8 = "macro";
-    var macro_opt = yazap.Arg.singleValueOption(macro_name, 'm', "Pattern macros to build regexp");
-    macro_opt.setValuePlaceholder("STRING");
-    macro_opt.setProperty(.takes_value);
-    const info_opt = yazap.Arg.booleanOption("info", 'i', "Dont work like grep i.e. output matched string with additional info");
-
-    var str_cmd = app.createCommand("string", "Single string matching mode");
-    str_cmd.setProperty(.help_on_empty_args);
-    str_cmd.setProperty(.positional_arg_required);
-    const string_opt = yazap.Arg.positional("STRING", "String to match", null);
-    try str_cmd.addArg(patterns_opt);
-    try str_cmd.addArg(macro_opt);
-    try str_cmd.addArg(info_opt);
-    try str_cmd.addArg(string_opt);
-
-    var file_cmd = app.createCommand("file", "File matching mode");
-    file_cmd.setProperty(.help_on_empty_args);
-    file_cmd.setProperty(.positional_arg_required);
-    const file_opt = yazap.Arg.positional("PATH", "Full path to file to read data from", null);
-
-    try file_cmd.addArg(patterns_opt);
-    try file_cmd.addArg(macro_opt);
-    try file_cmd.addArg(info_opt);
-    try file_cmd.addArg(file_opt);
-
-    var stdin_cmd = app.createCommand("stdin", "Standard input (stdin) matching mode");
-    stdin_cmd.setProperty(.help_on_empty_args);
-    try stdin_cmd.addArg(patterns_opt);
-    try stdin_cmd.addArg(macro_opt);
-    try stdin_cmd.addArg(info_opt);
-
-    var macro_cmd = app.createCommand(macro_name, "Macro information mode where a macro real regexp can be displayed or to get all supported macroses");
-    const macro_name_opt = yazap.Arg.positional("MACRO", "Macro name to expand real regular expression", null);
-    try macro_cmd.addArg(patterns_opt);
-    try macro_cmd.addArg(macro_name_opt);
-
-    try root_cmd.addSubcommand(str_cmd);
-    try root_cmd.addSubcommand(file_cmd);
-    try root_cmd.addSubcommand(stdin_cmd);
-    try root_cmd.addSubcommand(macro_cmd);
-
-    const matches = try app.parseProcess();
-
-    if (matches.subcommandMatches(macro_name)) |cmd_matches| {
-        const patterns = cmd_matches.getMultiValues(patterns_name);
-        try compileLib(patterns, arena.allocator());
-        if (cmd_matches.getSingleValue("MACRO")) |macro| {
-            try onTemplate(allocator, stdout, macro);
-        } else {
-            try onTemplates(allocator, stdout);
-        }
-    } else if (matches.subcommandMatches("string")) |cmd_matches| {
-        const patterns = cmd_matches.getMultiValues(patterns_name);
-        try compileLib(patterns, arena.allocator());
-        if (cmd_matches.getSingleValue(macro_name)) |macro| {
-            if (cmd_matches.getSingleValue("STRING")) |str| {
-                const info_mode = cmd_matches.containsArg("info");
-                try onString(arena.allocator(), stdout, macro, str, info_mode);
-            }
-        }
-    } else if (matches.subcommandMatches("file")) |cmd_matches| {
-        const patterns = cmd_matches.getMultiValues(patterns_name);
-        try compileLib(patterns, arena.allocator());
-        if (cmd_matches.getSingleValue(macro_name)) |macro| {
-            if (cmd_matches.getSingleValue("PATH")) |path| {
-                const info_mode = cmd_matches.containsArg("info");
-                try onFile(allocator, stdout, macro, path, info_mode);
-            }
-        }
-    } else if (matches.subcommandMatches("stdin")) |cmd_matches| {
-        const patterns = cmd_matches.getMultiValues(patterns_name);
-        try compileLib(patterns, arena.allocator());
-        if (cmd_matches.getSingleValue(macro_name)) |macro| {
+fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
+    if (cmd_matches.getSingleValue(configuration.macro_name)) |macro| {
+        if (cmd_matches.getSingleValue("STRING")) |str| {
             const info_mode = cmd_matches.containsArg("info");
-            try onStdin(allocator, stdout, macro, info_mode);
+            onString(allocator, macro, str, info_mode) catch |e| {
+                std.debug.print("Failed string match: {}\n", .{e});
+            };
         }
+    }
+}
+
+fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
+    if (cmd_matches.getSingleValue(configuration.macro_name)) |macro| {
+        if (cmd_matches.getSingleValue("PATH")) |path| {
+            const info_mode = cmd_matches.containsArg("info");
+            onFile(allocator, macro, path, info_mode) catch |e| {
+                std.debug.print("Failed file match: {}\n", .{e});
+            };
+        }
+    }
+}
+
+fn stdinAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
+    if (cmd_matches.getSingleValue(configuration.macro_name)) |macro| {
+        const info_mode = cmd_matches.containsArg("info");
+        onStdin(allocator, macro, info_mode) catch |e| {
+            std.debug.print("Failed stdin match: {}\n", .{e});
+        };
+    }
+}
+
+fn macroAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
+    if (cmd_matches.getSingleValue("MACRO")) |macro| {
+        onTemplate(allocator, macro) catch |e| {
+            std.debug.print("Failed macro match: {}\n", .{e});
+        };
+    } else {
+        onTemplates(allocator) catch |e| {
+            std.debug.print("Failed to list macro: {}\n", .{e});
+        };
     }
 }
 
 fn onString(
     allocator: std.mem.Allocator,
-    stdout: *std.io.Writer,
     macro: []const u8,
     subject: []const u8,
     info_mode: bool,
@@ -160,7 +113,6 @@ fn onString(
 
 fn onFile(
     allocator: std.mem.Allocator,
-    stdout: *std.io.Writer,
     macro: []const u8,
     path: []const u8,
     info_mode: bool,
@@ -179,27 +131,26 @@ fn onFile(
     } else {
         file_encoding = detection.encoding;
     }
-    return readFromReader(allocator, stdout, macro, reader, info_mode, file_encoding);
+    return readFromReader(allocator, macro, reader, info_mode, file_encoding);
 }
 
 fn onStdin(
     allocator: std.mem.Allocator,
-    stdout: *std.io.Writer,
     macro: []const u8,
     info_mode: bool,
 ) !void {
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.fs.File.stdin().reader(&file_buffer);
     const reader = &file_reader.interface;
-    return readFromReader(allocator, stdout, macro, reader, info_mode, null);
+    return readFromReader(allocator, macro, reader, info_mode, null);
 }
 
-fn onTemplate(allocator: std.mem.Allocator, stdout: *std.io.Writer, macro: []const u8) !void {
+fn onTemplate(allocator: std.mem.Allocator, macro: []const u8) !void {
     const pattern = try back.createPattern(allocator, macro);
     return stdout.print("{s}\n", .{pattern.regex});
 }
 
-fn onTemplates(allocator: std.mem.Allocator, stdout: *std.io.Writer) !void {
+fn onTemplates(allocator: std.mem.Allocator) !void {
     var it = front.getPatterns().keyIterator();
     var macroses = std.ArrayList([]const u8){};
     while (it.next()) |item| {
@@ -217,7 +168,6 @@ fn stringLessThan(_: void, lhs: []const u8, rhs: []const u8) bool {
 
 fn readFromReader(
     allocator: std.mem.Allocator,
-    stdout: *std.io.Writer,
     macro: []const u8,
     reader: *std.Io.Reader,
     info_mode: bool,
@@ -285,58 +235,6 @@ fn readFromReader(
             }
         }
         line_no += 1;
-    }
-}
-
-fn compileLib(paths: ?[][]const u8, allocator: std.mem.Allocator) !void {
-    front.init(allocator);
-    if (paths == null or paths.?.len == 0) {
-        // Use default
-        var lib_path: []const u8 = undefined;
-        const os_tag = builtin.os.tag;
-        if (os_tag == .linux) {
-            lib_path = "/usr/share/grok/patterns";
-        } else {
-            lib_path = try std.fs.selfExeDirPathAlloc(allocator);
-        }
-
-        try compileDir(lib_path, allocator);
-    } else {
-        for (paths.?) |path| {
-            compileDir(path, allocator) catch {
-                try front.compileFile(path.ptr);
-            };
-        }
-    }
-}
-
-fn compileDir(lib_path: []const u8, allocator: std.mem.Allocator) !void {
-    var dir: std.fs.Dir = undefined;
-    const options: std.fs.Dir.OpenOptions = .{ .iterate = true };
-    if (std.fs.path.isAbsolute(lib_path)) {
-        dir = try std.fs.openDirAbsolute(lib_path, options);
-    } else {
-        dir = try std.fs.cwd().openDir(lib_path, options);
-    }
-    var walker = try dir.walk(allocator);
-    defer walker.deinit();
-    while (true) {
-        const entry_or_null = walker.next() catch {
-            continue;
-        };
-        const entry = entry_or_null orelse {
-            break;
-        };
-        switch (entry.kind) {
-            std.fs.Dir.Entry.Kind.file => {
-                const matches = glob.match("*.patterns", entry.basename);
-                if (matches) {
-                    const p = try entry.dir.realpathAlloc(allocator, entry.basename);
-                    try front.compileFile(p.ptr);
-                }
-            },
-            else => {},
-        }
     }
 }
 
