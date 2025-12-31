@@ -3,7 +3,7 @@ const builtin = @import("builtin");
 const front = @import("frontend.zig");
 const back = @import("backend.zig");
 const encoding = @import("encoding.zig");
-const configuration = @import("configuration.zig");
+const config = @import("configuration.zig");
 const yazap = @import("yazap");
 
 var stdout: *std.Io.Writer = undefined;
@@ -25,22 +25,22 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
 
-    var config = try configuration.init(arena.allocator());
-    defer config.deinit();
-    if (config.run(configuration.string_command_name, stringAction)) {
+    var grok = try config.Grok.init(arena.allocator());
+    defer grok.deinit();
+    if (grok.run(config.string_command_name, stringAction)) {
         return;
     }
-    if (config.run(configuration.file_command_name, fileAction)) {
+    if (grok.run(config.file_command_name, fileAction)) {
         return;
     }
-    if (config.run(configuration.stdin_command_name, stdinAction)) {
+    if (grok.run(config.stdin_command_name, stdinAction)) {
         return;
     }
-    _ = config.run(configuration.macro_name, macroAction);
+    _ = grok.run(config.macro_name, macroAction);
 }
 
 fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (cmd_matches.getSingleValue(configuration.macro_name)) |macro| {
+    if (cmd_matches.getSingleValue(config.macro_name)) |macro| {
         if (cmd_matches.getSingleValue("STRING")) |str| {
             const info_mode = cmd_matches.containsArg("info");
             onString(allocator, macro, str, info_mode) catch |e| {
@@ -51,7 +51,7 @@ fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) voi
 }
 
 fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (cmd_matches.getSingleValue(configuration.macro_name)) |macro| {
+    if (cmd_matches.getSingleValue(config.macro_name)) |macro| {
         if (cmd_matches.getSingleValue("PATH")) |path| {
             const info_mode = cmd_matches.containsArg("info");
             onFile(allocator, macro, path, info_mode) catch |e| {
@@ -62,7 +62,7 @@ fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void 
 }
 
 fn stdinAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (cmd_matches.getSingleValue(configuration.macro_name)) |macro| {
+    if (cmd_matches.getSingleValue(config.macro_name)) |macro| {
         const info_mode = cmd_matches.containsArg("info");
         onStdin(allocator, macro, info_mode) catch |e| {
             std.debug.print("Failed stdin match: {}\n", .{e});
