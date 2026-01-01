@@ -30,7 +30,8 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
 
-    var grok = try config.Grok.init(arena.allocator());
+    const argv = try std.process.argsAlloc(arena.allocator());
+    var grok = try config.Grok.init(arena.allocator(), argv[1..]);
     defer grok.deinit();
 
     const actions = &[_]Action{

@@ -16,7 +16,7 @@ matches: yazap.ArgMatches,
 allocator: std.mem.Allocator,
 app: yazap.App,
 
-pub fn init(allocator: std.mem.Allocator) !Grok {
+pub fn init(allocator: std.mem.Allocator, argv: []const [:0]const u8) !Grok {
     const app_descr_template =
         \\Grok regexp macro processor {s} {s}
         \\Copyright (C) 2018-2026 Alexander Egorov. All rights reserved.
@@ -81,7 +81,7 @@ pub fn init(allocator: std.mem.Allocator) !Grok {
     try root_cmd.addSubcommand(stdin_cmd);
     try root_cmd.addSubcommand(macro_cmd);
 
-    const matches = try app.parseProcess();
+    const matches = try app.parseFrom(argv);
 
     return Grok{
         .matches = matches,
