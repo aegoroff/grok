@@ -6,7 +6,6 @@ const builtin = @import("builtin");
 const build_options = @import("build_options");
 const glob = @import("glob");
 const front = @import("frontend.zig");
-const g = @import("grok.zig");
 const patterns_name: []const u8 = "patterns";
 pub const macro_name: []const u8 = "macro";
 pub const string_command_name: []const u8 = "string";
