@@ -94,7 +94,7 @@ pub fn deinit(self: *Grok) void {
     self.app.deinit();
 }
 
-pub fn run(self: *Grok, command: []const u8, comptime action: fn (std.mem.Allocator, yazap.ArgMatches) void) bool {
+pub fn run(self: *Grok, command: []const u8, handler: *const fn (std.mem.Allocator, yazap.ArgMatches) void) bool {
     if (self.matches.subcommandMatches(command)) |cmd_matches| {
         const patterns = cmd_matches.getMultiValues(patterns_name);
         self.compileLib(patterns) catch |e| {
@@ -102,7 +102,7 @@ pub fn run(self: *Grok, command: []const u8, comptime action: fn (std.mem.Alloca
             return true;
         };
 
-        action(self.allocator, cmd_matches);
+        handler(self.allocator, cmd_matches);
         return true;
     }
     return false;
