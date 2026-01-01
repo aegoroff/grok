@@ -52,7 +52,7 @@ fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) voi
     if (configuration.getMacro(cmd_matches)) |macro| {
         if (cmd_matches.getSingleValue("STRING")) |str| {
             const info_mode = configuration.isInfoMode(cmd_matches);
-            onString(allocator, macro, str, info_mode) catch |e| {
+            matchString(allocator, macro, str, info_mode) catch |e| {
                 std.debug.print("Failed string match: {}\n", .{e});
             };
         }
@@ -63,7 +63,7 @@ fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void 
     if (configuration.getMacro(cmd_matches)) |macro| {
         if (cmd_matches.getSingleValue("PATH")) |path| {
             const info_mode = configuration.isInfoMode(cmd_matches);
-            onFile(allocator, macro, path, info_mode) catch |e| {
+            matchFile(allocator, macro, path, info_mode) catch |e| {
                 std.debug.print("Failed file match: {}\n", .{e});
             };
         }
@@ -73,7 +73,7 @@ fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void 
 fn stdinAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     if (configuration.getMacro(cmd_matches)) |macro| {
         const info_mode = configuration.isInfoMode(cmd_matches);
-        onStdin(allocator, macro, info_mode) catch |e| {
+        matchStdin(allocator, macro, info_mode) catch |e| {
             std.debug.print("Failed stdin match: {}\n", .{e});
         };
     }
@@ -81,17 +81,17 @@ fn stdinAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void
 
 fn macroAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     if (cmd_matches.getSingleValue("MACRO")) |macro| {
-        onTemplate(allocator, macro) catch |e| {
-            std.debug.print("Failed macro match: {}\n", .{e});
+        showMacroRegex(allocator, macro) catch |e| {
+            std.debug.print("Failed show macro: {}\n", .{e});
         };
     } else {
-        onTemplates(allocator) catch |e| {
-            std.debug.print("Failed to list macro: {}\n", .{e});
+        listAllMacroses(allocator) catch |e| {
+            std.debug.print("Failed to list macroses: {}\n", .{e});
         };
     }
 }
 
-fn onString(
+fn matchString(
     allocator: std.mem.Allocator,
     macro: []const u8,
     subject: []const u8,
@@ -120,7 +120,7 @@ fn onString(
     }
 }
 
-fn onFile(
+fn matchFile(
     allocator: std.mem.Allocator,
     macro: []const u8,
     path: []const u8,
@@ -143,7 +143,7 @@ fn onFile(
     return readFromReader(allocator, macro, reader, info_mode, file_encoding);
 }
 
-fn onStdin(
+fn matchStdin(
     allocator: std.mem.Allocator,
     macro: []const u8,
     info_mode: bool,
@@ -154,12 +154,12 @@ fn onStdin(
     return readFromReader(allocator, macro, reader, info_mode, null);
 }
 
-fn onTemplate(allocator: std.mem.Allocator, macro: []const u8) !void {
+fn showMacroRegex(allocator: std.mem.Allocator, macro: []const u8) !void {
     const pattern = try back.createPattern(allocator, macro);
     return stdout.print("{s}\n", .{pattern.regex});
 }
 
-fn onTemplates(allocator: std.mem.Allocator) !void {
+fn listAllMacroses(allocator: std.mem.Allocator) !void {
     var it = front.getPatterns().keyIterator();
     var macroses = std.ArrayList([]const u8){};
     while (it.next()) |item| {
