@@ -108,6 +108,14 @@ pub fn run(self: *Grok, command: []const u8, comptime action: fn (std.mem.Alloca
     return false;
 }
 
+pub fn getMacro(match: yazap.ArgMatches) ?[]const u8 {
+    return match.getSingleValue(macro_name);
+}
+
+pub fn isInfoMode(match: yazap.ArgMatches) bool {
+    return match.containsArg("info");
+}
+
 fn compileLib(self: *Grok, paths: ?[][]const u8) !void {
     front.init(self.allocator);
     if (paths == null or paths.?.len == 0) {
