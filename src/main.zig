@@ -8,6 +8,11 @@ const yazap = @import("yazap");
 
 var stdout: *std.Io.Writer = undefined;
 
+const Action = struct {
+    name: []const u8,
+    handler: *const fn (std.mem.Allocator, yazap.ArgMatches) void,
+};
+
 pub fn main() !void {
     if (builtin.os.tag == .windows) {
         // Windows-specific UTF-8 setup
@@ -27,16 +32,19 @@ pub fn main() !void {
 
     var grok = try config.Grok.init(arena.allocator());
     defer grok.deinit();
-    if (grok.run(config.string_command_name, stringAction)) {
-        return;
+
+    const actions = &[_]Action{
+        .{ .name = config.string_command_name, .handler = &stringAction },
+        .{ .name = config.file_command_name, .handler = &fileAction },
+        .{ .name = config.stdin_command_name, .handler = &stdinAction },
+        .{ .name = config.macro_name, .handler = &macroAction },
+    };
+
+    for (actions) |action| {
+        if (grok.run(action.name, action.handler)) {
+            return;
+        }
     }
-    if (grok.run(config.file_command_name, fileAction)) {
-        return;
-    }
-    if (grok.run(config.stdin_command_name, stdinAction)) {
-        return;
-    }
-    _ = grok.run(config.macro_name, macroAction);
 }
 
 fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
