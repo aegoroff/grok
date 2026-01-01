@@ -25,7 +25,7 @@ pub fn build(b: *std.Build) void {
     const libgrok_sources = [_][]const u8{
         flex_output,
         bison_output,
-        "src/lib.c",
+        "src/grok/lib.c",
     };
 
     var flex_args: []const []const u8 = undefined;
@@ -71,7 +71,7 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("glob", glob_dep.module("glob"));
     exe.root_module.addImport("yazap", yazap.module("yazap"));
     exe.root_module.addIncludePath(b.path(generated_path));
-    exe.root_module.addIncludePath(b.path("src"));
+    exe.root_module.addIncludePath(b.path("src/grok"));
     exe.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
     exe.root_module.linkLibrary(pcre2_dep.artifact("pcre2-8"));
     exe.root_module.addImport("build_options", options.createModule());
@@ -91,7 +91,7 @@ pub fn build(b: *std.Build) void {
     unit_tests.root_module.addImport("glob", glob_dep.module("glob"));
     unit_tests.root_module.addImport("yazap", yazap.module("yazap"));
     unit_tests.root_module.addIncludePath(b.path(generated_path));
-    unit_tests.root_module.addIncludePath(b.path("src"));
+    unit_tests.root_module.addIncludePath(b.path("src/grok"));
     unit_tests.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
     unit_tests.root_module.linkLibrary(pcre2_dep.artifact("pcre2-8"));
     unit_tests.root_module.addImport("build_options", options.createModule());
