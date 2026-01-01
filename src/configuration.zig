@@ -6,6 +6,7 @@ const builtin = @import("builtin");
 const build_options = @import("build_options");
 const glob = @import("glob");
 const front = @import("frontend.zig");
+const g = @import("grok.zig");
 const patterns_name: []const u8 = "patterns";
 pub const macro_name: []const u8 = "macro";
 pub const string_command_name: []const u8 = "string";
@@ -167,3 +168,37 @@ fn compileDir(self: *Grok, lib_path: []const u8) !void {
         }
     }
 }
+
+test "correct string parsing and run integration test" {
+    const allocator = std.heap.c_allocator;
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR", "2000" };
+    var grok = try Grok.init(arena.allocator(), command_line);
+    defer grok.deinit();
+    const run_result = grok.run("string", &testAction);
+    try std.testing.expect(run_result);
+}
+
+test "incorrect string parsing no positional parameter" {
+    const allocator = std.heap.c_allocator;
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR" };
+    const err = Grok.init(arena.allocator(), command_line);
+    try std.testing.expectError(yazap.yazap_error.ParseError.PositionalArgumentNotProvided, err);
+}
+
+test "incorrect file parsing no positional parameter" {
+    const allocator = std.heap.c_allocator;
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    const command_line: []const [:0]const u8 = &[_][:0]const u8{ "file", "-m", "YEAR" };
+    const err = Grok.init(arena.allocator(), command_line);
+    try std.testing.expectError(yazap.yazap_error.ParseError.PositionalArgumentNotProvided, err);
+}
+
+fn testAction(_: std.mem.Allocator, _: yazap.ArgMatches) void {}
