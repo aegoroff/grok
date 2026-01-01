@@ -40,9 +40,9 @@ pub fn main() !void {
 }
 
 fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (cmd_matches.getSingleValue(config.macro_name)) |macro| {
+    if (config.getMacro(cmd_matches)) |macro| {
         if (cmd_matches.getSingleValue("STRING")) |str| {
-            const info_mode = cmd_matches.containsArg("info");
+            const info_mode = config.isInfoMode(cmd_matches);
             onString(allocator, macro, str, info_mode) catch |e| {
                 std.debug.print("Failed string match: {}\n", .{e});
             };
@@ -51,9 +51,9 @@ fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) voi
 }
 
 fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (cmd_matches.getSingleValue(config.macro_name)) |macro| {
+    if (config.getMacro(cmd_matches)) |macro| {
         if (cmd_matches.getSingleValue("PATH")) |path| {
-            const info_mode = cmd_matches.containsArg("info");
+            const info_mode = config.isInfoMode(cmd_matches);
             onFile(allocator, macro, path, info_mode) catch |e| {
                 std.debug.print("Failed file match: {}\n", .{e});
             };
@@ -62,8 +62,8 @@ fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void 
 }
 
 fn stdinAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (cmd_matches.getSingleValue(config.macro_name)) |macro| {
-        const info_mode = cmd_matches.containsArg("info");
+    if (config.getMacro(cmd_matches)) |macro| {
+        const info_mode = config.isInfoMode(cmd_matches);
         onStdin(allocator, macro, info_mode) catch |e| {
             std.debug.print("Failed stdin match: {}\n", .{e});
         };
