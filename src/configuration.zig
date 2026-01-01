@@ -1,4 +1,4 @@
-pub const Grok = @This();
+pub const Config = @This();
 
 const std = @import("std");
 const yazap = @import("yazap");
@@ -16,7 +16,7 @@ matches: yazap.ArgMatches,
 allocator: std.mem.Allocator,
 app: yazap.App,
 
-pub fn init(allocator: std.mem.Allocator, argv: []const [:0]const u8) !Grok {
+pub fn init(allocator: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     const app_descr_template =
         \\Grok regexp macro processor {s} {s}
         \\Copyright (C) 2018-2026 Alexander Egorov. All rights reserved.
@@ -83,18 +83,18 @@ pub fn init(allocator: std.mem.Allocator, argv: []const [:0]const u8) !Grok {
 
     const matches = try app.parseFrom(argv);
 
-    return Grok{
+    return Config{
         .matches = matches,
         .allocator = allocator,
         .app = app,
     };
 }
 
-pub fn deinit(self: *Grok) void {
+pub fn deinit(self: *Config) void {
     self.app.deinit();
 }
 
-pub fn run(self: *Grok, command: []const u8, handler: *const fn (std.mem.Allocator, yazap.ArgMatches) void) bool {
+pub fn run(self: *Config, command: []const u8, handler: *const fn (std.mem.Allocator, yazap.ArgMatches) void) bool {
     if (self.matches.subcommandMatches(command)) |cmd_matches| {
         const patterns = cmd_matches.getMultiValues(patterns_name);
         self.compileLib(patterns) catch |e| {
@@ -116,7 +116,7 @@ pub fn isInfoMode(match: yazap.ArgMatches) bool {
     return match.containsArg("info");
 }
 
-fn compileLib(self: *Grok, paths: ?[][]const u8) !void {
+fn compileLib(self: *Config, paths: ?[][]const u8) !void {
     front.init(self.allocator);
     if (paths == null or paths.?.len == 0) {
         // Use default
@@ -138,7 +138,7 @@ fn compileLib(self: *Grok, paths: ?[][]const u8) !void {
     }
 }
 
-fn compileDir(self: *Grok, lib_path: []const u8) !void {
+fn compileDir(self: *Config, lib_path: []const u8) !void {
     var dir: std.fs.Dir = undefined;
     const options: std.fs.Dir.OpenOptions = .{ .iterate = true };
     if (std.fs.path.isAbsolute(lib_path)) {
@@ -174,7 +174,7 @@ test "correct string parsing and run integration test" {
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR", "2000" };
-    var grok = try Grok.init(arena.allocator(), command_line);
+    var grok = try Config.init(arena.allocator(), command_line);
     defer grok.deinit();
     const run_result = grok.run("string", &testAction);
     try std.testing.expect(run_result);
@@ -186,7 +186,7 @@ test "incorrect string parsing no positional parameter" {
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR" };
-    const err = Grok.init(arena.allocator(), command_line);
+    const err = Config.init(arena.allocator(), command_line);
     try std.testing.expectError(yazap.yazap_error.ParseError.PositionalArgumentNotProvided, err);
 }
 
@@ -196,7 +196,7 @@ test "incorrect file parsing no positional parameter" {
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "file", "-m", "YEAR" };
-    const err = Grok.init(arena.allocator(), command_line);
+    const err = Config.init(arena.allocator(), command_line);
     try std.testing.expectError(yazap.yazap_error.ParseError.PositionalArgumentNotProvided, err);
 }
 
