@@ -1,5 +1,7 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const grok = @import("grok.zig");
+const glob = @import("glob");
 
 const c = @cImport({
     @cInclude("stdio.h");
@@ -15,7 +17,72 @@ pub const Info = struct {
 
 pub const Part = enum { literal, reference };
 
-pub fn compileFile(path: [*c]const u8) !void {
+var allocator: std.mem.Allocator = undefined;
+var composition: std.ArrayList(Info) = undefined;
+var definitions: std.StringHashMap(std.ArrayList(Info)) = undefined;
+
+pub fn getPattern(key: []const u8) grok.GrokError!std.ArrayList(Info) {
+    return definitions.get(key) orelse grok.GrokError.UnknownMacro;
+}
+
+pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
+    return definitions;
+}
+
+pub fn compileLib(alloc: std.mem.Allocator, paths: ?[][]const u8) !void {
+    allocator = alloc;
+    definitions = std.StringHashMap(std.ArrayList(Info)).init(allocator);
+    if (paths == null or paths.?.len == 0) {
+        // Use default
+        var lib_path: []const u8 = undefined;
+        const os_tag = builtin.os.tag;
+        if (os_tag == .linux) {
+            lib_path = "/usr/share/grok/patterns";
+        } else {
+            lib_path = try std.fs.selfExeDirPathAlloc(allocator);
+        }
+
+        try compileDir(lib_path);
+    } else {
+        for (paths.?) |path| {
+            compileDir(path) catch {
+                try compileFile(path.ptr);
+            };
+        }
+    }
+}
+
+fn compileDir(lib_path: []const u8) !void {
+    var dir: std.fs.Dir = undefined;
+    const options: std.fs.Dir.OpenOptions = .{ .iterate = true };
+    if (std.fs.path.isAbsolute(lib_path)) {
+        dir = try std.fs.openDirAbsolute(lib_path, options);
+    } else {
+        dir = try std.fs.cwd().openDir(lib_path, options);
+    }
+    var walker = try dir.walk(allocator);
+    defer walker.deinit();
+    while (true) {
+        const entry_or_null = walker.next() catch {
+            continue;
+        };
+        const entry = entry_or_null orelse {
+            break;
+        };
+        switch (entry.kind) {
+            std.fs.Dir.Entry.Kind.file => {
+                const matches = glob.match("*.patterns", entry.basename);
+                if (matches) {
+                    const p = try entry.dir.realpathAlloc(allocator, entry.basename);
+                    try compileFile(p.ptr);
+                }
+            },
+            else => {},
+        }
+    }
+}
+
+fn compileFile(path: [*c]const u8) !void {
     const c_file_ptr = c.fopen(path, "r") orelse {
         // Handle error
         std.debug.print("Failed to open file: {s}\n", .{path});
@@ -28,15 +95,6 @@ pub fn compileFile(path: [*c]const u8) !void {
         std.debug.print("Failed to parse file: {s}\n", .{path});
         return grok.GrokError.InvalidPatternFile;
     }
-}
-
-var allocator: std.mem.Allocator = undefined;
-var composition: std.ArrayList(Info) = undefined;
-var definitions: std.StringHashMap(std.ArrayList(Info)) = undefined;
-
-pub fn init(a: std.mem.Allocator) void {
-    allocator = a;
-    definitions = std.StringHashMap(std.ArrayList(Info)).init(allocator);
 }
 
 pub export fn fend_on_literal(str: [*c]const u8) void {
@@ -88,12 +146,4 @@ pub export fn fend_on_grok(m: *c.macro_t) void {
     }) catch |e| {
         std.debug.print("Error: {t}\n", .{e});
     };
-}
-
-pub fn getPattern(key: []const u8) grok.GrokError!std.ArrayList(Info) {
-    return definitions.get(key) orelse grok.GrokError.UnknownMacro;
-}
-
-pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
-    return definitions;
 }

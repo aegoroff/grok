@@ -4,8 +4,8 @@ const std = @import("std");
 const yazap = @import("yazap");
 const builtin = @import("builtin");
 const build_options = @import("build_options");
-const glob = @import("glob");
 const front = @import("frontend.zig");
+
 const patterns_name: []const u8 = "patterns";
 pub const macro_name: []const u8 = "macro";
 pub const string_command_name: []const u8 = "string";
@@ -97,7 +97,7 @@ pub fn deinit(self: *Config) void {
 pub fn run(self: *Config, command: []const u8, handler: *const fn (std.mem.Allocator, yazap.ArgMatches) void) bool {
     if (self.matches.subcommandMatches(command)) |cmd_matches| {
         const patterns = cmd_matches.getMultiValues(patterns_name);
-        self.compileLib(patterns) catch |e| {
+        front.compileLib(self.allocator, patterns) catch |e| {
             std.debug.print("Failed to compile lib: {}\n", .{e});
             return true;
         };
@@ -116,67 +116,15 @@ pub fn isInfoMode(match: yazap.ArgMatches) bool {
     return match.containsArg("info");
 }
 
-fn compileLib(self: *Config, paths: ?[][]const u8) !void {
-    front.init(self.allocator);
-    if (paths == null or paths.?.len == 0) {
-        // Use default
-        var lib_path: []const u8 = undefined;
-        const os_tag = builtin.os.tag;
-        if (os_tag == .linux) {
-            lib_path = "/usr/share/grok/patterns";
-        } else {
-            lib_path = try std.fs.selfExeDirPathAlloc(self.allocator);
-        }
-
-        try self.compileDir(lib_path);
-    } else {
-        for (paths.?) |path| {
-            self.compileDir(path) catch {
-                try front.compileFile(path.ptr);
-            };
-        }
-    }
-}
-
-fn compileDir(self: *Config, lib_path: []const u8) !void {
-    var dir: std.fs.Dir = undefined;
-    const options: std.fs.Dir.OpenOptions = .{ .iterate = true };
-    if (std.fs.path.isAbsolute(lib_path)) {
-        dir = try std.fs.openDirAbsolute(lib_path, options);
-    } else {
-        dir = try std.fs.cwd().openDir(lib_path, options);
-    }
-    var walker = try dir.walk(self.allocator);
-    defer walker.deinit();
-    while (true) {
-        const entry_or_null = walker.next() catch {
-            continue;
-        };
-        const entry = entry_or_null orelse {
-            break;
-        };
-        switch (entry.kind) {
-            std.fs.Dir.Entry.Kind.file => {
-                const matches = glob.match("*.patterns", entry.basename);
-                if (matches) {
-                    const p = try entry.dir.realpathAlloc(self.allocator, entry.basename);
-                    try front.compileFile(p.ptr);
-                }
-            },
-            else => {},
-        }
-    }
-}
-
 test "correct string parsing and run integration test" {
     const allocator = std.heap.c_allocator;
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR", "2000" };
-    var grok = try Config.init(arena.allocator(), command_line);
-    defer grok.deinit();
-    const run_result = grok.run("string", &testAction);
+    var config = try Config.init(arena.allocator(), command_line);
+    defer config.deinit();
+    const run_result = config.run("string", &testAction);
     try std.testing.expect(run_result);
 }
 
