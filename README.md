@@ -91,7 +91,7 @@ grok macro UNIXPATH
 
 Match a string:
 ```bash
-grok string -m EMAIL "user@example.com"
+grok string -m EMAILADDRESS "user@example.com"
 ```
 
 Search in a file:
