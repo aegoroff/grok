@@ -123,7 +123,7 @@ test "correct string parsing and run integration test" {
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR", "2000" };
     var config = try Config.init(arena.allocator(), command_line);
     defer config.deinit();
-    const run_result = config.run("string", &testAction);
+    const run_result = config.run("string", &testStringAction);
     try std.testing.expect(run_result);
 }
 
@@ -145,4 +145,8 @@ test "incorrect file parsing no positional parameter" {
     try std.testing.expectError(yazap.yazap_error.ParseError.PositionalArgumentNotProvided, err);
 }
 
-fn testAction(_: std.mem.Allocator, _: yazap.ArgMatches) void {}
+fn testStringAction(_: std.mem.Allocator, _: yazap.ArgMatches) void {
+    if (!builtin.is_test) {
+        @compileError("This function is only available in test builds");
+    }
+}
