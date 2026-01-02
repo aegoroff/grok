@@ -117,8 +117,7 @@ pub fn isInfoMode(match: yazap.ArgMatches) bool {
 }
 
 test "correct string parsing and run integration test" {
-    const allocator = std.heap.c_allocator;
-    var arena = std.heap.ArenaAllocator.init(allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR", "2000" };
@@ -129,8 +128,7 @@ test "correct string parsing and run integration test" {
 }
 
 test "incorrect string parsing no positional parameter" {
-    const allocator = std.heap.c_allocator;
-    var arena = std.heap.ArenaAllocator.init(allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR" };
@@ -139,8 +137,7 @@ test "incorrect string parsing no positional parameter" {
 }
 
 test "incorrect file parsing no positional parameter" {
-    const allocator = std.heap.c_allocator;
-    var arena = std.heap.ArenaAllocator.init(allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "file", "-m", "YEAR" };
