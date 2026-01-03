@@ -137,7 +137,7 @@ pub fn prepareRegex(pattern: Pattern) !Prepared {
         };
         defer backend_allocator.free(buffer);
         _ = re.pcre2_get_error_message_8(errornumber, buffer.ptr, len);
-        std.debug.print("PCRE2 compilation failed at offset {d}: {s}\n", .{ erroroffset, buffer });
+        std.debug.print("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}\n", .{ erroroffset, buffer, pattern.regex });
         return grok.GrokError.InvalidRegex;
     };
     return Prepared{ .re = regex };
