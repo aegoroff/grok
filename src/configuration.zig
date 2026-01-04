@@ -7,6 +7,8 @@ const build_options = @import("build_options");
 const front = @import("frontend.zig");
 
 const patterns_name: []const u8 = "patterns";
+const count_name: []const u8 = "count";
+
 pub const macro_name: []const u8 = "macro";
 pub const string_command_name: []const u8 = "string";
 pub const file_command_name: []const u8 = "file";
@@ -45,6 +47,7 @@ pub fn init(allocator: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     macro_opt.setValuePlaceholder("STRING");
     macro_opt.setProperty(.takes_value);
     const info_opt = yazap.Arg.booleanOption("info", 'i', "Dont work like grep i.e. output matched string with additional info");
+    const count_opt = yazap.Arg.booleanOption(count_name, 'c', "Print only matched strings count");
 
     var str_cmd = app.createCommand(string_command_name, "Single string matching mode");
     str_cmd.setProperty(.help_on_empty_args);
@@ -63,6 +66,7 @@ pub fn init(allocator: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     try file_cmd.addArg(patterns_opt);
     try file_cmd.addArg(macro_opt);
     try file_cmd.addArg(info_opt);
+    try file_cmd.addArg(count_opt);
     try file_cmd.addArg(file_opt);
 
     var stdin_cmd = app.createCommand(stdin_command_name, "Standard input (stdin) matching mode");
@@ -70,6 +74,7 @@ pub fn init(allocator: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     try stdin_cmd.addArg(patterns_opt);
     try stdin_cmd.addArg(macro_opt);
     try stdin_cmd.addArg(info_opt);
+    try stdin_cmd.addArg(count_opt);
 
     var macro_cmd = app.createCommand(macro_name, "Macro information mode where a macro real regexp can be displayed or to get all supported macroses");
     const macro_name_opt = yazap.Arg.positional("MACRO", "Macro name to expand real regular expression", null);
@@ -114,6 +119,10 @@ pub fn getMacro(match: yazap.ArgMatches) ?[]const u8 {
 
 pub fn isInfoMode(match: yazap.ArgMatches) bool {
     return match.containsArg("info");
+}
+
+pub fn isCountMode(match: yazap.ArgMatches) bool {
+    return match.containsArg(count_name);
 }
 
 test "correct string parsing and run integration test" {
