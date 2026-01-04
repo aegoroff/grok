@@ -132,9 +132,7 @@ pub fn prepareRegex(pattern: Pattern) !Prepared {
 
     const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
         const len = 256;
-        const buffer = backend_allocator.alloc(u8, len) catch {
-            return grok.GrokError.MemoryAllocationError;
-        };
+        const buffer = try backend_allocator.alloc(u8, len);
         defer backend_allocator.free(buffer);
         _ = re.pcre2_get_error_message_8(errornumber, buffer.ptr, len);
         std.debug.print("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}\n", .{ erroroffset, buffer, pattern.regex });
