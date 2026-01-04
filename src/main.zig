@@ -13,6 +13,12 @@ const Action = struct {
     handler: *const fn (std.mem.Allocator, yazap.ArgMatches) void,
 };
 
+const OutputControlFlags = packed struct {
+    info: bool = false,
+    count: bool = false,
+    print_line_num: bool = false,
+};
+
 pub fn main() !void {
     if (builtin.os.tag == .windows) {
         // Windows-specific UTF-8 setup
@@ -62,9 +68,12 @@ fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) voi
 fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     if (configuration.getMacro(cmd_matches)) |macro| {
         if (cmd_matches.getSingleValue("PATH")) |path| {
-            const info_mode = configuration.isInfoMode(cmd_matches);
-            const count_mode = configuration.isCountMode(cmd_matches);
-            matchFile(allocator, macro, path, info_mode, count_mode) catch |e| {
+            const flags = OutputControlFlags{
+                .info = configuration.isInfoMode(cmd_matches),
+                .count = configuration.isCountMode(cmd_matches),
+                .print_line_num = configuration.printLineNumber(cmd_matches),
+            };
+            matchFile(allocator, macro, path, flags) catch |e| {
                 std.debug.print("Failed file match: {}\n", .{e});
             };
         }
@@ -73,9 +82,12 @@ fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void 
 
 fn stdinAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     if (configuration.getMacro(cmd_matches)) |macro| {
-        const info_mode = configuration.isInfoMode(cmd_matches);
-        const count_mode = configuration.isCountMode(cmd_matches);
-        matchStdin(allocator, macro, info_mode, count_mode) catch |e| {
+        const flags = OutputControlFlags{
+            .info = configuration.isInfoMode(cmd_matches),
+            .count = configuration.isCountMode(cmd_matches),
+            .print_line_num = configuration.printLineNumber(cmd_matches),
+        };
+        matchStdin(allocator, macro, flags) catch |e| {
             std.debug.print("Failed stdin match: {}\n", .{e});
         };
     }
@@ -126,8 +138,7 @@ fn matchFile(
     allocator: std.mem.Allocator,
     macro: []const u8,
     path: []const u8,
-    info_mode: bool,
-    count_mode: bool,
+    flags: OutputControlFlags,
 ) !void {
     var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
     defer file.close();
@@ -143,19 +154,18 @@ fn matchFile(
     } else {
         file_encoding = detection.encoding;
     }
-    return readFromReader(allocator, macro, reader, info_mode, count_mode, file_encoding);
+    return readFromReader(allocator, macro, reader, flags, file_encoding);
 }
 
 fn matchStdin(
     allocator: std.mem.Allocator,
     macro: []const u8,
-    info_mode: bool,
-    count_mode: bool,
+    flags: OutputControlFlags,
 ) !void {
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.fs.File.stdin().reader(&file_buffer);
     const reader = &file_reader.interface;
-    return readFromReader(allocator, macro, reader, info_mode, count_mode, null);
+    return readFromReader(allocator, macro, reader, flags, null);
 }
 
 fn showMacroRegex(allocator: std.mem.Allocator, macro: []const u8) !void {
@@ -183,20 +193,18 @@ fn readFromReader(
     allocator: std.mem.Allocator,
     macro: []const u8,
     reader: *std.Io.Reader,
-    info_mode: bool,
-    count_mode: bool,
+    flags: OutputControlFlags,
     file_encoding: ?encoding.Encoding, // null means reading from stdin
 ) !void {
     back.init(allocator);
     const pattern = try back.createPattern(allocator, macro);
     const prepared = try back.prepareRegex(pattern);
 
-    var line_no: usize = 1;
-
     var arena = std.heap.ArenaAllocator.init(allocator);
     var current_encoding: encoding.Encoding = undefined;
 
-    var counter: u64 = 0;
+    var line_no: usize = 0;
+    var match_counter: u64 = 0;
     while (true) {
         defer _ = arena.reset(.retain_capacity);
         const loop_allocator = arena.allocator();
@@ -212,6 +220,7 @@ fn readFromReader(
         };
 
         var line = aw.written();
+        line_no += 1;
 
         if (file_encoding) |e| {
             current_encoding = e;
@@ -233,11 +242,12 @@ fn readFromReader(
 
         const matched = back.matchRegex(loop_allocator, &pattern, line, &prepared);
 
-        if (count_mode) {
-            if (matched.matched) {
-                counter += 1;
-            }
-        } else if (info_mode) {
+        if (matched.matched) {
+            match_counter += 1;
+        }
+        if (flags.count) {
+            continue;
+        } else if (flags.info) {
             try stdout.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, matched.matched, macro });
             if (matched.properties) |properties| {
                 try stdout.print("\n  Meta properties found:\n", .{});
@@ -251,13 +261,16 @@ fn readFromReader(
             }
         } else {
             if (matched.matched) {
-                try stdout.print("{s}\n", .{line});
+                if (flags.print_line_num) {
+                    try stdout.print("{d}: {s}\n", .{ line_no, line });
+                } else {
+                    try stdout.print("{s}\n", .{line});
+                }
             }
         }
-        line_no += 1;
     }
-    if (count_mode) {
-        try stdout.print("{d}\n", .{counter});
+    if (flags.count) {
+        try stdout.print("{d}\n", .{match_counter});
     }
 }
 
