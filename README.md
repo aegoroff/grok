@@ -127,7 +127,7 @@ Run `grok <command> -h` or `grok <command> --help` for detailed help on any comm
 
 - `-p, --patterns=<patterns>...` - One or more pattern files. If not set, current directory is used to search for all `*.patterns` files
 - `-m, --macro=<STRING>` - Pattern macro to build regexp (required for `string`, `file`, and `stdin` commands)
-- `-i, --info` - Output matched string with additional information (line numbers, captured groups, etc.)
+- `-i, --info` - Output matched string with additional information (captured groups, etc.)
 - `-h, --help` - Print help and exit
 
 ### Command Details
@@ -145,7 +145,7 @@ grok string [OPTIONS] <STRING>
 
 **Example:**
 ```bash
-grok string -m EMAIL "user@example.com"
+grok string -m EMAILADDRESS "user@example.com"
 ```
 
 #### `file` - File Matching
@@ -158,6 +158,10 @@ grok file [OPTIONS] <PATH>
 
 **Arguments:**
 - `PATH` - Full path to file to read data from
+
+**Options:**
+- `-c, --count` - Print only the number of matched lines
+- `-n, --line-number` - Print line numbers with matching lines
 
 **Example:**
 ```bash
@@ -176,6 +180,10 @@ grok stdin [OPTIONS]
 ```bash
 cat /var/log/system.log | grok stdin -m SYSLOGBASE
 ```
+
+**Options:**
+- `-c, --count` - Print only the number of matched lines
+- `-n, --line-number` - Print line numbers with matching lines
 
 #### `macro` - Macro Information
 
