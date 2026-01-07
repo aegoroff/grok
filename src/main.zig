@@ -97,22 +97,12 @@ fn macroAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void
     }
 }
 
-fn matchString(
-    allocator: std.mem.Allocator,
-    macro: []const u8,
-    subject: []const u8,
-    info_mode: bool,
-) !void {
+fn matchString(allocator: std.mem.Allocator, macro: []const u8, subject: []const u8, info_mode: bool) !void {
     var match = try matcher.Matcher.init(allocator, stdout, macro);
     try match.matchString(subject, info_mode);
 }
 
-fn matchFile(
-    allocator: std.mem.Allocator,
-    macro: []const u8,
-    path: []const u8,
-    flags: matcher.OutputControlFlags,
-) !void {
+fn matchFile(allocator: std.mem.Allocator, macro: []const u8, path: []const u8, flags: matcher.OutputFlags) !void {
     var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
     defer file.close();
     var file_buffer: [16384]u8 = undefined;
@@ -131,11 +121,7 @@ fn matchFile(
     try match.matchReader(reader, flags, file_encoding);
 }
 
-fn matchStdin(
-    allocator: std.mem.Allocator,
-    macro: []const u8,
-    flags: matcher.OutputControlFlags,
-) !void {
+fn matchStdin(allocator: std.mem.Allocator, macro: []const u8, flags: matcher.OutputFlags) !void {
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.fs.File.stdin().reader(&file_buffer);
     var match = try matcher.Matcher.init(allocator, stdout, macro);

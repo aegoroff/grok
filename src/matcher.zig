@@ -10,7 +10,7 @@ pattern: back.Pattern,
 writer: *std.Io.Writer,
 macro: []const u8,
 
-pub const OutputControlFlags = packed struct {
+pub const OutputFlags = packed struct {
     info: bool = false,
     count: bool = false,
     print_line_num: bool = false,
@@ -57,7 +57,7 @@ pub fn showRegex(self: *const Matcher) !void {
 pub fn matchReader(
     self: *Matcher,
     reader: *std.Io.Reader,
-    flags: OutputControlFlags,
+    flags: OutputFlags,
     file_encoding: ?encoding.Encoding, // null means reading from stdin
 ) !void {
     var arena = std.heap.ArenaAllocator.init(self.allocator);
