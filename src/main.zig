@@ -118,14 +118,14 @@ fn matchFile(allocator: std.mem.Allocator, macro: []const u8, path: []const u8, 
         file_encoding = detection.encoding;
     }
     var match = try matcher.Matcher.init(allocator, stdout, macro);
-    try match.matchReader(reader, flags, file_encoding);
+    try match.matchStrings(reader, flags, file_encoding);
 }
 
 fn matchStdin(allocator: std.mem.Allocator, macro: []const u8, flags: matcher.OutputFlags) !void {
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.fs.File.stdin().reader(&file_buffer);
     var match = try matcher.Matcher.init(allocator, stdout, macro);
-    try match.matchReader(&file_reader.interface, flags, null);
+    try match.matchStrings(&file_reader.interface, flags, null);
 }
 
 fn showMacroRegex(allocator: std.mem.Allocator, macro: []const u8) !void {

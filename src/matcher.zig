@@ -29,8 +29,9 @@ pub fn init(allocator: std.mem.Allocator, writer: *std.Io.Writer, macro: []const
     };
 }
 
-pub fn matchString(self: *Matcher, subject: []const u8, info_mode: bool) !void {
-    const matched = back.matchRegex(self.allocator, &self.pattern, subject, &self.prepared);
+/// Matches single string specified in `str` argument
+pub fn matchString(self: *Matcher, str: []const u8, info_mode: bool) !void {
+    const matched = back.matchRegex(self.allocator, &self.pattern, str, &self.prepared);
     if (info_mode) {
         if (matched.matched) {
             try self.writer.print("Match found\n", .{});
@@ -46,7 +47,7 @@ pub fn matchString(self: *Matcher, subject: []const u8, info_mode: bool) !void {
             try self.writer.print("No match found\n", .{});
         }
     } else if (matched.matched) {
-        try self.writer.print("{s}\n", .{subject});
+        try self.writer.print("{s}\n", .{str});
     }
 }
 
@@ -54,7 +55,8 @@ pub fn showRegex(self: *const Matcher) !void {
     try self.writer.print("{s}\n", .{self.pattern.regex});
 }
 
-pub fn matchReader(
+/// Reads strings sepatated by \n from `reader` and matches them
+pub fn matchStrings(
     self: *Matcher,
     reader: *std.Io.Reader,
     flags: OutputFlags,
