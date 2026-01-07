@@ -51,8 +51,9 @@ pub fn main() !void {
 fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     if (configuration.getMacro(cmd_matches)) |macro| {
         if (cmd_matches.getSingleValue("STRING")) |str| {
-            const info_mode = configuration.isInfoMode(cmd_matches);
-            matchString(allocator, macro, str, info_mode) catch |e| {
+            matchString(allocator, macro, str, .{
+                .info = configuration.isInfoMode(cmd_matches),
+            }) catch |e| {
                 std.debug.print("Failed string match: {}\n", .{e});
             };
         }
@@ -97,9 +98,9 @@ fn macroAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void
     }
 }
 
-fn matchString(allocator: std.mem.Allocator, macro: []const u8, subject: []const u8, info_mode: bool) !void {
+fn matchString(allocator: std.mem.Allocator, macro: []const u8, subject: []const u8, flags: matcher.OutputFlags) !void {
     var match = try matcher.Matcher.init(allocator, stdout, macro);
-    try match.matchString(subject, info_mode);
+    try match.matchString(subject, flags);
 }
 
 fn matchFile(allocator: std.mem.Allocator, macro: []const u8, path: []const u8, flags: matcher.OutputFlags) !void {

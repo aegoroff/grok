@@ -30,25 +30,9 @@ pub fn init(allocator: std.mem.Allocator, writer: *std.Io.Writer, macro: []const
 }
 
 /// Matches single string specified in `str` argument
-pub fn matchString(self: *Matcher, str: []const u8, info_mode: bool) !void {
-    const matched = back.matchRegex(self.allocator, &self.pattern, str, &self.prepared);
-    if (info_mode) {
-        if (matched.matched) {
-            try self.writer.print("Match found\n", .{});
-            if (matched.properties) |properties| {
-                var it = properties.iterator();
-                while (it.next()) |entry| {
-                    const key = entry.key_ptr.*;
-                    const val = entry.value_ptr.*;
-                    try self.writer.print("\t{s}: {s}\n", .{ key, val });
-                }
-            }
-        } else {
-            try self.writer.print("No match found\n", .{});
-        }
-    } else if (matched.matched) {
-        try self.writer.print("{s}\n", .{str});
-    }
+pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
+    const result = back.matchRegex(self.allocator, &self.pattern, str, &self.prepared);
+    try self.output(1, result, flags);
 }
 
 pub fn showRegex(self: *const Matcher) !void {
@@ -102,36 +86,42 @@ pub fn matchStrings(
             reader.toss(1);
         }
 
-        const matched = back.matchRegex(loop_allocator, &self.pattern, line, &self.prepared);
+        const result = back.matchRegex(loop_allocator, &self.pattern, line, &self.prepared);
 
-        if (matched.matched) {
+        if (result.matched) {
             match_counter += 1;
         }
         if (flags.count) {
             continue;
-        } else if (flags.info) {
-            try self.writer.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, matched.matched, self.macro });
-            if (matched.properties) |properties| {
-                try self.writer.print("\n  Meta properties found:\n", .{});
-                var it = properties.iterator();
-                while (it.next()) |entry| {
-                    const key = entry.key_ptr.*;
-                    const val = entry.value_ptr.*;
-                    try self.writer.print("\t{s}: {s}\n", .{ key, val });
-                }
-                try self.writer.print("\n\n", .{});
-            }
         } else {
-            if (matched.matched) {
-                if (flags.print_line_num) {
-                    try self.writer.print("{d}: {s}\n", .{ line_no, line });
-                } else {
-                    try self.writer.print("{s}\n", .{line});
-                }
-            }
+            try self.output(line_no, result, flags);
         }
     }
     if (flags.count) {
         try self.writer.print("{d}\n", .{match_counter});
+    }
+}
+
+fn output(self: *Matcher, line_no: usize, result: back.MatchResult, flags: OutputFlags) !void {
+    if (flags.info) {
+        try self.writer.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, result.matched, self.macro });
+        if (result.properties) |properties| {
+            try self.writer.print("\n  Meta properties found:\n", .{});
+            var it = properties.iterator();
+            while (it.next()) |entry| {
+                const key = entry.key_ptr.*;
+                const val = entry.value_ptr.*;
+                try self.writer.print("\t{s}: {s}\n", .{ key, val });
+            }
+            try self.writer.print("\n\n", .{});
+        }
+    } else {
+        if (result.matched) {
+            if (flags.print_line_num) {
+                try self.writer.print("{d}: {s}\n", .{ line_no, result.original });
+            } else {
+                try self.writer.print("{s}\n", .{result.original});
+            }
+        }
     }
 }
