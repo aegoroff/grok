@@ -77,6 +77,11 @@ pub fn build(b: *std.Build) void {
     exe.root_module.linkLibrary(pcre2_dep.artifact("pcre2-8"));
     exe.root_module.addImport("build_options", options.createModule());
 
+    if (optimize == .ReleaseFast and target.result.os.tag != .macos) {
+        exe.lto = .full;
+        exe.link_gc_sections = true;
+    }
+
     b.installArtifact(exe);
 
     // Unit tests
