@@ -17,6 +17,7 @@ pub const Prepared = struct {
 
 pub const MatchResult = struct {
     matched: bool,
+    original: []const u8,
     properties: ?std.StringHashMap([]const u8),
 };
 
@@ -165,11 +166,13 @@ pub fn matchRegex(allocator: std.mem.Allocator, pattern: *const Pattern, subject
         }
         return MatchResult{
             .matched = matched,
+            .original = subject,
             .properties = properties,
         };
     } else {
         return MatchResult{
             .matched = matched,
+            .original = subject,
             .properties = null,
         };
     }
