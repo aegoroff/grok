@@ -31,7 +31,7 @@ pub fn init(allocator: std.mem.Allocator, writer: *std.Io.Writer, macro: []const
 
 /// Matches single string specified in `str` argument
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
-    const result = regex.match(self.allocator, &self.pattern, str, &self.prepared);
+    const result = regex.match(self.allocator, &self.prepared, str);
     try self.output(1, result, flags);
 }
 
@@ -86,7 +86,7 @@ pub fn matchStrings(
             reader.toss(1);
         }
 
-        const result = regex.match(loop_allocator, &self.pattern, line, &self.prepared);
+        const result = regex.match(loop_allocator, &self.prepared, line);
 
         if (result.matched) {
             match_counter += 1;

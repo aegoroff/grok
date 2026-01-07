@@ -13,6 +13,7 @@ pub const Pattern = struct {
 
 pub const Prepared = struct {
     re: *re.pcre2_code_8,
+    properties: std.ArrayList([]const u8),
 };
 
 pub const MatchResult = struct {
@@ -139,10 +140,13 @@ pub fn prepare(pattern: Pattern) !Prepared {
         std.debug.print("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}\n", .{ erroroffset, buffer, pattern.regex });
         return grok.GrokError.InvalidRegex;
     };
-    return Prepared{ .re = regex };
+    return Prepared{
+        .re = regex,
+        .properties = pattern.properties,
+    };
 }
 
-pub fn match(allocator: std.mem.Allocator, pattern: *const Pattern, subject: []const u8, prepared: *const Prepared) MatchResult {
+pub fn match(allocator: std.mem.Allocator, prepared: *const Prepared, subject: []const u8) MatchResult {
     backend_allocator = allocator; // IMPORTANT
     const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, general_context);
     defer re.pcre2_match_data_free_8(match_data);
@@ -152,9 +156,9 @@ pub fn match(allocator: std.mem.Allocator, pattern: *const Pattern, subject: []c
     const rc: c_int = re.pcre2_match_8(prepared.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
     const matched = rc > 0;
 
-    if (matched and pattern.properties.items.len > 0) {
+    if (matched and prepared.properties.items.len > 0) {
         var properties = std.StringHashMap([]const u8).init(allocator);
-        for (pattern.properties.items) |value| {
+        for (prepared.properties.items) |value| {
             var buffer: [*c]re.PCRE2_UCHAR8 = undefined;
             var buffer_size_in_chars: re.PCRE2_SIZE = undefined;
             const get_string_result = re.pcre2_substring_get_byname_8(match_data, value.ptr, &buffer, &buffer_size_in_chars);
