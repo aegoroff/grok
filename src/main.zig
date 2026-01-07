@@ -110,7 +110,7 @@ fn matchFile(allocator: std.mem.Allocator, macro: []const u8, path: []const u8, 
     const reader = &file_reader.interface;
     const encoding_buffer = try reader.take(4);
     const detection = encoding.detectBomMemory(encoding_buffer);
-    try file_reader.seekTo(detection.offset);
+    try file_reader.seekTo(detection.offset); // skip bom if any
     var file_encoding: encoding.Encoding = undefined;
     if (detection.encoding == .unknown) {
         file_encoding = .utf8; // set default to utf-8
