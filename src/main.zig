@@ -117,7 +117,7 @@ fn matchFile(allocator: std.mem.Allocator, macro: []const u8, path: []const u8, 
         const min = @min(stat.size, 4); // 4 is max possible BOM size
         const encoding_buffer = try reader.take(min);
         const detection = encoding.detectBomMemory(encoding_buffer);
-        try file_reader.seekTo(detection.offset); // skip bom if any
+        try file_reader.seekTo(detection.offset); // skip bom if any or set to begin if no bom detected
 
         if (detection.encoding == .unknown) {
             file_encoding = .utf8; // set default to utf-8
