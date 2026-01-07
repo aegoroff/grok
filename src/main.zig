@@ -111,10 +111,11 @@ fn matchFile(allocator: std.mem.Allocator, macro: []const u8, path: []const u8, 
     var file_reader = file.reader(&file_buffer);
     const reader = &file_reader.interface;
     var file_encoding: encoding.Encoding = undefined;
-    if (stat.size < 4) {
+    if (stat.size < 2) {
         file_encoding = .utf8;
     } else {
-        const encoding_buffer = try reader.take(4);
+        const min = @min(stat.size, 4); // 4 is max possible BOM size
+        const encoding_buffer = try reader.take(min);
         const detection = encoding.detectBomMemory(encoding_buffer);
         try file_reader.seekTo(detection.offset); // skip bom if any
 
