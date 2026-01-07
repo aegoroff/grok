@@ -1,12 +1,12 @@
 pub const Matcher = @This();
 
 const std = @import("std");
-const back = @import("backend.zig");
+const regex = @import("regex.zig");
 const encoding = @import("encoding.zig");
 
 allocator: std.mem.Allocator,
-prepared: back.Prepared,
-pattern: back.Pattern,
+prepared: regex.Prepared,
+pattern: regex.Pattern,
 writer: *std.Io.Writer,
 macro: []const u8,
 
@@ -17,9 +17,9 @@ pub const OutputFlags = packed struct {
 };
 
 pub fn init(allocator: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !Matcher {
-    back.init(allocator);
-    const pattern = try back.createPattern(allocator, macro);
-    const prepared = try back.prepareRegex(pattern);
+    regex.init(allocator);
+    const pattern = try regex.createPattern(allocator, macro);
+    const prepared = try regex.prepare(pattern);
     return Matcher{
         .allocator = allocator,
         .prepared = prepared,
@@ -31,7 +31,7 @@ pub fn init(allocator: std.mem.Allocator, writer: *std.Io.Writer, macro: []const
 
 /// Matches single string specified in `str` argument
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
-    const result = back.matchRegex(self.allocator, &self.pattern, str, &self.prepared);
+    const result = regex.match(self.allocator, &self.pattern, str, &self.prepared);
     try self.output(1, result, flags);
 }
 
@@ -86,7 +86,7 @@ pub fn matchStrings(
             reader.toss(1);
         }
 
-        const result = back.matchRegex(loop_allocator, &self.pattern, line, &self.prepared);
+        const result = regex.match(loop_allocator, &self.pattern, line, &self.prepared);
 
         if (result.matched) {
             match_counter += 1;
@@ -102,7 +102,7 @@ pub fn matchStrings(
     }
 }
 
-fn output(self: *Matcher, line_no: usize, result: back.MatchResult, flags: OutputFlags) !void {
+fn output(self: *Matcher, line_no: usize, result: regex.MatchResult, flags: OutputFlags) !void {
     if (flags.info) {
         try self.writer.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, result.matched, self.macro });
         if (result.properties) |properties| {
