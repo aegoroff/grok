@@ -138,9 +138,8 @@ fn matchStdin(
 ) !void {
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.fs.File.stdin().reader(&file_buffer);
-    const reader = &file_reader.interface;
     var match = try matcher.Matcher.init(allocator, stdout, macro);
-    try match.matchReader(reader, flags, null);
+    try match.matchReader(&file_reader.interface, flags, null);
 }
 
 fn showMacroRegex(allocator: std.mem.Allocator, macro: []const u8) !void {
