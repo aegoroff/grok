@@ -106,18 +106,25 @@ fn matchString(allocator: std.mem.Allocator, macro: []const u8, subject: []const
 fn matchFile(allocator: std.mem.Allocator, macro: []const u8, path: []const u8, flags: matcher.OutputFlags) !void {
     var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
     defer file.close();
+    const stat = try file.stat();
     var file_buffer: [16384]u8 = undefined;
     var file_reader = file.reader(&file_buffer);
     const reader = &file_reader.interface;
-    const encoding_buffer = try reader.take(4);
-    const detection = encoding.detectBomMemory(encoding_buffer);
-    try file_reader.seekTo(detection.offset); // skip bom if any
     var file_encoding: encoding.Encoding = undefined;
-    if (detection.encoding == .unknown) {
-        file_encoding = .utf8; // set default to utf-8
+    if (stat.size < 4) {
+        file_encoding = .utf8;
     } else {
-        file_encoding = detection.encoding;
+        const encoding_buffer = try reader.take(4);
+        const detection = encoding.detectBomMemory(encoding_buffer);
+        try file_reader.seekTo(detection.offset); // skip bom if any
+
+        if (detection.encoding == .unknown) {
+            file_encoding = .utf8; // set default to utf-8
+        } else {
+            file_encoding = detection.encoding;
+        }
     }
+
     var match = try matcher.Matcher.init(allocator, stdout, macro);
     try match.matchStrings(reader, flags, file_encoding);
 }
