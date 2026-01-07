@@ -124,7 +124,7 @@ pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !Pattern {
     return result;
 }
 
-pub fn prepareRegex(pattern: Pattern) !Prepared {
+pub fn prepare(pattern: Pattern) !Prepared {
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
 
@@ -142,7 +142,7 @@ pub fn prepareRegex(pattern: Pattern) !Prepared {
     return Prepared{ .re = regex };
 }
 
-pub fn matchRegex(allocator: std.mem.Allocator, pattern: *const Pattern, subject: []const u8, prepared: *const Prepared) MatchResult {
+pub fn match(allocator: std.mem.Allocator, pattern: *const Pattern, subject: []const u8, prepared: *const Prepared) MatchResult {
     backend_allocator = allocator; // IMPORTANT
     const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, general_context);
     defer re.pcre2_match_data_free_8(match_data);
