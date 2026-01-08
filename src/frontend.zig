@@ -32,24 +32,31 @@ pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
 pub fn compileLib(alloc: std.mem.Allocator, paths: ?[][]const u8) !void {
     allocator = alloc;
     definitions = std.StringHashMap(std.ArrayList(Info)).init(allocator);
-    if (paths == null or paths.?.len == 0) {
-        // Use default
-        var lib_path: []const u8 = undefined;
-        const os_tag = builtin.os.tag;
-        if (os_tag == .linux) {
-            lib_path = "/usr/share/grok/patterns";
+    if (paths) |path_arg| {
+        if (path_arg.len == 0) {
+            try compileDefault();
         } else {
-            lib_path = try std.fs.selfExeDirPathAlloc(allocator);
+            for (path_arg) |path| {
+                compileDir(path) catch {
+                    try compileFile(path.ptr);
+                };
+            }
         }
-
-        try compileDir(lib_path);
     } else {
-        for (paths.?) |path| {
-            compileDir(path) catch {
-                try compileFile(path.ptr);
-            };
-        }
+        try compileDefault();
     }
+}
+
+fn compileDefault() !void {
+    var lib_path: []const u8 = undefined;
+    const os_tag = builtin.os.tag;
+    if (os_tag == .linux) {
+        lib_path = "/usr/share/grok/patterns";
+    } else {
+        lib_path = try std.fs.selfExeDirPathAlloc(allocator);
+    }
+
+    try compileDir(lib_path);
 }
 
 fn compileDir(lib_path: []const u8) !void {
