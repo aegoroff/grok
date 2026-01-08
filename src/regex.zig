@@ -118,8 +118,7 @@ pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !Pattern {
     var result = Pattern{ .properties = std.ArrayList([]const u8){}, .regex = "" };
     for (m.items) |value| {
         try stack.append(allocator, value);
-        while (stack.items.len > 0) {
-            const current = stack.pop().?;
+        while (stack.pop()) |current| {
             const current_slice = std.mem.span(current.data);
             if (current.part == .literal) {
                 // plain literal case
