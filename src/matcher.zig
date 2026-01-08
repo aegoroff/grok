@@ -91,11 +91,7 @@ pub fn matchStrings(
         if (result.matched) {
             match_counter += 1;
         }
-        if (flags.count) {
-            continue;
-        } else {
-            try self.output(line_no, result, flags);
-        }
+        try self.output(line_no, result, flags);
     }
     if (flags.count) {
         try self.writer.print("{d}\n", .{match_counter});
@@ -103,6 +99,9 @@ pub fn matchStrings(
 }
 
 fn output(self: *Matcher, line_no: usize, result: regex.MatchResult, flags: OutputFlags) !void {
+    if (flags.count) {
+        return;
+    }
     if (flags.info) {
         try self.writer.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, result.matched, self.macro });
         if (result.properties) |properties| {
