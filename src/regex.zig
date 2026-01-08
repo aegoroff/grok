@@ -205,28 +205,23 @@ pub fn match(allocator: std.mem.Allocator, prepared: *const Prepared, subject: [
     const rc: c_int = re.pcre2_match_8(prepared.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
     const matched = rc > 0;
 
+    var properties: ?std.StringHashMap([]const u8) = null;
     if (matched and prepared.properties.items.len > 0) {
-        var properties = std.StringHashMap([]const u8).init(allocator);
+        properties = std.StringHashMap([]const u8).init(allocator);
         for (prepared.properties.items) |value| {
             var buffer: [*c]re.PCRE2_UCHAR8 = undefined;
             var buffer_size_in_chars: re.PCRE2_SIZE = undefined;
             const get_string_result = re.pcre2_substring_get_byname_8(match_data, value.ptr, &buffer, &buffer_size_in_chars);
             if (get_string_result == 0) {
-                properties.put(value, std.mem.span(buffer)) catch {
+                properties.?.put(value, std.mem.span(buffer)) catch {
                     continue;
                 };
             }
         }
-        return MatchResult{
-            .matched = matched,
-            .original = subject,
-            .properties = properties,
-        };
-    } else {
-        return MatchResult{
-            .matched = matched,
-            .original = subject,
-            .properties = null,
-        };
     }
+    return MatchResult{
+        .matched = matched,
+        .original = subject,
+        .properties = properties,
+    };
 }
