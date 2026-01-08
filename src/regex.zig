@@ -6,25 +6,42 @@ const re = @cImport({
     @cInclude("pcre2.h");
 });
 
+/// A pattern structure that holds a regex string and its associated properties.
+/// This represents a compiled pattern that can be used for matching against text.
 pub const Pattern = struct {
+    /// The regex pattern string
     regex: []const u8,
+    /// List of property names that this pattern captures
     properties: std.ArrayList([]const u8),
 };
 
+/// A prepared pattern that has been compiled and is ready for matching.
+/// This contains the compiled PCRE2 regex object and associated properties.
 pub const Prepared = struct {
+    /// Pointer to the compiled PCRE2 code
     re: *re.pcre2_code_8,
+    /// List of property names that this pattern captures
     properties: std.ArrayList([]const u8),
 };
 
+/// Result of a regex match operation.
+/// Contains information about whether the match was successful and any captured properties.
 pub const MatchResult = struct {
+    /// Whether the pattern matched the subject text
     matched: bool,
+    /// The original subject text that was matched against
     original: []const u8,
+    /// Optional map of captured property names to their values
     properties: ?std.StringHashMap([]const u8),
 };
 
 var backend_allocator: std.mem.Allocator = undefined;
 var general_context: *re.pcre2_general_context_8 = undefined;
 
+/// Initialize the regex module with the given allocator.
+/// This sets up the PCRE2 context and allocator for subsequent operations.
+///
+/// `a` The allocator to use for memory allocations
 pub fn init(a: std.mem.Allocator) void {
     backend_allocator = a;
     general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, null).?;
@@ -35,6 +52,13 @@ const AllocationHeader = extern struct {
     size: usize,
 };
 
+/// Custom allocator function for PCRE2 that ensures proper alignment.
+/// This function allocates memory with a header for tracking and ensures
+/// 8-byte alignment for the data portion.
+///
+/// `size` The size of memory to allocate
+/// _: Unused parameter (PCRE2 context)
+/// @return Pointer to the allocated memory or null on failure
 pub export fn pcre_alloc(size: usize, _: ?*anyopaque) ?*anyopaque {
     // Allocate space for header + data + padding for alignment
     const header_size = @sizeOf(AllocationHeader);
@@ -59,6 +83,12 @@ pub export fn pcre_alloc(size: usize, _: ?*anyopaque) ?*anyopaque {
     return @ptrCast(aligned_data_ptr);
 }
 
+/// Custom deallocator function for PCRE2 that frees memory allocated by pcre_alloc.
+/// This function retrieves the original allocation information from the header
+/// and frees the entire memory block.
+///
+/// `ptr` Pointer to the memory to free
+/// _: Unused parameter (PCRE2 context)
 pub export fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) void {
     if (ptr) |p| {
         const data_ptr = @as([*]u8, @ptrCast(p));
@@ -74,6 +104,12 @@ pub export fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) void {
     }
 }
 
+/// Create a pattern from a macro string by processing nested patterns and references.
+/// This function expands macros and creates a regex pattern with named capture groups.
+///
+/// `allocator` The allocator to use for memory allocations
+/// `macro` The macro string to process
+/// @return A Pattern struct containing the processed regex and properties, or an error
 pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !Pattern {
     const m = try front.getPattern(macro);
     var stack = std.ArrayList(front.Info){};
@@ -125,6 +161,12 @@ pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !Pattern {
     return result;
 }
 
+/// Prepare a pattern for matching by compiling it with PCRE2.
+/// This function takes a Pattern and compiles it into a PCRE2 regex object
+/// that can be used for matching operations.
+///
+/// `pattern` The Pattern to compile
+/// @return A Prepared struct containing the compiled regex and properties, or an error
 pub fn prepare(pattern: Pattern) !Prepared {
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
@@ -146,6 +188,13 @@ pub fn prepare(pattern: Pattern) !Prepared {
     };
 }
 
+/// Match a prepared pattern against a subject string.
+/// This function performs the actual regex matching and extracts any captured properties.
+///
+/// `allocator` The allocator to use for memory allocations
+/// `prepared` The prepared pattern to match against
+/// `subject` The subject string to match
+/// @return A MatchResult containing the match status and captured properties
 pub fn match(allocator: std.mem.Allocator, prepared: *const Prepared, subject: []const u8) MatchResult {
     backend_allocator = allocator; // IMPORTANT
     const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, general_context);
