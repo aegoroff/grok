@@ -144,7 +144,7 @@ fn showMacroRegex(allocator: std.mem.Allocator, macro: []const u8) !void {
 
 fn listAllMacroses(allocator: std.mem.Allocator) !void {
     var it = front.getPatterns().keyIterator();
-    var macroses = std.ArrayList([]const u8){};
+    var macroses: std.ArrayList([]const u8) = try .initCapacity(allocator, it.len);
     while (it.next()) |item| {
         try macroses.append(allocator, item.*);
     }
