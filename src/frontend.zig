@@ -49,8 +49,7 @@ pub fn compileLib(alloc: std.mem.Allocator, paths: ?[][]const u8) !void {
 
 fn compileDefault() !void {
     var lib_path: []const u8 = undefined;
-    const os_tag = builtin.os.tag;
-    if (os_tag == .linux) {
+    if (builtin.os.tag == .linux) {
         lib_path = "/usr/share/grok/patterns";
     } else {
         lib_path = try std.fs.selfExeDirPathAlloc(allocator);
