@@ -112,10 +112,10 @@ pub export fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) void {
 /// @return A Pattern struct containing the processed regex and properties, or an error
 pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !Pattern {
     const m = try front.getPattern(macro);
-    var stack = std.ArrayList(front.Info){};
-    var composition = std.ArrayList(u8){};
+    var stack: std.ArrayList(front.Info) = .empty;
+    var composition: std.ArrayList(u8) = .empty;
     var used_properties = std.StringHashMap(bool).init(allocator);
-    var result = Pattern{ .properties = std.ArrayList([]const u8){}, .regex = "" };
+    var result = Pattern{ .properties = .empty, .regex = "" };
     for (m.items) |value| {
         try stack.append(allocator, value);
         while (stack.pop()) |current| {
@@ -128,7 +128,7 @@ pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !Pattern {
                     // leading (?<name> immediately into composition
                     var reference = std.mem.span(current_reference);
                     if (used_properties.contains(reference)) {
-                        var concat = std.ArrayList(u8){};
+                        var concat: std.ArrayList(u8) = .empty;
                         try concat.appendSlice(allocator, current_slice);
                         try concat.appendSlice(allocator, "_");
                         try concat.appendSlice(allocator, reference);
