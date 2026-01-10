@@ -16,16 +16,16 @@ pub fn build(b: *std.Build) void {
     ensureDirExists(b, generated_path) catch unreachable;
 
     const flex_input = std.fmt.allocPrint(b.allocator, "{s}/grok.lex", .{c_code_path}) catch "";
-    const flex_output = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.c", .{generated_path}) catch "";
-    const flex_out_opt = std.fmt.allocPrint(b.allocator, "--outfile={s}", .{flex_output}) catch "";
+    const flex_src = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.c", .{generated_path}) catch "";
+    const flex_opt = std.fmt.allocPrint(b.allocator, "--outfile={s}", .{flex_src}) catch "";
 
     const bison_input = std.fmt.allocPrint(b.allocator, "{s}/grok.y", .{c_code_path}) catch "";
-    const bison_output = std.fmt.allocPrint(b.allocator, "{s}/grok.tab.c", .{generated_path}) catch "";
-    const bison_out_opt = std.fmt.allocPrint(b.allocator, "--output={s}", .{bison_output}) catch "";
+    const bison_src = std.fmt.allocPrint(b.allocator, "{s}/grok.tab.c", .{generated_path}) catch "";
+    const bison_opt = std.fmt.allocPrint(b.allocator, "--output={s}", .{bison_src}) catch "";
 
-    const libgrok_sources = [_][]const u8{
-        flex_output,
-        bison_output,
+    const c_sources = [_][]const u8{
+        flex_src,
+        bison_src,
         std.fmt.allocPrint(b.allocator, "{s}/lib.c", .{c_code_path}) catch "",
     };
 
@@ -34,16 +34,16 @@ pub fn build(b: *std.Build) void {
 
     switch (builtin.os.tag) {
         .linux => {
-            flex_args = &[_][]const u8{ "flex", "--fast", flex_out_opt, flex_input };
-            bison_args = &[_][]const u8{ "bison", bison_out_opt, "-dy", bison_input };
+            flex_args = &[_][]const u8{ "flex", "--fast", flex_opt, flex_input };
+            bison_args = &[_][]const u8{ "bison", bison_opt, "-dy", bison_input };
         },
         .windows => {
-            flex_args = &[_][]const u8{ "win_flex.exe", "--fast", "--wincompat", flex_out_opt, flex_input };
-            bison_args = &[_][]const u8{ "win_bison.exe", bison_out_opt, "-dy", bison_input };
+            flex_args = &[_][]const u8{ "win_flex.exe", "--fast", "--wincompat", flex_opt, flex_input };
+            bison_args = &[_][]const u8{ "win_bison.exe", bison_opt, "-dy", bison_input };
         },
         .macos => {
-            flex_args = &[_][]const u8{ "/usr/local/opt/flex/bin/flex", "--fast", flex_out_opt, flex_input };
-            bison_args = &[_][]const u8{ "/usr/local/opt/bison/bin/bison", bison_out_opt, "-dy", bison_input };
+            flex_args = &[_][]const u8{ "/usr/local/opt/flex/bin/flex", "--fast", flex_opt, flex_input };
+            bison_args = &[_][]const u8{ "/usr/local/opt/bison/bin/bison", bison_opt, "-dy", bison_input };
         },
         else => @compileError("Unsupported OS: " ++ @tagName(builtin.os.tag)),
     }
@@ -73,7 +73,7 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("yazap", yazap.module("yazap"));
     exe.root_module.addIncludePath(b.path(generated_path));
     exe.root_module.addIncludePath(b.path(c_code_path));
-    exe.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
+    exe.root_module.addCSourceFiles(.{ .files = &c_sources, .flags = &[_][]const u8{} });
     exe.root_module.linkLibrary(pcre2_dep.artifact("pcre2-8"));
     exe.root_module.addImport("build_options", options.createModule());
 
@@ -97,7 +97,7 @@ pub fn build(b: *std.Build) void {
     unit_tests.root_module.addImport("yazap", yazap.module("yazap"));
     unit_tests.root_module.addIncludePath(b.path(generated_path));
     unit_tests.root_module.addIncludePath(b.path(c_code_path));
-    unit_tests.root_module.addCSourceFiles(.{ .files = &libgrok_sources, .flags = &[_][]const u8{} });
+    unit_tests.root_module.addCSourceFiles(.{ .files = &c_sources, .flags = &[_][]const u8{} });
     unit_tests.root_module.linkLibrary(pcre2_dep.artifact("pcre2-8"));
     unit_tests.root_module.addImport("build_options", options.createModule());
 
