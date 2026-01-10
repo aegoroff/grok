@@ -29,8 +29,8 @@ pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
     return definitions;
 }
 
-pub fn compileLib(alloc: std.mem.Allocator, paths: ?[][]const u8) !void {
-    allocator = alloc;
+pub fn compileLib(gpa: std.mem.Allocator, paths: ?[][]const u8) !void {
+    allocator = gpa;
     definitions = std.StringHashMap(std.ArrayList(Info)).init(allocator);
     if (paths) |path_arg| {
         if (path_arg.len == 0) {

@@ -41,9 +41,9 @@ pub const DetectResult = struct {
     offset: usize,
 };
 
-pub fn convertRawUtf16ToUtf8(allocator: std.mem.Allocator, rawBytes: []u8, encoding: Encoding) ![]u8 {
-    const wide = try charToWchar(allocator, rawBytes, encoding);
-    return std.unicode.utf16LeToUtf8Alloc(allocator, wide);
+pub fn convertRawUtf16ToUtf8(gpa: std.mem.Allocator, rawBytes: []u8, encoding: Encoding) ![]u8 {
+    const wide = try charToWchar(gpa, rawBytes, encoding);
+    return std.unicode.utf16LeToUtf8Alloc(gpa, wide);
 }
 
 pub fn detectBomMemory(buffer: []const u8) DetectResult {
@@ -63,10 +63,10 @@ pub fn detectBomMemory(buffer: []const u8) DetectResult {
     return .{ .encoding = .unknown, .offset = 0 };
 }
 
-fn charToWchar(allocator: std.mem.Allocator, buffer: []const u8, encoding: Encoding) ![]u16 {
+fn charToWchar(gpa: std.mem.Allocator, buffer: []const u8, encoding: Encoding) ![]u16 {
     const len = buffer.len / 2;
 
-    var wide_buffer = try allocator.alloc(u16, len);
+    var wide_buffer = try gpa.alloc(u16, len);
 
     var i: usize = 0;
     var counter: usize = 0;

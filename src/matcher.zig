@@ -16,12 +16,12 @@ pub const OutputFlags = packed struct {
     print_line_num: bool = false,
 };
 
-pub fn init(allocator: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !Matcher {
-    regex.init(allocator);
-    const pattern = try regex.createPattern(allocator, macro);
+pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !Matcher {
+    regex.init(gpa);
+    const pattern = try regex.createPattern(gpa, macro);
     const prepared = try regex.prepare(pattern);
     return Matcher{
-        .allocator = allocator,
+        .allocator = gpa,
         .prepared = prepared,
         .pattern = pattern,
         .writer = writer,
