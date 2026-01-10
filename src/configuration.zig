@@ -19,19 +19,19 @@ matches: yazap.ArgMatches,
 allocator: std.mem.Allocator,
 app: yazap.App,
 
-pub fn init(allocator: std.mem.Allocator, argv: []const [:0]const u8) !Config {
+pub fn init(gpa: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     const app_descr_template =
         \\Grok regexp macro processor {s} {s}
         \\Copyright (C) 2018-2026 Alexander Egorov. All rights reserved.
     ;
     const query = std.Target.Query.fromTarget(&builtin.target);
     const app_descr = try std.fmt.allocPrint(
-        allocator,
+        gpa,
         app_descr_template,
         .{ build_options.version, @tagName(query.cpu_arch.?) },
     );
 
-    var app = yazap.App.init(allocator, "grok", app_descr);
+    var app = yazap.App.init(gpa, "grok", app_descr);
 
     var root_cmd = app.rootCommand();
     root_cmd.setProperty(.help_on_empty_args);
@@ -94,7 +94,7 @@ pub fn init(allocator: std.mem.Allocator, argv: []const [:0]const u8) !Config {
 
     return Config{
         .matches = matches,
-        .allocator = allocator,
+        .allocator = gpa,
         .app = app,
     };
 }

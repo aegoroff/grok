@@ -41,9 +41,9 @@ var general_context: *re.pcre2_general_context_8 = undefined;
 /// Initialize the regex module with the given allocator.
 /// This sets up the PCRE2 context and allocator for subsequent operations.
 ///
-/// `a` The allocator to use for memory allocations
-pub fn init(a: std.mem.Allocator) void {
-    backend_allocator = a;
+/// `gpa` The allocator to use for memory allocations
+pub fn init(gpa: std.mem.Allocator) void {
+    backend_allocator = gpa;
     general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, null).?;
 }
 
@@ -107,51 +107,51 @@ pub export fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) void {
 /// Create a pattern from a macro string by processing nested patterns and references.
 /// This function expands macros and creates a regex pattern with named capture groups.
 ///
-/// `allocator` The allocator to use for memory allocations
+/// `gpa` The allocator to use for memory allocations
 /// `macro` The macro string to process
 /// @return A Pattern struct containing the processed regex and properties, or an error
-pub fn createPattern(allocator: std.mem.Allocator, macro: []const u8) !Pattern {
+pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     const m = try front.getPattern(macro);
     var stack: std.ArrayList(front.Info) = .empty;
     var composition: std.ArrayList(u8) = .empty;
-    var used_properties = std.StringHashMap(bool).init(allocator);
+    var used_properties = std.StringHashMap(bool).init(gpa);
     var result = Pattern{ .properties = .empty, .regex = "" };
     for (m.items) |value| {
-        try stack.append(allocator, value);
+        try stack.append(gpa, value);
         while (stack.pop()) |current| {
             const current_slice = std.mem.span(current.data);
             if (current.part == .literal) {
                 // plain literal case
-                try composition.appendSlice(allocator, current_slice);
+                try composition.appendSlice(gpa, current_slice);
             } else {
                 if (current.reference) |current_reference| {
                     // leading (?<name> immediately into composition
                     var reference = std.mem.span(current_reference);
                     if (used_properties.contains(reference)) {
                         var concat: std.ArrayList(u8) = .empty;
-                        try concat.appendSlice(allocator, current_slice);
-                        try concat.appendSlice(allocator, "_");
-                        try concat.appendSlice(allocator, reference);
-                        try concat.append(allocator, 0);
+                        try concat.appendSlice(gpa, current_slice);
+                        try concat.appendSlice(gpa, "_");
+                        try concat.appendSlice(gpa, reference);
+                        try concat.append(gpa, 0);
                         reference = concat.items[0 .. concat.items.len - 1 :0];
                     }
                     try used_properties.put(reference, true);
 
-                    try composition.appendSlice(allocator, "(?<");
-                    try composition.appendSlice(allocator, reference);
-                    try composition.appendSlice(allocator, ">");
-                    try result.properties.append(allocator, reference);
+                    try composition.appendSlice(gpa, "(?<");
+                    try composition.appendSlice(gpa, reference);
+                    try composition.appendSlice(gpa, ">");
+                    try result.properties.append(gpa, reference);
 
                     // trailing ) into stack bottom
                     const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
-                    try stack.append(allocator, trail_paren);
+                    try stack.append(gpa, trail_paren);
                 }
                 const childs = front.getPattern(current_slice) catch {
                     continue;
                 };
                 var rev_iter = std.mem.reverseIterator(childs.items);
                 while (rev_iter.next()) |child| {
-                    try stack.append(allocator, child);
+                    try stack.append(gpa, child);
                 }
             }
         }
@@ -190,12 +190,12 @@ pub fn prepare(pattern: Pattern) !Prepared {
 /// Match a prepared pattern against a subject string.
 /// This function performs the actual regex matching and extracts any captured properties.
 ///
-/// `allocator` The allocator to use for memory allocations
+/// `gpa` The allocator to use for memory allocations
 /// `prepared` The prepared pattern to match against
 /// `subject` The subject string to match
 /// @return A MatchResult containing the match status and captured properties
-pub fn match(allocator: std.mem.Allocator, prepared: *const Prepared, subject: []const u8) MatchResult {
-    backend_allocator = allocator; // IMPORTANT
+pub fn match(gpa: std.mem.Allocator, prepared: *const Prepared, subject: []const u8) MatchResult {
+    backend_allocator = gpa; // IMPORTANT
     const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, general_context);
     defer re.pcre2_match_data_free_8(match_data);
     const match_ctx = re.pcre2_match_context_create_8(general_context);
@@ -206,7 +206,7 @@ pub fn match(allocator: std.mem.Allocator, prepared: *const Prepared, subject: [
 
     var properties: ?std.StringHashMap([]const u8) = null;
     if (matched and prepared.properties.items.len > 0) {
-        properties = std.StringHashMap([]const u8).init(allocator);
+        properties = std.StringHashMap([]const u8).init(gpa);
         for (prepared.properties.items) |value| {
             var buffer: [*c]re.PCRE2_UCHAR8 = undefined;
             var buffer_size_in_chars: re.PCRE2_SIZE = undefined;

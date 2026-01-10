@@ -26,12 +26,11 @@ pub fn main() !void {
         stdout.flush() catch {};
     }
 
-    const allocator = std.heap.c_allocator;
-    var arena = std.heap.ArenaAllocator.init(allocator);
-    defer arena.deinit();
+    var gpa = std.heap.ArenaAllocator.init(std.heap.c_allocator);
+    defer gpa.deinit();
 
-    const argv = try std.process.argsAlloc(arena.allocator());
-    var config = try configuration.Config.init(arena.allocator(), argv[1..]);
+    const argv = try std.process.argsAlloc(gpa.allocator());
+    var config = try configuration.Config.init(gpa.allocator(), argv[1..]);
     defer config.deinit();
 
     const actions = &[_]Action{
@@ -48,10 +47,10 @@ pub fn main() !void {
     }
 }
 
-fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
+fn stringAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     if (configuration.getMacro(cmd_matches)) |macro| {
         if (cmd_matches.getSingleValue("STRING")) |str| {
-            matchString(allocator, macro, str, .{
+            matchString(gpa, macro, str, .{
                 .info = configuration.isInfoMode(cmd_matches),
             }) catch |e| {
                 std.debug.print("Failed string match: {}\n", .{e});
@@ -60,10 +59,10 @@ fn stringAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) voi
     }
 }
 
-fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
+fn fileAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     if (configuration.getMacro(cmd_matches)) |macro| {
         if (cmd_matches.getSingleValue("PATH")) |path| {
-            matchFile(allocator, macro, path, .{
+            matchFile(gpa, macro, path, .{
                 .info = configuration.isInfoMode(cmd_matches),
                 .count = configuration.isCountMode(cmd_matches),
                 .print_line_num = configuration.printLineNumber(cmd_matches),
@@ -74,9 +73,9 @@ fn fileAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void 
     }
 }
 
-fn stdinAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
+fn stdinAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     if (configuration.getMacro(cmd_matches)) |macro| {
-        matchStdin(allocator, macro, .{
+        matchStdin(gpa, macro, .{
             .info = configuration.isInfoMode(cmd_matches),
             .count = configuration.isCountMode(cmd_matches),
             .print_line_num = configuration.printLineNumber(cmd_matches),
@@ -86,24 +85,24 @@ fn stdinAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void
     }
 }
 
-fn macroAction(allocator: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
+fn macroAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     if (cmd_matches.getSingleValue("MACRO")) |macro| {
-        showMacroRegex(allocator, macro) catch |e| {
+        showMacroRegex(gpa, macro) catch |e| {
             std.debug.print("Failed show macro: {}\n", .{e});
         };
     } else {
-        listAllMacroses(allocator) catch |e| {
+        listAllMacroses(gpa) catch |e| {
             std.debug.print("Failed to list macroses: {}\n", .{e});
         };
     }
 }
 
-fn matchString(allocator: std.mem.Allocator, macro: []const u8, subject: []const u8, flags: matcher.OutputFlags) !void {
-    var match = try matcher.Matcher.init(allocator, stdout, macro);
+fn matchString(gpa: std.mem.Allocator, macro: []const u8, subject: []const u8, flags: matcher.OutputFlags) !void {
+    var match = try matcher.Matcher.init(gpa, stdout, macro);
     try match.matchString(subject, flags);
 }
 
-fn matchFile(allocator: std.mem.Allocator, macro: []const u8, path: []const u8, flags: matcher.OutputFlags) !void {
+fn matchFile(gpa: std.mem.Allocator, macro: []const u8, path: []const u8, flags: matcher.OutputFlags) !void {
     var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
     defer file.close();
     const stat = try file.stat();
@@ -126,27 +125,27 @@ fn matchFile(allocator: std.mem.Allocator, macro: []const u8, path: []const u8, 
         }
     }
 
-    var match = try matcher.Matcher.init(allocator, stdout, macro);
+    var match = try matcher.Matcher.init(gpa, stdout, macro);
     try match.matchStrings(reader, flags, file_encoding);
 }
 
-fn matchStdin(allocator: std.mem.Allocator, macro: []const u8, flags: matcher.OutputFlags) !void {
+fn matchStdin(gpa: std.mem.Allocator, macro: []const u8, flags: matcher.OutputFlags) !void {
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.fs.File.stdin().reader(&file_buffer);
-    var match = try matcher.Matcher.init(allocator, stdout, macro);
+    var match = try matcher.Matcher.init(gpa, stdout, macro);
     try match.matchStrings(&file_reader.interface, flags, null);
 }
 
-fn showMacroRegex(allocator: std.mem.Allocator, macro: []const u8) !void {
-    const match = try matcher.Matcher.init(allocator, stdout, macro);
+fn showMacroRegex(gpa: std.mem.Allocator, macro: []const u8) !void {
+    const match = try matcher.Matcher.init(gpa, stdout, macro);
     try match.showRegex();
 }
 
-fn listAllMacroses(allocator: std.mem.Allocator) !void {
+fn listAllMacroses(gpa: std.mem.Allocator) !void {
     var it = front.getPatterns().keyIterator();
-    var macroses: std.ArrayList([]const u8) = try .initCapacity(allocator, it.len);
+    var macroses: std.ArrayList([]const u8) = try .initCapacity(gpa, it.len);
     while (it.next()) |item| {
-        try macroses.append(allocator, item.*);
+        try macroses.append(gpa, item.*);
     }
     std.mem.sort([]const u8, macroses.items, {}, stringLessThan);
     for (macroses.items) |item| {
