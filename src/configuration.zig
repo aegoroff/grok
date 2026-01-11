@@ -9,6 +9,10 @@ const front = @import("frontend.zig");
 const patterns_name: []const u8 = "patterns";
 const count_name: []const u8 = "count";
 const line_name: []const u8 = "line-number";
+const info_name: []const u8 = "info";
+const path_name: []const u8 = "PATH";
+const string_name: []const u8 = "STRING";
+const macro_arg_name: []const u8 = "MACRO";
 
 pub const macro_name: []const u8 = "macro";
 pub const string_command_name: []const u8 = "string";
@@ -47,30 +51,30 @@ pub fn init(gpa: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     var macro_opt = yazap.Arg.singleValueOption(macro_name, 'm', "Pattern macros to build regexp");
     macro_opt.setValuePlaceholder("STRING");
     macro_opt.setProperty(.takes_value);
-    const info_opt = yazap.Arg.booleanOption("info", 'i', "Dont work like grep i.e. output matched string with additional info");
+    const info_opt = yazap.Arg.booleanOption(info_name, 'i', "Dont work like grep i.e. output matched string with additional info");
     const count_opt = yazap.Arg.booleanOption(count_name, 'c', "Print only matched strings count");
     const line_num_opt = yazap.Arg.booleanOption(line_name, 'n', "Print line number along with output lines");
 
     var str_cmd = app.createCommand(string_command_name, "Single string matching mode");
     str_cmd.setProperty(.help_on_empty_args);
     str_cmd.setProperty(.positional_arg_required);
-    const string_opt = yazap.Arg.positional("STRING", "String to match", null);
+    const string_arg = yazap.Arg.positional(string_name, "String to match", null);
     try str_cmd.addArg(patterns_opt);
     try str_cmd.addArg(macro_opt);
     try str_cmd.addArg(info_opt);
-    try str_cmd.addArg(string_opt);
+    try str_cmd.addArg(string_arg);
 
     var file_cmd = app.createCommand(file_command_name, "File matching mode");
     file_cmd.setProperty(.help_on_empty_args);
     file_cmd.setProperty(.positional_arg_required);
-    const file_opt = yazap.Arg.positional("PATH", "Full path to file to read data from", null);
+    const file_arg = yazap.Arg.positional(path_name, "Full path to file to read data from", null);
 
     try file_cmd.addArg(patterns_opt);
     try file_cmd.addArg(macro_opt);
     try file_cmd.addArg(info_opt);
     try file_cmd.addArg(count_opt);
     try file_cmd.addArg(line_num_opt);
-    try file_cmd.addArg(file_opt);
+    try file_cmd.addArg(file_arg);
 
     var stdin_cmd = app.createCommand(stdin_command_name, "Standard input (stdin) matching mode");
     stdin_cmd.setProperty(.help_on_empty_args);
@@ -80,8 +84,15 @@ pub fn init(gpa: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     try stdin_cmd.addArg(count_opt);
     try stdin_cmd.addArg(line_num_opt);
 
-    var macro_cmd = app.createCommand(macro_name, "Macro information mode where a macro real regexp can be displayed or to get all supported macroses");
-    const macro_name_opt = yazap.Arg.positional("MACRO", "Macro name to expand real regular expression", null);
+    var macro_cmd = app.createCommand(
+        macro_name,
+        "Macro information mode where a macro real regexp can be displayed or to get all supported macroses",
+    );
+    const macro_name_opt = yazap.Arg.positional(
+        macro_arg_name,
+        "Macro name to expand real regular expression",
+        null,
+    );
     try macro_cmd.addArg(patterns_opt);
     try macro_cmd.addArg(macro_name_opt);
 
@@ -117,12 +128,24 @@ pub fn run(self: *Config, command: []const u8, handler: *const fn (std.mem.Alloc
     return false;
 }
 
-pub fn getMacro(match: yazap.ArgMatches) ?[]const u8 {
+pub fn getMacroOpt(match: yazap.ArgMatches) ?[]const u8 {
     return match.getSingleValue(macro_name);
 }
 
+pub fn getStringArgValue(match: yazap.ArgMatches) ?[]const u8 {
+    return match.getSingleValue(string_name);
+}
+
+pub fn getPathArgValue(match: yazap.ArgMatches) ?[]const u8 {
+    return match.getSingleValue(path_name);
+}
+
+pub fn getMacroArgValue(match: yazap.ArgMatches) ?[]const u8 {
+    return match.getSingleValue(macro_arg_name);
+}
+
 pub fn isInfoMode(match: yazap.ArgMatches) bool {
-    return match.containsArg("info");
+    return match.containsArg(info_name);
 }
 
 pub fn isCountMode(match: yazap.ArgMatches) bool {

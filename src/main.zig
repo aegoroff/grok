@@ -47,11 +47,11 @@ pub fn main() !void {
     }
 }
 
-fn stringAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (configuration.getMacro(cmd_matches)) |macro| {
-        if (cmd_matches.getSingleValue("STRING")) |str| {
+fn stringAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
+    if (configuration.getMacroOpt(cmd)) |macro| {
+        if (configuration.getStringArgValue(cmd)) |str| {
             matchString(gpa, macro, str, .{
-                .info = configuration.isInfoMode(cmd_matches),
+                .info = configuration.isInfoMode(cmd),
             }) catch |e| {
                 std.debug.print("Failed string match: {}\n", .{e});
             };
@@ -59,13 +59,13 @@ fn stringAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     }
 }
 
-fn fileAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (configuration.getMacro(cmd_matches)) |macro| {
-        if (cmd_matches.getSingleValue("PATH")) |path| {
+fn fileAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
+    if (configuration.getMacroOpt(cmd)) |macro| {
+        if (configuration.getPathArgValue(cmd)) |path| {
             matchFile(gpa, macro, path, .{
-                .info = configuration.isInfoMode(cmd_matches),
-                .count = configuration.isCountMode(cmd_matches),
-                .print_line_num = configuration.printLineNumber(cmd_matches),
+                .info = configuration.isInfoMode(cmd),
+                .count = configuration.isCountMode(cmd),
+                .print_line_num = configuration.printLineNumber(cmd),
             }) catch |e| {
                 std.debug.print("Failed file match: {}\n", .{e});
             };
@@ -73,20 +73,20 @@ fn fileAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
     }
 }
 
-fn stdinAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (configuration.getMacro(cmd_matches)) |macro| {
+fn stdinAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
+    if (configuration.getMacroOpt(cmd)) |macro| {
         matchStdin(gpa, macro, .{
-            .info = configuration.isInfoMode(cmd_matches),
-            .count = configuration.isCountMode(cmd_matches),
-            .print_line_num = configuration.printLineNumber(cmd_matches),
+            .info = configuration.isInfoMode(cmd),
+            .count = configuration.isCountMode(cmd),
+            .print_line_num = configuration.printLineNumber(cmd),
         }) catch |e| {
             std.debug.print("Failed stdin match: {}\n", .{e});
         };
     }
 }
 
-fn macroAction(gpa: std.mem.Allocator, cmd_matches: yazap.ArgMatches) void {
-    if (cmd_matches.getSingleValue("MACRO")) |macro| {
+fn macroAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
+    if (configuration.getMacroArgValue(cmd)) |macro| {
         showMacroRegex(gpa, macro) catch |e| {
             std.debug.print("Failed show macro: {}\n", .{e});
         };
