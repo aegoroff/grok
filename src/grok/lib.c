@@ -9,8 +9,6 @@
  * Copyright: (c) Alexander Egorov 2015-2026
  */
 
-#include <string.h>
-
 #ifdef _MSC_VER
 
 #include <Windows.h>
