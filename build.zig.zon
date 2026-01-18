@@ -1,5 +1,5 @@
 .{
-    .name = .libgrok,
+    .name = .grok,
     .version = "0.3.0-1",
     .fingerprint = 0xd4f23f6c6d7a7877,
 
