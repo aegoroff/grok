@@ -2,7 +2,6 @@ name: CI Build
 
 env:
   GITHUB_REF: "${{ github.ref }}"
-  APR_HOME16: ${{ github.workspace }}\APR\
   RELEASE_DIR: artifacts
   RELEASE_BIN: grok
   BUILD_CONFIGURATION: Release
