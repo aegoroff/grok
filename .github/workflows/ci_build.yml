@@ -169,7 +169,7 @@ jobs:
           curl -L  -o releaser.tar.gz https://github.com/aegoroff/releaser/releases/download/${{ env.RELEASER_VER }}/releaser-${{ env.RELEASER_VER }}-x86_64-unknown-linux-musl.tar.gz
           tar -xf releaser.tar.gz
       - name: Create brew formula
-        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux_musl_x86_64/' -m './macos_none_x86_64/' -u ${{ env.RELEASE_BIN }}.rb
+        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux_musl_x86_64/' -m './macos_none_x86_64/' -a './macos_none_aarch64/' -u ${{ env.RELEASE_BIN }}.rb
       - name: Publish brew formula
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
