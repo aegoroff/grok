@@ -6,12 +6,7 @@ env:
   RELEASE_DIR: artifacts
   RELEASE_BIN: grok
   BUILD_CONFIGURATION: Release
-  WINDOWS_TARGET: x86_64-windows-gnu
-  MACOS_TARGET: x86_64-macos-none
-  MACOS_TARGET_AARCH64: aarch64-macos-none
-  LINUX_TARGET_MUSL: x86_64-linux-musl
-  LINUX_TARGET_MUSL_AARCH64: aarch64-linux-musl
-  RELEASER_VER: 0.14.0
+  RELEASER_VER: 0.16.0
   CI_BUILD_NUMBER: ${{ github.run_number }}
 
 on:
@@ -30,7 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ aarch64-linux-musl, x86_64-linux-musl, x86_64-windows-gnu, x86_64-macos-none, aarch64-macos-none ]
         include:
           - target: x86_64-linux-musl
             abi: musl
@@ -57,7 +51,11 @@ jobs:
             os: macos
             arch: aarch64
             processor: apple_m1
-
+          - target: aarch64-windows-gnu
+            abi: gnu
+            os: windows
+            arch: aarch64
+            processor: ""
 
     steps:
       - uses: actions/checkout@v6
@@ -131,11 +129,17 @@ jobs:
           name: linux_musl_x86_64
           path: linux_musl_x86_64
 
-      - name: Download Windows zip
+      - name: Download Windows x86_64 zip
         uses: actions/download-artifact@v7
         with:
           name: windows_gnu_x86_64
           path: windows_gnu_x86_64
+
+      - name: Download Windows aarch64 zip
+        uses: actions/download-artifact@v7
+        with:
+          name: windows_gnu_aarch64
+          path: windows_gnu_aarch64
 
       - name: Download x86_64 MacOS zip
         uses: actions/download-artifact@v7
@@ -197,8 +201,9 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
           files: |
-            ./linux_musl_aarch64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_MUSL_AARCH64 }}.tar.gz
-            ./linux_musl_x86_64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET_MUSL }}.tar.gz
-            ./windows_gnu_x86_64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_TARGET }}.tar.gz
-            ./macos_none_x86_64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_TARGET }}.tar.gz
-            ./macos_none_aarch64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_TARGET_AARCH64 }}.tar.gz
+            ./linux_musl_aarch64/*.tar.gz
+            ./linux_musl_x86_64/*.tar.gz
+            ./windows_gnu_x86_64/*.tar.gz
+            ./windows_aarch64_x86_64/*.tar.gz
+            ./macos_none_x86_64/*.tar.gz
+            ./macos_none_aarch64/*.tar.gz
