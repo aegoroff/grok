@@ -203,6 +203,6 @@ jobs:
             ./linux_musl_aarch64/*.tar.gz
             ./linux_musl_x86_64/*.tar.gz
             ./windows_gnu_x86_64/*.tar.gz
-            ./windows_aarch64_x86_64/*.tar.gz
+            ./windows_gnu_aarch64/*.tar.gz
             ./macos_none_x86_64/*.tar.gz
             ./macos_none_aarch64/*.tar.gz
