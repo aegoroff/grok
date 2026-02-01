@@ -1,5 +1,9 @@
+optimize  := "ReleaseFast"
+target := "x86_64-linux-musl"
+cpu := "haswell"
+
 build ver="0.3.0-dev":
-  zig build  -Doptimize=ReleaseFast -Dtarget=x86_64-linux-musl --summary all -Dcpu=haswell -Dversion={{ver}}
+  zig build  -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}
 
 test ver="0.3.0-dev":
-  zig build test -Doptimize=ReleaseFast -Dtarget=x86_64-linux-musl --summary all -Dcpu=haswell -Dversion={{ver}}
+  zig build test -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}
