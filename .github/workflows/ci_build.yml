@@ -30,14 +30,19 @@ jobs:
             os: linux
             arch: x86_64
             processor: haswell
+          - target: aarch64-linux-musl
+            abi: musl
+            os: linux
+            arch: aarch64
+            processor: ""
           - target: x86_64-windows-gnu
             abi: gnu
             os: windows
             arch: x86_64
             processor: haswell
-          - target: aarch64-linux-musl
-            abi: musl
-            os: linux
+          - target: aarch64-windows-gnu
+            abi: gnu
+            os: windows
             arch: aarch64
             processor: ""
           - target: x86_64-macos-none
@@ -50,11 +55,6 @@ jobs:
             os: macos
             arch: aarch64
             processor: apple_m1
-          - target: aarch64-windows-gnu
-            abi: gnu
-            os: windows
-            arch: aarch64
-            processor: ""
 
     steps:
       - uses: actions/checkout@v6
@@ -116,41 +116,10 @@ jobs:
           echo "using version tag ${GITHUB_REF:11}"
           echo "version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
 
-      - name: Download Linux aarch64 MUSL tarball
+      - name: Download artefacts
         uses: actions/download-artifact@v7
         with:
-          name: linux_musl_aarch64
-          path: linux_musl_aarch64
-
-      - name: Download Linux x86_64 MUSL tarball
-        uses: actions/download-artifact@v7
-        with:
-          name: linux_musl_x86_64
-          path: linux_musl_x86_64
-
-      - name: Download Windows x86_64 zip
-        uses: actions/download-artifact@v7
-        with:
-          name: windows_gnu_x86_64
-          path: windows_gnu_x86_64
-
-      - name: Download Windows aarch64 zip
-        uses: actions/download-artifact@v7
-        with:
-          name: windows_gnu_aarch64
-          path: windows_gnu_aarch64
-
-      - name: Download x86_64 MacOS zip
-        uses: actions/download-artifact@v7
-        with:
-          name: macos_none_x86_64
-          path: macos_none_x86_64
-
-      - name: Download aarch64 MacOS zip
-        uses: actions/download-artifact@v7
-        with:
-          name: macos_none_aarch64
-          path: macos_none_aarch64
+          path: release
 
       - name: Create fake Cargo.toml
         run: |
@@ -169,7 +138,7 @@ jobs:
           curl -L  -o releaser.tar.gz https://github.com/aegoroff/releaser/releases/download/${{ env.RELEASER_VER }}/releaser-${{ env.RELEASER_VER }}-x86_64-unknown-linux-musl.tar.gz
           tar -xf releaser.tar.gz
       - name: Create brew formula
-        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux_musl_x86_64/' -m './macos_none_x86_64/' -a './macos_none_aarch64/' -u ${{ env.RELEASE_BIN }}.rb
+        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './release/linux_musl_x86_64/' -m './release/macos_none_x86_64/' -a './release/macos_none_aarch64/' -u ${{ env.RELEASE_BIN }}.rb
       - name: Publish brew formula
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
@@ -182,7 +151,7 @@ jobs:
           commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
 
       - name: Create scoop json
-        run: ${{ github.workspace }}/releaser s -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -i './windows_gnu_x86_64/' -e ${{ env.RELEASE_BIN }}.exe -u ${{ env.RELEASE_BIN }}.json
+        run: ${{ github.workspace }}/releaser s -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -i './release/windows_gnu_x86_64/' -e ${{ env.RELEASE_BIN }}.exe -u ${{ env.RELEASE_BIN }}.json
       - name: Publish scoop json
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
@@ -200,9 +169,4 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
           files: |
-            ./linux_musl_aarch64/*.tar.gz
-            ./linux_musl_x86_64/*.tar.gz
-            ./windows_gnu_x86_64/*.tar.gz
-            ./windows_gnu_aarch64/*.tar.gz
-            ./macos_none_x86_64/*.tar.gz
-            ./macos_none_aarch64/*.tar.gz
+            ./release/**/*.tar.gz
