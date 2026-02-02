@@ -171,7 +171,7 @@ jobs:
           files: |
             ./release/**/*.tar.gz
 
-      - name: Publish dirstat-go-bin
+      - name: Publish grok-tool-bin
         uses: zokugun/github-actions-aur-releaser@v1
         with:
           package_name: grok-tool-bin
