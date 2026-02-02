@@ -156,7 +156,7 @@ pub fn build(b: *std.Build) void {
 
 fn ensureDirExists(b: *std.Build, dir_path: []const u8) !void {
     const full_path = b.pathFromRoot(dir_path);
-    std.fs.cwd().makePath(full_path) catch |err| {
+    std.Io.Dir.cwd().createDir(b.graph.io, full_path, .default_dir) catch |err| {
         std.debug.print("Failed to create directory '{s}': {s}\n", .{ full_path, @errorName(err) });
         return err;
     };
