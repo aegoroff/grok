@@ -12,7 +12,7 @@ pub const Pattern = struct {
     /// The regex pattern string
     regex: []const u8,
     /// List of property names that this pattern captures
-    properties: std.ArrayList([]const u8),
+    properties: std.ArrayList([:0]const u8),
 };
 
 /// A prepared pattern that has been compiled and is ready for matching.
@@ -21,7 +21,7 @@ pub const Prepared = struct {
     /// Pointer to the compiled PCRE2 code
     re: *re.pcre2_code_8,
     /// List of property names that this pattern captures
-    properties: std.ArrayList([]const u8),
+    properties: std.ArrayList([:0]const u8),
 };
 
 /// Result of a regex match operation.
@@ -127,8 +127,10 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
                 if (current.reference) |current_reference| {
                     // leading (?<name> immediately into composition
                     var reference = std.mem.span(current_reference);
+                    var concat: std.ArrayList(u8) = .empty;
+                    defer concat.deinit(gpa);
+
                     if (used_properties.contains(reference)) {
-                        var concat: std.ArrayList(u8) = .empty;
                         try concat.appendSlice(gpa, current_slice);
                         try concat.appendSlice(gpa, "_");
                         try concat.appendSlice(gpa, reference);
@@ -140,7 +142,9 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
                     try composition.appendSlice(gpa, "(?<");
                     try composition.appendSlice(gpa, reference);
                     try composition.appendSlice(gpa, ">");
-                    try result.properties.append(gpa, reference);
+
+                    const owned = try gpa.dupeZ(u8, reference);
+                    try result.properties.append(gpa, owned);
 
                     // trailing ) into stack bottom
                     const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
@@ -174,10 +178,8 @@ pub fn prepare(pattern: Pattern) !Prepared {
     defer re.pcre2_compile_context_free_8(compile_ctx);
 
     const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
-        const len = 256;
-        const buffer = try backend_allocator.alloc(u8, len);
-        defer backend_allocator.free(buffer);
-        _ = re.pcre2_get_error_message_8(errornumber, buffer.ptr, len);
+        var buffer: [256]u8 = undefined;
+        _ = re.pcre2_get_error_message_8(errornumber, &buffer, buffer.len);
         std.debug.print("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}\n", .{ erroroffset, buffer, pattern.regex });
         return grok.GrokError.InvalidRegex;
     };
