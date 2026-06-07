@@ -55,17 +55,20 @@ pub fn matchStrings(
     var current_encoding = file_encoding orelse .unknown;
 
     while (true) {
+        // Automatically releases all memory allocated via loop_allocator at the end of the iteration
         defer _ = arena.reset(.retain_capacity);
         const loop_allocator = arena.allocator();
 
         var line: []const u8 = undefined;
 
         if (current_encoding == .utf16be or current_encoding == .utf16le) {
-            // Read raw UTF-16 line up to two-byte \n, convert to
+            // Read raw UTF-16 line up to two-byte \n into the temporary loop allocator
             const raw = readUtf16Line(loop_allocator, reader, current_encoding) catch |err| switch (err) {
                 error.EndOfStream => break,
                 else => return err,
             };
+
+            // Allocation is managed and automatically freed by the arena reset at the end of the loop
             line = try encoding.convertRawUtf16ToUtf8(loop_allocator, raw, current_encoding);
         } else {
             var aw = std.Io.Writer.Allocating.init(loop_allocator);
@@ -120,6 +123,9 @@ fn readUtf16Line(gpa: std.mem.Allocator, reader: *std.Io.Reader, enc: encoding.E
         var pair: [2]u8 = undefined;
         reader.readSliceAll(&pair) catch |err| switch (err) {
             error.EndOfStream => {
+                // If EOF is hit, we verify if there are any trailing bytes left in the buffer.
+                // An odd number of bytes will trigger EndOfStream inside readSliceAll,
+                // allowing us to return accumulated data instead of crashing.
                 if (buf.items.len == 0) return error.EndOfStream;
                 break;
             },
