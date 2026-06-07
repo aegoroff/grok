@@ -1,4 +1,5 @@
 const std = @import("std");
+const grok = @import("grok.zig");
 
 pub const Encoding = enum {
     unknown,
@@ -6,10 +7,6 @@ pub const Encoding = enum {
     utf16le,
     utf16be,
     utf32be,
-};
-
-pub const ConversionError = error{
-    InvalidLength,
 };
 
 const Bom = struct {
@@ -68,7 +65,7 @@ pub fn detectBomMemory(buffer: []const u8) DetectResult {
 }
 
 fn charToWchar(gpa: std.mem.Allocator, buffer: []const u8, encoding: Encoding) ![]u16 {
-    if (buffer.len % 2 != 0) return ConversionError.InvalidLength;
+    if (buffer.len % 2 != 0) return grok.GrokError.InvalidUtf16LineLength;
     const len = buffer.len / 2;
 
     var wide_buffer = try gpa.alloc(u16, len);
