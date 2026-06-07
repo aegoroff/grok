@@ -80,7 +80,7 @@ fn charToWchar(gpa: std.mem.Allocator, buffer: []const u8, encoding: Encoding) !
 
         wide_buffer[i] = switch (encoding) {
             .utf16le => std.mem.readInt(u16, &bytes, .little),
-            else => std.mem.readInt(u16, &bytes, .big),
+            else => std.mem.bigToNative(u16, std.mem.readInt(u16, &bytes, .big)),
         };
     }
 
