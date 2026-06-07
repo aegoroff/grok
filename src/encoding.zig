@@ -8,6 +8,10 @@ pub const Encoding = enum {
     utf32be,
 };
 
+pub const ConversionError = error{
+    InvalidLength,
+};
+
 const Bom = struct {
     encoding: Encoding,
     signature: []const u8,
@@ -64,23 +68,20 @@ pub fn detectBomMemory(buffer: []const u8) DetectResult {
 }
 
 fn charToWchar(gpa: std.mem.Allocator, buffer: []const u8, encoding: Encoding) ![]u16 {
+    if (buffer.len % 2 != 0) return ConversionError.InvalidLength;
     const len = buffer.len / 2;
 
     var wide_buffer = try gpa.alloc(u16, len);
+    errdefer gpa.free(wide_buffer);
 
     var i: usize = 0;
-    var counter: usize = 0;
-    while (i + 1 < buffer.len) : (i += 2) {
-        const b1 = buffer[i];
-        const b2 = buffer[i + 1];
+    while (i < len) : (i += 1) {
+        const bytes = buffer[i * 2 .. (i * 2) + 2][0..2].*;
 
-        const val: u16 = switch (encoding) {
-            .utf16le => @as(u16, b2) << 8 | b1,
-            else => @as(u16, b1) << 8 | b2,
+        wide_buffer[i] = switch (encoding) {
+            .utf16le => std.mem.readInt(u16, &bytes, .little),
+            else => std.mem.readInt(u16, &bytes, .big),
         };
-
-        wide_buffer[counter] = val;
-        counter += 1;
     }
 
     return wide_buffer;
