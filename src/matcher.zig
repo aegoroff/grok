@@ -39,7 +39,7 @@ pub fn showRegex(self: *const Matcher) !void {
     try self.writer.print("{s}\n", .{self.pattern.regex});
 }
 
-/// Reads strings sepatated by \n from `reader` and matches them
+/// Reads strings separated by \n from `reader` and matches them
 pub fn matchStrings(
     self: *Matcher,
     reader: *std.Io.Reader,
@@ -47,55 +47,89 @@ pub fn matchStrings(
     file_encoding: ?encoding.Encoding, // null means reading from stdin
 ) !void {
     var arena = std.heap.ArenaAllocator.init(self.allocator);
-    var current_encoding: encoding.Encoding = undefined;
+    defer arena.deinit();
 
     var line_no: usize = 0;
     var match_counter: u64 = 0;
+
+    var current_encoding = file_encoding orelse .unknown;
+
     while (true) {
         defer _ = arena.reset(.retain_capacity);
         const loop_allocator = arena.allocator();
-        var aw = std.Io.Writer.Allocating.init(loop_allocator);
-        defer aw.deinit();
-        _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
-            error.EndOfStream => {
-                if (aw.written().len == 0) break;
-                // Process the very last line if it doesn't end with \n
-                break;
-            },
-            else => return err,
-        };
 
-        var line = aw.written();
-        line_no += 1;
+        var line: []const u8 = undefined;
 
-        if (file_encoding) |e| {
-            current_encoding = e;
+        if (current_encoding == .utf16be or current_encoding == .utf16le) {
+            // Read raw UTF-16 line up to two-byte \n, convert to
+            const raw = readUtf16Line(loop_allocator, reader, current_encoding) catch |err| switch (err) {
+                error.EndOfStream => break,
+                else => return err,
+            };
+            line = try encoding.convertRawUtf16ToUtf8(loop_allocator, raw, current_encoding);
         } else {
-            // stdin case. Detect encoding on each line because stdin can be
-            // concatenated from several files using cat
-            const detected = encoding.detectBomMemory(line);
-            if (detected.encoding != .unknown) {
-                current_encoding = detected.encoding;
+            var aw = std.Io.Writer.Allocating.init(loop_allocator);
+            _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
+                error.EndOfStream => {
+                    if (aw.written().len == 0) break;
+                },
+                else => return err,
+            };
+
+            line = aw.written();
+            reader.toss(1);
+
+            if (file_encoding) |e| {
+                current_encoding = e;
+            } else {
+                // stdin case. Detect encoding on each line because stdin can be
+                // concatenated from several files using cat
+                const detected = encoding.detectBomMemory(line);
+                if (detected.encoding != .unknown) {
+                    current_encoding = detected.encoding;
+                }
             }
         }
 
-        if (current_encoding == .utf16be or current_encoding == .utf16le) {
-            reader.toss(2); // IMPORTANT: or we damage lines after the first one
-            line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line, current_encoding);
-        } else {
-            reader.toss(1);
-        }
-
+        line_no += 1;
         const result = regex.match(loop_allocator, &self.prepared, line);
-
         if (result.matched) {
             match_counter += 1;
         }
         try self.output(line_no, result, flags);
     }
+
     if (flags.count) {
         try self.writer.print("{d}\n", .{match_counter});
     }
+}
+
+/// Reads one line from a UTF-16 stream (up to a two-byte \n or EOF).
+/// Returns the raw bytes of the line without the delimiter.
+fn readUtf16Line(gpa: std.mem.Allocator, reader: *std.Io.Reader, enc: encoding.Encoding) ![]u8 {
+    const newline: [2]u8 = switch (enc) {
+        .utf16be => .{ 0x00, 0x0A },
+        .utf16le => .{ 0x0A, 0x00 },
+        else => unreachable,
+    };
+
+    var buf: std.ArrayList(u8) = .empty;
+    errdefer buf.deinit(gpa);
+
+    while (true) {
+        var pair: [2]u8 = undefined;
+        reader.readSliceAll(&pair) catch |err| switch (err) {
+            error.EndOfStream => {
+                if (buf.items.len == 0) return error.EndOfStream;
+                break;
+            },
+            error.ReadFailed => return error.ReadFailed,
+        };
+        if (std.mem.eql(u8, &pair, &newline)) break;
+        try buf.appendSlice(gpa, &pair);
+    }
+
+    return buf.toOwnedSlice(gpa);
 }
 
 fn output(self: *Matcher, line_no: usize, result: regex.MatchResult, flags: OutputFlags) !void {
