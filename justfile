@@ -7,3 +7,6 @@ build optimize = "ReleaseFast":
 
 test optimize = "ReleaseFast":
   mise exec zig@0.15.2 -- zig build test -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}
+
+linux:
+  mise run build:zig
