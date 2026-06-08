@@ -7,7 +7,6 @@ env:
   BUILD_CONFIGURATION: Release
   RELEASER_VER: 0.16.0
   CI_BUILD_NUMBER: ${{ github.run_number }}
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   push:
