@@ -14,6 +14,7 @@ pub const OutputFlags = packed struct {
     info: bool = false,
     count: bool = false,
     print_line_num: bool = false,
+    invert_match: bool = false,
 };
 
 pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !Matcher {
@@ -33,6 +34,15 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
     const result = regex.match(self.allocator, &self.prepared, str);
     try self.output(1, result, flags);
+}
+
+/// Inverts the match result - returns matched if original didn't match
+fn invertResult(result: regex.MatchResult) regex.MatchResult {
+    return regex.MatchResult{
+        .matched = !result.matched,
+        .original = result.original,
+        .properties = result.properties,
+    };
 }
 
 pub fn showRegex(self: *const Matcher) !void {
@@ -95,7 +105,10 @@ pub fn matchStrings(
         }
 
         line_no += 1;
-        const result = regex.match(loop_allocator, &self.prepared, line);
+        var result = regex.match(loop_allocator, &self.prepared, line);
+        if (flags.invert_match) {
+            result = invertResult(result);
+        }
         if (result.matched) {
             match_counter += 1;
         }

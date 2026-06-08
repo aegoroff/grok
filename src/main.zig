@@ -52,6 +52,7 @@ fn stringAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
         if (configuration.getStringArgValue(cmd)) |str| {
             matchString(gpa, macro, str, .{
                 .info = configuration.isInfoMode(cmd),
+                .invert_match = configuration.isInvertMatch(cmd),
             }) catch |e| {
                 std.debug.print("Failed string match: {}\n", .{e});
             };
@@ -66,6 +67,7 @@ fn fileAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
                 .info = configuration.isInfoMode(cmd),
                 .count = configuration.isCountMode(cmd),
                 .print_line_num = configuration.printLineNumber(cmd),
+                .invert_match = configuration.isInvertMatch(cmd),
             }) catch |e| {
                 std.debug.print("Failed file match: {}\n", .{e});
             };
@@ -79,6 +81,7 @@ fn stdinAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
             .info = configuration.isInfoMode(cmd),
             .count = configuration.isCountMode(cmd),
             .print_line_num = configuration.printLineNumber(cmd),
+            .invert_match = configuration.isInvertMatch(cmd),
         }) catch |e| {
             std.debug.print("Failed stdin match: {}\n", .{e});
         };
