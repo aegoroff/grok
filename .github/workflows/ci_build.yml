@@ -73,13 +73,13 @@ jobs:
       - name: Build with mise
         shell: bash
         run: |
-          export ABI="${{ matrix.abi }}"
-          export OS="${{ matrix.os }}"
-          export ARCH="${{ matrix.arch }}"
-          export CPU="${{ matrix.processor }}"
-          export VERSION="${{ steps.get_version.outputs.VERSION }}"
-          
           mise run build:zig
+        env:
+          ABI: ${{ matrix.abi }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
+          CPU: ${{ matrix.processor }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
