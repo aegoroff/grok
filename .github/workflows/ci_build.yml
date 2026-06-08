@@ -65,21 +65,26 @@ jobs:
         run: |
           echo "using version tag ${GITHUB_REF:11}"
           echo "version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
-      - name: Install Zig
-        uses: mlugg/setup-zig@v2
+      - name: Install mise and tools
+        uses: jdx/mise-action@v2
         with:
-          version: 0.15.2
-      - name: Build
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build with mise
+        shell: bash
         run: |
-          chmod +x ./linux_build_zig.sh
-          ./linux_build_zig.sh ${{ matrix.abi }} ${{ matrix.os }} ${{ matrix.arch }} "${{ steps.get_version.outputs.VERSION }}" ${{ matrix.processor }}
-        env:
-          GROK_VERSION: ${{ steps.get_version.outputs.VERSION }}
+          export ABI="${{ matrix.abi }}"
+          export OS="${{ matrix.os }}"
+          export ARCH="${{ matrix.arch }}"
+          export CPU="${{ matrix.processor }}"
+          export VERSION="${{ steps.get_version.outputs.VERSION }}"
+          
+          mise run build:zig
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
         run: cp -v ./zig-out/*.gz ./${{ env.RELEASE_DIR }}/
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os }}_${{ matrix.abi }}_${{ matrix.arch }}
           path: ./${{ env.RELEASE_DIR }}
