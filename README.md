@@ -128,6 +128,7 @@ Run `grok <command> -h` or `grok <command> --help` for detailed help on any comm
 - `-p, --patterns=<patterns>...` - One or more pattern files. If not set, current directory is used to search for all `*.patterns` files
 - `-m, --macro=<STRING>` - Pattern macro to build regexp (required for `string`, `file`, and `stdin` commands)
 - `-i, --info` - Output matched string with additional information (captured groups, etc.)
+- `-v, --invert-match` - Select non-matching lines (invert match)
 - `-h, --help` - Print help and exit
 
 ### Command Details
@@ -162,6 +163,7 @@ grok file [OPTIONS] <PATH>
 **Options:**
 - `-c, --count` - Print only the number of matched lines
 - `-n, --line-number` - Print line numbers with matching lines
+- `-v, --invert-match` - Select non-matching lines (invert match)
 
 **Example:**
 ```bash
@@ -184,6 +186,7 @@ cat /var/log/system.log | grok stdin -m SYSLOGBASE
 **Options:**
 - `-c, --count` - Print only the number of matched lines
 - `-n, --line-number` - Print line numbers with matching lines
+- `-v, --invert-match` - Select non-matching lines (invert match)
 
 #### `macro` - Macro Information
 
@@ -281,6 +284,22 @@ Multiple pattern files:
 
 ```bash
 grok file -p patterns/custom.patterns -p patterns/webservers.patterns -m APACHELOG access.log
+```
+
+### Invert Match
+
+Select non-matching lines (like `grep -v`):
+
+```bash
+# Show lines that do NOT match the pattern
+grok file -m SYSLOGBASE -v /var/log/system.log
+```
+
+Combine with other options:
+
+```bash
+# Show line numbers for non-matching lines
+grok stdin -m ERROR -n -v < logfile.txt
 ```
 
 ## Building from Source
