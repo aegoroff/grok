@@ -12,6 +12,7 @@ macro: []const u8,
 
 pub const OutputFlags = packed struct {
     info: bool = false,
+    json: bool = false,
     count: bool = false,
     print_line_num: bool = false,
     invert_match: bool = false,
@@ -155,7 +156,9 @@ fn output(self: *Matcher, line_no: usize, result: regex.MatchResult, flags: Outp
     if (flags.count) {
         return;
     }
-    if (flags.info) {
+    if (flags.json) {
+        try self.outputJson(line_no, result);
+    } else if (flags.info) {
         try self.writer.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, result.matched, self.macro });
         if (result.properties) |properties| {
             try self.writer.print("\n  Meta properties found:\n", .{});
@@ -176,4 +179,39 @@ fn output(self: *Matcher, line_no: usize, result: regex.MatchResult, flags: Outp
             }
         }
     }
+}
+
+fn outputJson(self: *Matcher, line_no: usize, result: regex.MatchResult) !void {
+    var jw: std.json.Stringify = .{
+        .writer = self.writer,
+        .options = .{},
+    };
+
+    try jw.beginObject();
+
+    try jw.objectField("line");
+    try jw.write(line_no);
+
+    try jw.objectField("matched");
+    try jw.write(result.matched);
+
+    try jw.objectField("pattern");
+    try jw.write(self.macro);
+
+    try jw.objectField("text");
+    try jw.write(result.original);
+
+    if (result.properties) |properties| {
+        try jw.objectField("properties");
+        try jw.beginObject();
+        var it = properties.iterator();
+        while (it.next()) |entry| {
+            try jw.objectField(entry.key_ptr.*);
+            try jw.write(entry.value_ptr.*);
+        }
+        try jw.endObject();
+    }
+
+    try jw.endObject();
+    try self.writer.writeByte('\n');
 }
