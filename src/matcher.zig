@@ -159,17 +159,7 @@ fn output(self: *Matcher, line_no: usize, result: regex.MatchResult, flags: Outp
     if (flags.json) {
         try self.outputJson(line_no, result);
     } else if (flags.info) {
-        try self.writer.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, result.matched, self.macro });
-        if (result.properties) |properties| {
-            try self.writer.print("\n  Meta properties found:\n", .{});
-            var it = properties.iterator();
-            while (it.next()) |entry| {
-                const key = entry.key_ptr.*;
-                const val = entry.value_ptr.*;
-                try self.writer.print("\t{s}: {s}\n", .{ key, val });
-            }
-            try self.writer.print("\n\n", .{});
-        }
+        try self.outputInfo(line_no, result);
     } else {
         if (result.matched) {
             if (flags.print_line_num) {
@@ -178,6 +168,20 @@ fn output(self: *Matcher, line_no: usize, result: regex.MatchResult, flags: Outp
                 try self.writer.print("{s}\n", .{result.original});
             }
         }
+    }
+}
+
+fn outputInfo(self: *Matcher, line_no: usize, result: regex.MatchResult) !void {
+    try self.writer.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, result.matched, self.macro });
+    if (result.properties) |properties| {
+        try self.writer.print("\n  Meta properties found:\n", .{});
+        var it = properties.iterator();
+        while (it.next()) |entry| {
+            const key = entry.key_ptr.*;
+            const val = entry.value_ptr.*;
+            try self.writer.print("\t{s}: {s}\n", .{ key, val });
+        }
+        try self.writer.print("\n\n", .{});
     }
 }
 
