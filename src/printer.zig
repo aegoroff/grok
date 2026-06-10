@@ -87,16 +87,16 @@ fn printJson(self: *Printer, line_no: usize, result: regex.MatchResult) !void {
     try jw.objectField("text");
     try jw.write(result.original);
 
+    try jw.objectField("properties");
+    try jw.beginObject();
     if (result.properties) |properties| {
-        try jw.objectField("properties");
-        try jw.beginObject();
         var it = properties.iterator();
         while (it.next()) |entry| {
             try jw.objectField(entry.key_ptr.*);
             try jw.write(entry.value_ptr.*);
         }
-        try jw.endObject();
     }
+    try jw.endObject();
 
     try jw.endObject();
     try self.writer.writeByte('\n');
