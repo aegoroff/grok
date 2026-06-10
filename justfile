@@ -11,4 +11,4 @@ test optimize = "ReleaseFast":
 linux:
   mise run build:zig
 
-all: build test
+all optimize = "ReleaseFast": (build optimize) (test optimize)
