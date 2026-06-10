@@ -38,7 +38,8 @@ pub fn compileLib(gpa: std.mem.Allocator, paths: ?[][]const u8) !void {
         } else {
             for (path_arg) |path| {
                 compileDir(path) catch {
-                    try compileFile(path);
+                    const pathz = try allocator.dupeZ(u8, path);
+                    try compileFile(pathz);
                 };
             }
         }
@@ -80,7 +81,8 @@ fn compileDir(lib_path: []const u8) !void {
                 const matches = glob.match("*.patterns", entry.basename);
                 if (matches) {
                     const p = try entry.dir.realpathAlloc(allocator, entry.basename);
-                    try compileFile(p);
+                    const pz = try allocator.dupeZ(u8, p);
+                    try compileFile(pz);
                 }
             },
             else => {},
