@@ -50,10 +50,22 @@ pub fn build(b: *std.Build) void {
 
     const flex = b.addSystemCommand(flex_args);
     const bison = b.addSystemCommand(bison_args);
+    bison.step.dependOn(&flex.step);
 
     const yazap = b.dependency("yazap", .{});
     const glob_dep = b.dependency("glob", .{ .target = target, .optimize = optimize });
     const pcre2_dep = b.dependency("pcre2", .{ .target = target, .optimize = optimize });
+
+    const deps = ModuleDeps{
+        .b = b,
+        .yazap = yazap,
+        .glob_dep = glob_dep,
+        .pcre2_dep = pcre2_dep,
+        .c_sources = &c_sources,
+        .c_code_path = c_code_path,
+        .generated_path = generated_path,
+        .options = options,
+    };
 
     const exe = b.addExecutable(.{
         .name = "grok",
@@ -65,17 +77,8 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
-
-    bison.step.dependOn(&flex.step);
     exe.step.dependOn(&bison.step);
-
-    exe.root_module.addImport("glob", glob_dep.module("glob"));
-    exe.root_module.addImport("yazap", yazap.module("yazap"));
-    exe.root_module.addIncludePath(b.path(generated_path));
-    exe.root_module.addIncludePath(b.path(c_code_path));
-    exe.root_module.addCSourceFiles(.{ .files = &c_sources, .flags = &[_][]const u8{} });
-    exe.root_module.linkLibrary(pcre2_dep.artifact("pcre2-8"));
-    exe.root_module.addImport("build_options", options.createModule());
+    deps.applyTo(exe.root_module);
 
     if (optimize == .ReleaseFast and target.result.os.tag != .macos) {
         exe.lto = .full;
@@ -93,16 +96,10 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
-    unit_tests.root_module.addImport("glob", glob_dep.module("glob"));
-    unit_tests.root_module.addImport("yazap", yazap.module("yazap"));
-    unit_tests.root_module.addIncludePath(b.path(generated_path));
-    unit_tests.root_module.addIncludePath(b.path(c_code_path));
-    unit_tests.root_module.addCSourceFiles(.{ .files = &c_sources, .flags = &[_][]const u8{} });
-    unit_tests.root_module.linkLibrary(pcre2_dep.artifact("pcre2-8"));
-    unit_tests.root_module.addImport("build_options", options.createModule());
+    unit_tests.step.dependOn(&bison.step);
+    deps.applyTo(unit_tests.root_module);
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
-
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_unit_tests.step);
 
@@ -153,6 +150,27 @@ pub fn build(b: *std.Build) void {
     const archive_step = b.step("archive", "Create a tar.gz archive of the build");
     archive_step.dependOn(&gzip_step.step);
 }
+
+const ModuleDeps = struct {
+    b: *std.Build,
+    yazap: *std.Build.Dependency,
+    glob_dep: *std.Build.Dependency,
+    pcre2_dep: *std.Build.Dependency,
+    c_sources: []const []const u8,
+    c_code_path: []const u8,
+    generated_path: []const u8,
+    options: *std.Build.Step.Options,
+
+    fn applyTo(self: ModuleDeps, mod: *std.Build.Module) void {
+        mod.addImport("glob", self.glob_dep.module("glob"));
+        mod.addImport("yazap", self.yazap.module("yazap"));
+        mod.addIncludePath(self.b.path(self.generated_path));
+        mod.addIncludePath(self.b.path(self.c_code_path));
+        mod.addCSourceFiles(.{ .files = self.c_sources, .flags = &[_][]const u8{} });
+        mod.linkLibrary(self.pcre2_dep.artifact("pcre2-8"));
+        mod.addImport("build_options", self.options.createModule());
+    }
+};
 
 fn ensureDirExists(b: *std.Build, dir_path: []const u8) !void {
     const full_path = b.pathFromRoot(dir_path);
