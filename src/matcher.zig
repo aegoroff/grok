@@ -9,7 +9,6 @@ allocator: std.mem.Allocator,
 prepared: regex.Prepared,
 pattern: regex.Pattern,
 print: printer.Printer,
-macro: []const u8,
 
 pub const OutputFlags = printer.OutputFlags;
 
@@ -22,7 +21,6 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !
         .prepared = prepared,
         .pattern = pattern,
         .print = printer.Printer.init(writer, macro),
-        .macro = macro,
     };
 }
 
