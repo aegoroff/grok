@@ -128,6 +128,7 @@ Run `grok <command> -h` or `grok <command> --help` for detailed help on any comm
 - `-p, --patterns=<patterns>...` - One or more pattern files. If not set, current directory is used to search for all `*.patterns` files
 - `-m, --macro=<STRING>` - Pattern macro to build regexp (required for `string`, `file`, and `stdin` commands)
 - `-i, --info` - Output matched string with additional information (captured groups, etc.)
+- `-j, --jsonl` - Output matched strings in JSONL (Newline delimited JSON) format
 - `-v, --invert-match` - Select non-matching lines (invert match)
 - `-h, --help` - Print help and exit
 
@@ -300,6 +301,20 @@ Combine with other options:
 ```bash
 # Show line numbers for non-matching lines
 grok stdin -m ERROR -n -v < logfile.txt
+```
+
+### JSONL Output
+
+Output matched strings in JSONL (Newline delimited JSON) format:
+
+```bash
+grok stdin -m SYSLOGBASE -j < /var/log/system.log
+```
+
+This format is useful for further processing with tools like `jq`:
+
+```bash
+grok stdin -m SYSLOGBASE -j < /var/log/system.log | jq .
 ```
 
 ## Building from Source
