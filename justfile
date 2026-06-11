@@ -1,4 +1,4 @@
-ver := "0.3.0-dev"
+ver := "0.4.0-dev"
 target := "x86_64-linux-musl"
 cpu := "haswell"
 
