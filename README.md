@@ -300,7 +300,7 @@ Combine with other options:
 
 ```bash
 # Show line numbers for non-matching lines
-grok stdin -m ERROR -n -v < logfile.txt
+grok stdin -m SYSLOGBASE -n -v < logfile.txt
 ```
 
 ### JSONL Output
