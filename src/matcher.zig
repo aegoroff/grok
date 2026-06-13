@@ -3,18 +3,14 @@ pub const Matcher = @This();
 const std = @import("std");
 const regex = @import("regex.zig");
 const encoding = @import("encoding.zig");
+const printer = @import("printer.zig");
 
 allocator: std.mem.Allocator,
 prepared: regex.Prepared,
 pattern: regex.Pattern,
-writer: *std.Io.Writer,
-macro: []const u8,
+print: printer.Printer,
 
-pub const OutputFlags = packed struct {
-    info: bool = false,
-    count: bool = false,
-    print_line_num: bool = false,
-};
+pub const OutputFlags = printer.OutputFlags;
 
 pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !Matcher {
     regex.init(gpa);
@@ -24,22 +20,30 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !
         .allocator = gpa,
         .prepared = prepared,
         .pattern = pattern,
-        .writer = writer,
-        .macro = macro,
+        .print = printer.Printer.init(writer, macro),
     };
 }
 
 /// Matches single string specified in `str` argument
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
     const result = regex.match(self.allocator, &self.prepared, str);
-    try self.output(1, result, flags);
+    try self.print.printResult(1, result, flags);
+}
+
+/// Inverts the match result - returns matched if original didn't match
+fn invertResult(result: regex.MatchResult) regex.MatchResult {
+    return regex.MatchResult{
+        .matched = !result.matched,
+        .original = result.original,
+        .properties = result.properties,
+    };
 }
 
 pub fn showRegex(self: *const Matcher) !void {
-    try self.writer.print("{s}\n", .{self.pattern.regex});
+    try self.print.printRegex(self.pattern.regex);
 }
 
-/// Reads strings sepatated by \n from `reader` and matches them
+/// Reads strings separated by \n from `reader` and matches them
 pub fn matchStrings(
     self: *Matcher,
     reader: *std.Io.Reader,
@@ -47,80 +51,96 @@ pub fn matchStrings(
     file_encoding: ?encoding.Encoding, // null means reading from stdin
 ) !void {
     var arena = std.heap.ArenaAllocator.init(self.allocator);
-    var current_encoding: encoding.Encoding = undefined;
+    defer arena.deinit();
 
     var line_no: usize = 0;
     var match_counter: u64 = 0;
+
+    var current_encoding = file_encoding orelse .unknown;
+
     while (true) {
+        // Automatically releases all memory allocated via loop_allocator at the end of the iteration
         defer _ = arena.reset(.retain_capacity);
         const loop_allocator = arena.allocator();
-        var aw = std.Io.Writer.Allocating.init(loop_allocator);
-        defer aw.deinit();
-        _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
-            error.EndOfStream => {
-                if (aw.written().len == 0) break;
-                // Process the very last line if it doesn't end with \n
-                break;
-            },
-            else => return err,
-        };
 
-        var line = aw.written();
-        line_no += 1;
+        var line: []const u8 = undefined;
 
-        if (file_encoding) |e| {
-            current_encoding = e;
+        if (current_encoding == .utf16be or current_encoding == .utf16le) {
+            // Read raw UTF-16 line up to two-byte \n into the temporary loop allocator
+            const raw = readUtf16Line(loop_allocator, reader, current_encoding) catch |err| switch (err) {
+                error.EndOfStream => break,
+                else => return err,
+            };
+
+            // Allocation is managed and automatically freed by the arena reset at the end of the loop
+            line = try encoding.convertRawUtf16ToUtf8(loop_allocator, raw, current_encoding);
         } else {
-            // stdin case. Detect encoding on each line because stdin can be
-            // concatenated from several files using cat
-            const detected = encoding.detectBomMemory(line);
-            if (detected.encoding != .unknown) {
-                current_encoding = detected.encoding;
+            var aw = std.Io.Writer.Allocating.init(loop_allocator);
+            _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
+                error.EndOfStream => {
+                    if (aw.written().len == 0) break;
+                },
+                else => return err,
+            };
+
+            line = aw.written();
+            reader.toss(1);
+
+            if (file_encoding) |e| {
+                current_encoding = e;
+            } else {
+                // stdin case. Detect encoding on each line because stdin can be
+                // concatenated from several files using cat
+                const detected = encoding.detectBomMemory(line);
+                if (detected.encoding != .unknown) {
+                    current_encoding = detected.encoding;
+                }
             }
         }
 
-        if (current_encoding == .utf16be or current_encoding == .utf16le) {
-            reader.toss(2); // IMPORTANT: or we damage lines after the first one
-            line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line, current_encoding);
-        } else {
-            reader.toss(1);
+        line_no += 1;
+        var result = regex.match(loop_allocator, &self.prepared, line);
+        if (flags.invert_match) {
+            result = invertResult(result);
         }
-
-        const result = regex.match(loop_allocator, &self.prepared, line);
-
         if (result.matched) {
             match_counter += 1;
         }
-        try self.output(line_no, result, flags);
+        try self.print.printResult(line_no, result, flags);
     }
+
     if (flags.count) {
-        try self.writer.print("{d}\n", .{match_counter});
+        try self.print.printCount(match_counter);
     }
 }
 
-fn output(self: *Matcher, line_no: usize, result: regex.MatchResult, flags: OutputFlags) !void {
-    if (flags.count) {
-        return;
+/// Reads one line from a UTF-16 stream (up to a two-byte \n or EOF).
+/// Returns the raw bytes of the line without the delimiter.
+fn readUtf16Line(gpa: std.mem.Allocator, reader: *std.Io.Reader, enc: encoding.Encoding) ![]u8 {
+    const newline: [2]u8 = switch (enc) {
+        .utf16be => .{ 0x00, 0x0A },
+        .utf16le => .{ 0x0A, 0x00 },
+        else => unreachable,
+    };
+
+    var buf: std.ArrayList(u8) = .empty;
+    errdefer buf.deinit(gpa);
+
+    while (true) {
+        var pair: [2]u8 = undefined;
+        reader.readSliceAll(&pair) catch |err| switch (err) {
+            error.EndOfStream => {
+                // If EOF is hit, we verify if there are any trailing bytes left in the buffer.
+                // An odd number of bytes will trigger EndOfStream inside readSliceAll,
+                // allowing us to return accumulated data instead of crashing.
+                if (buf.items.len == 0) return error.EndOfStream;
+                break;
+            },
+            error.ReadFailed => return error.ReadFailed,
+        };
+        if (std.mem.eql(u8, &pair, &newline)) break;
+        try buf.appendSlice(gpa, &pair);
     }
-    if (flags.info) {
-        try self.writer.print("line: {d} match: {} | pattern: {s}\n", .{ line_no, result.matched, self.macro });
-        if (result.properties) |properties| {
-            try self.writer.print("\n  Meta properties found:\n", .{});
-            var it = properties.iterator();
-            while (it.next()) |entry| {
-                const key = entry.key_ptr.*;
-                const val = entry.value_ptr.*;
-                try self.writer.print("\t{s}: {s}\n", .{ key, val });
-            }
-            try self.writer.print("\n\n", .{});
-        }
-    } else {
-        if (result.matched) {
-            if (flags.print_line_num) {
-                try self.writer.print("{d}: {s}\n", .{ line_no, result.original });
-            } else {
-                try self.writer.print("{s}\n", .{result.original});
-            }
-        }
-    }
+
+    return buf.toOwnedSlice(gpa);
 }
