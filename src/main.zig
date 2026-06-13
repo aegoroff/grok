@@ -29,7 +29,7 @@ pub fn main(init: std.process.Init) !void {
         stdout.flush() catch {};
     }
 
-    const gpa = init.gpa;
+    const gpa = init.arena.allocator();
 
     const args = try init.minimal.args.toSlice(gpa);
     var config = try configuration.Config.init(gpa, init.io, args[1..]); // skip exe itself
