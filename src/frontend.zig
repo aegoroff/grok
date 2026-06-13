@@ -53,7 +53,7 @@ fn compileDefault(io: std.Io) !void {
     if (builtin.os.tag == .linux) {
         lib_path = "/usr/share/grok/patterns";
     } else {
-        lib_path = try std.fs.selfExeDirPathAlloc(allocator);
+        lib_path = try std.process.executableDirPathAlloc(io, allocator);
     }
 
     try compileDir(io, lib_path);
