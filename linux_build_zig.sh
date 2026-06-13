@@ -8,7 +8,7 @@ CPU=$5
 [[ -n "${ABI}" ]] || ABI=musl
 [[ -n "${OS}" ]] || OS=linux
 [[ -n "${ARCH}" ]] || ARCH=x86_64
-[[ -n "${VERSION}" ]] || VERSION="0.4.0-dev"
+[[ -n "${VERSION}" || "${VERSION}" != *merge ]] || VERSION="0.4.0-dev"
 
 ZIG_PREFIX_DIR=bin-${ARCH}-${OS}-${ABI}
 OPTIMIZE=ReleaseFast
