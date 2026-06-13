@@ -80,7 +80,7 @@ pub fn build(b: *std.Build) void {
     exe.step.dependOn(&bison.step);
     deps.applyTo(exe.root_module);
 
-    if (optimize == .ReleaseFast and target.result.os.tag != .macos) {
+    if (optimize == .ReleaseFast and target.result.os.tag != .macos and target.result.os.tag != .windows) {
         exe.lto = .full;
         exe.link_gc_sections = true;
     }
