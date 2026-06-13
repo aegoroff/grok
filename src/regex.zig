@@ -143,7 +143,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
                     try composition.appendSlice(gpa, reference);
                     try composition.appendSlice(gpa, ">");
 
-                    const owned = try gpa.dupeZ(u8, reference);
+                    const owned = try gpa.dupeSentinel(u8, reference, 0);
                     try result.properties.append(gpa, owned);
 
                     // trailing ) into stack bottom
