@@ -10,27 +10,26 @@ var stdout: *std.Io.Writer = undefined;
 
 const Action = struct {
     name: []const u8,
-    handler: *const fn (std.mem.Allocator, yazap.ArgMatches) void,
+    handler: *const fn (std.mem.Allocator, io: std.Io, yazap.ArgMatches) void,
 };
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     if (builtin.os.tag == .windows) {
         // Windows-specific UTF-8 setup
         const kernel32 = std.os.windows.kernel32;
         _ = kernel32.SetConsoleOutputCP(65001);
     }
     var stdout_buffer: [1024]u8 = undefined;
-    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    var stdout_writer = std.Io.File.stdout().writer(init.io, &stdout_buffer);
     stdout = &stdout_writer.interface;
     defer {
         stdout.flush() catch {};
     }
 
-    var gpa = std.heap.ArenaAllocator.init(std.heap.c_allocator);
-    defer gpa.deinit();
+    const gpa = init.gpa;
 
-    const argv = try std.process.argsAlloc(gpa.allocator());
-    var config = try configuration.Config.init(gpa.allocator(), argv[1..]);
+    const args = try init.minimal.args.toSlice(gpa);
+    var config = try configuration.Config.init(gpa, init.io, args[1..]); // skip exe itself
     defer config.deinit();
 
     const actions = &[_]Action{
@@ -47,7 +46,7 @@ pub fn main() !void {
     }
 }
 
-fn stringAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
+fn stringAction(gpa: std.mem.Allocator, _: std.Io, cmd: yazap.ArgMatches) void {
     if (configuration.getMacroOpt(cmd)) |macro| {
         if (configuration.getStringArgValue(cmd)) |str| {
             matchString(gpa, macro, str, .{
@@ -61,10 +60,10 @@ fn stringAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
     }
 }
 
-fn fileAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
+fn fileAction(gpa: std.mem.Allocator, io: std.Io, cmd: yazap.ArgMatches) void {
     if (configuration.getMacroOpt(cmd)) |macro| {
         if (configuration.getPathArgValue(cmd)) |path| {
-            matchFile(gpa, macro, path, .{
+            matchFile(gpa, io, macro, path, .{
                 .info = configuration.isInfoMode(cmd),
                 .json = configuration.isJsonMode(cmd),
                 .count = configuration.isCountMode(cmd),
@@ -77,9 +76,9 @@ fn fileAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
     }
 }
 
-fn stdinAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
+fn stdinAction(gpa: std.mem.Allocator, io: std.Io, cmd: yazap.ArgMatches) void {
     if (configuration.getMacroOpt(cmd)) |macro| {
-        matchStdin(gpa, macro, .{
+        matchStdin(gpa, io, macro, .{
             .info = configuration.isInfoMode(cmd),
             .json = configuration.isJsonMode(cmd),
             .count = configuration.isCountMode(cmd),
@@ -91,7 +90,7 @@ fn stdinAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
     }
 }
 
-fn macroAction(gpa: std.mem.Allocator, cmd: yazap.ArgMatches) void {
+fn macroAction(gpa: std.mem.Allocator, _: std.Io, cmd: yazap.ArgMatches) void {
     if (configuration.getMacroArgValue(cmd)) |macro| {
         showMacroRegex(gpa, macro) catch |e| {
             std.debug.print("Failed show macro: {}\n", .{e});
@@ -108,12 +107,12 @@ fn matchString(gpa: std.mem.Allocator, macro: []const u8, subject: []const u8, f
     try match.matchString(subject, flags);
 }
 
-fn matchFile(gpa: std.mem.Allocator, macro: []const u8, path: []const u8, flags: matcher.OutputFlags) !void {
-    var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
-    defer file.close();
-    const stat = try file.stat();
+fn matchFile(gpa: std.mem.Allocator, io: std.Io, macro: []const u8, path: []const u8, flags: matcher.OutputFlags) !void {
+    var file = try std.Io.Dir.openFileAbsolute(io, path, .{ .mode = .read_only });
+    defer file.close(io);
+    const stat = try file.stat(io);
     var file_buffer: [16384]u8 = undefined;
-    var file_reader = file.reader(&file_buffer);
+    var file_reader = file.reader(io, &file_buffer);
     const reader = &file_reader.interface;
     var file_encoding: encoding.Encoding = undefined;
     if (stat.size < 2) {
@@ -135,9 +134,9 @@ fn matchFile(gpa: std.mem.Allocator, macro: []const u8, path: []const u8, flags:
     try match.matchStrings(reader, flags, file_encoding);
 }
 
-fn matchStdin(gpa: std.mem.Allocator, macro: []const u8, flags: matcher.OutputFlags) !void {
+fn matchStdin(gpa: std.mem.Allocator, io: std.Io, macro: []const u8, flags: matcher.OutputFlags) !void {
     var file_buffer: [16384]u8 = undefined;
-    var file_reader = std.fs.File.stdin().reader(&file_buffer);
+    var file_reader = std.Io.File.stdin().reader(io, &file_buffer);
     var match = try matcher.Matcher.init(gpa, stdout, macro);
     try match.matchStrings(&file_reader.interface, flags, null);
 }

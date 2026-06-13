@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) void {
     const c_code_path = "src/grok";
     const generated_path = std.fmt.allocPrint(b.allocator, "{s}/generated", .{c_code_path}) catch "";
 
-    ensureDirExists(b, generated_path) catch unreachable;
+    ensureDirExists(b, generated_path) catch {};
 
     const flex_input = std.fmt.allocPrint(b.allocator, "{s}/grok.lex", .{c_code_path}) catch "";
     const flex_src = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.c", .{generated_path}) catch "";
