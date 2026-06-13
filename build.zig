@@ -77,7 +77,6 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
-    exe.root_module.link_libc = true;
     exe.step.dependOn(&bison.step);
     deps.applyTo(exe.root_module);
 
@@ -97,7 +96,6 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
-    unit_tests.root_module.link_libc = true;
     unit_tests.step.dependOn(&bison.step);
     deps.applyTo(unit_tests.root_module);
 
