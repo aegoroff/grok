@@ -37,22 +37,23 @@
 ## Build & Test Commands
 ```bash
 # Build
-mise exec zig@0.15.2 -- zig build
+mise exec zig@0.16.0 -- zig build -Dtarget=x86_64-linux-musl
 
 # Run tests
-mise exec zig@0.15.2 -- zig build test
+mise exec zig@0.16.0 -- zig build test -Dtarget=x86_64-linux-musl
 
 # Check for errors
-mise exec zig@0.15.2 -- zig build check
+mise exec zig@0.16.0 -- zig build check -Dtarget=x86_64-linux-musl
 
 # Build release
-mise exec zig@0.15.2 -- zig build -Doptimize=ReleaseFast
+mise exec zig@0.16.0 -- zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-musl
 ```
 
 ## File Structure
 - `src/main.zig` - Entry point
 - `src/grok.zig` - Main grok module
 - `src/matcher.zig` - Pattern matching logic
+- `src/printer.zig` - Results output
 - `src/regex.zig` - Regex support
 - `src/frontend.zig` - Frontend/parser
 - `src/encoding.zig` - Encoding utilities
@@ -62,7 +63,6 @@ mise exec zig@0.15.2 -- zig build -Doptimize=ReleaseFast
 ## Important Notes
 - Always verify build passes before completing tasks
 - Run full test suite after significant changes
-- Check for memory leaks with `mise exec zig@0.15.2 -- zig build -Dsanitize`
 - Follow existing code organization patterns
 - Write code comments only in English
 - Dont write trivial code comments 
