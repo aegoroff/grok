@@ -10,6 +10,8 @@ const patterns_name: []const u8 = "patterns";
 const count_name: []const u8 = "count";
 const line_name: []const u8 = "line-number";
 const info_name: []const u8 = "info";
+const json_name: []const u8 = "jsonl";
+const invert_name: []const u8 = "invert-match";
 const path_name: []const u8 = "PATH";
 const string_name: []const u8 = "STRING";
 const macro_arg_name: []const u8 = "MACRO";
@@ -52,8 +54,10 @@ pub fn init(gpa: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     macro_opt.setValuePlaceholder("STRING");
     macro_opt.setProperty(.takes_value);
     const info_opt = yazap.Arg.booleanOption(info_name, 'i', "Dont work like grep i.e. output matched string with additional info");
+    const json_opt = yazap.Arg.booleanOption(json_name, 'j', "Output matched strings in JSONL (Newline delimited JSON) format");
     const count_opt = yazap.Arg.booleanOption(count_name, 'c', "Print only matched strings count");
     const line_num_opt = yazap.Arg.booleanOption(line_name, 'n', "Print line number along with output lines");
+    const invert_opt = yazap.Arg.booleanOption(invert_name, 'v', "Select non-matching lines");
 
     var str_cmd = app.createCommand(string_command_name, "Single string matching mode");
     str_cmd.setProperty(.help_on_empty_args);
@@ -62,6 +66,8 @@ pub fn init(gpa: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     try str_cmd.addArg(patterns_opt);
     try str_cmd.addArg(macro_opt);
     try str_cmd.addArg(info_opt);
+    try str_cmd.addArg(json_opt);
+    try str_cmd.addArg(invert_opt);
     try str_cmd.addArg(string_arg);
 
     var file_cmd = app.createCommand(file_command_name, "File matching mode");
@@ -72,8 +78,10 @@ pub fn init(gpa: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     try file_cmd.addArg(patterns_opt);
     try file_cmd.addArg(macro_opt);
     try file_cmd.addArg(info_opt);
+    try file_cmd.addArg(json_opt);
     try file_cmd.addArg(count_opt);
     try file_cmd.addArg(line_num_opt);
+    try file_cmd.addArg(invert_opt);
     try file_cmd.addArg(file_arg);
 
     var stdin_cmd = app.createCommand(stdin_command_name, "Standard input (stdin) matching mode");
@@ -81,8 +89,10 @@ pub fn init(gpa: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     try stdin_cmd.addArg(patterns_opt);
     try stdin_cmd.addArg(macro_opt);
     try stdin_cmd.addArg(info_opt);
+    try stdin_cmd.addArg(json_opt);
     try stdin_cmd.addArg(count_opt);
     try stdin_cmd.addArg(line_num_opt);
+    try stdin_cmd.addArg(invert_opt);
 
     var macro_cmd = app.createCommand(
         macro_name,
@@ -148,12 +158,20 @@ pub fn isInfoMode(match: yazap.ArgMatches) bool {
     return match.containsArg(info_name);
 }
 
+pub fn isJsonMode(match: yazap.ArgMatches) bool {
+    return match.containsArg(json_name);
+}
+
 pub fn isCountMode(match: yazap.ArgMatches) bool {
     return match.containsArg(count_name);
 }
 
 pub fn printLineNumber(match: yazap.ArgMatches) bool {
     return match.containsArg(line_name);
+}
+
+pub fn isInvertMatch(match: yazap.ArgMatches) bool {
+    return match.containsArg(invert_name);
 }
 
 test "correct string parsing and run integration test" {
