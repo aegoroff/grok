@@ -24,8 +24,9 @@ pub const stdin_command_name: []const u8 = "stdin";
 matches: yazap.ArgMatches,
 allocator: std.mem.Allocator,
 app: yazap.App,
+io: std.Io,
 
-pub fn init(gpa: std.mem.Allocator, argv: []const [:0]const u8) !Config {
+pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Config {
     const app_descr_template =
         \\Grok regexp macro processor {s} {s}
         \\Copyright (C) 2018-2026 Alexander Egorov. All rights reserved.
@@ -111,12 +112,13 @@ pub fn init(gpa: std.mem.Allocator, argv: []const [:0]const u8) !Config {
     try root_cmd.addSubcommand(stdin_cmd);
     try root_cmd.addSubcommand(macro_cmd);
 
-    const matches = try app.parseFrom(argv);
+    const matches = try app.parseFrom(io, argv);
 
     return Config{
         .matches = matches,
         .allocator = gpa,
         .app = app,
+        .io = io,
     };
 }
 
@@ -124,15 +126,15 @@ pub fn deinit(self: *Config) void {
     self.app.deinit();
 }
 
-pub fn run(self: *Config, command: []const u8, handler: *const fn (std.mem.Allocator, yazap.ArgMatches) void) bool {
+pub fn run(self: *Config, command: []const u8, handler: *const fn (std.mem.Allocator, io: std.Io, yazap.ArgMatches) void) bool {
     if (self.matches.subcommandMatches(command)) |cmd_matches| {
         const patterns = cmd_matches.getMultiValues(patterns_name);
-        front.compileLib(self.allocator, patterns) catch |e| {
+        front.compileLib(self.allocator, self.io, patterns) catch |e| {
             std.debug.print("Failed to compile lib: {}\n", .{e});
             return true;
         };
 
-        handler(self.allocator, cmd_matches);
+        handler(self.allocator, self.io, cmd_matches);
         return true;
     }
     return false;
@@ -179,7 +181,7 @@ test "correct string parsing and run integration test" {
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR", "2000" };
-    var config = try Config.init(arena.allocator(), command_line);
+    var config = try Config.init(arena.allocator(), std.testing.io, command_line);
     defer config.deinit();
     const run_result = config.run("string", &testStringAction);
     try std.testing.expect(run_result);
@@ -190,7 +192,7 @@ test "incorrect string parsing no positional parameter" {
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR" };
-    const err = Config.init(arena.allocator(), command_line);
+    const err = Config.init(arena.allocator(), std.testing.io, command_line);
     try std.testing.expectError(yazap.yazap_error.ParseError.PositionalArgumentNotProvided, err);
 }
 
@@ -199,11 +201,12 @@ test "incorrect file parsing no positional parameter" {
     defer arena.deinit();
 
     const command_line: []const [:0]const u8 = &[_][:0]const u8{ "file", "-m", "YEAR" };
-    const err = Config.init(arena.allocator(), command_line);
+
+    const err = Config.init(arena.allocator(), std.testing.io, command_line);
     try std.testing.expectError(yazap.yazap_error.ParseError.PositionalArgumentNotProvided, err);
 }
 
-fn testStringAction(_: std.mem.Allocator, _: yazap.ArgMatches) void {
+fn testStringAction(_: std.mem.Allocator, _: std.Io, _: yazap.ArgMatches) void {
     if (!builtin.is_test) {
         @compileError("This function is only available in test builds");
     }

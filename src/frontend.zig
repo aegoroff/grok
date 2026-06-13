@@ -29,26 +29,26 @@ pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
     return definitions;
 }
 
-pub fn compileLib(gpa: std.mem.Allocator, paths: ?[][]const u8) !void {
+pub fn compileLib(gpa: std.mem.Allocator, io: std.Io, paths: ?[][]const u8) !void {
     allocator = gpa;
     definitions = std.StringHashMap(std.ArrayList(Info)).init(allocator);
     if (paths) |path_arg| {
         if (path_arg.len == 0) {
-            try compileDefault();
+            try compileDefault(io);
         } else {
             for (path_arg) |path| {
-                compileDir(path) catch {
+                compileDir(io, path) catch {
                     const pathz = try allocator.dupeZ(u8, path);
                     try compileFile(pathz);
                 };
             }
         }
     } else {
-        try compileDefault();
+        try compileDefault(io);
     }
 }
 
-fn compileDefault() !void {
+fn compileDefault(io: std.Io) !void {
     var lib_path: []const u8 = undefined;
     if (builtin.os.tag == .linux) {
         lib_path = "/usr/share/grok/patterns";
@@ -56,31 +56,31 @@ fn compileDefault() !void {
         lib_path = try std.fs.selfExeDirPathAlloc(allocator);
     }
 
-    try compileDir(lib_path);
+    try compileDir(io, lib_path);
 }
 
-fn compileDir(lib_path: []const u8) !void {
-    var dir: std.fs.Dir = undefined;
-    const options: std.fs.Dir.OpenOptions = .{ .iterate = true };
+fn compileDir(io: std.Io, lib_path: []const u8) !void {
+    var dir: std.Io.Dir = undefined;
+    const options: std.Io.Dir.OpenOptions = .{ .iterate = true };
     if (std.fs.path.isAbsolute(lib_path)) {
-        dir = try std.fs.openDirAbsolute(lib_path, options);
+        dir = try std.Io.Dir.openDirAbsolute(io, lib_path, options);
     } else {
-        dir = try std.fs.cwd().openDir(lib_path, options);
+        dir = try std.Io.Dir.cwd().openDir(io, lib_path, options);
     }
     var walker = try dir.walk(allocator);
     defer walker.deinit();
     while (true) {
-        const entry_or_null = walker.next() catch {
+        const entry_or_null = walker.next(io) catch {
             continue;
         };
         const entry = entry_or_null orelse {
             break;
         };
         switch (entry.kind) {
-            std.fs.Dir.Entry.Kind.file => {
+            std.Io.File.Kind.file => {
                 const matches = glob.match("*.patterns", entry.basename);
                 if (matches) {
-                    const p = try entry.dir.realpathAlloc(allocator, entry.basename);
+                    const p = try entry.dir.realPathFileAlloc(io, entry.basename, allocator);
                     const pz = try allocator.dupeZ(u8, p);
                     try compileFile(pz);
                 }
@@ -116,7 +116,7 @@ pub export fn fend_on_literal(str: [*c]const u8) void {
 }
 
 pub export fn fend_on_definition() void {
-    composition = std.ArrayList(Info){};
+    composition = std.ArrayList(Info).empty;
 }
 
 pub export fn fend_on_definition_end(str: [*c]const u8) void {
