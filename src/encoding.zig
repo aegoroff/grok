@@ -42,7 +42,7 @@ pub const DetectResult = struct {
     offset: usize,
 };
 
-pub fn convertRawUtf16ToUtf8(gpa: std.mem.Allocator, rawBytes: []u8, encoding: Encoding) ![]u8 {
+pub fn convertRawUtf16ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encoding: Encoding) ![]u8 {
     const wide = try charToWchar(gpa, rawBytes, encoding);
     return std.unicode.utf16LeToUtf8Alloc(gpa, wide);
 }

@@ -65,36 +65,35 @@ pub fn matchStrings(
 
         var line: []const u8 = undefined;
 
-        if (current_encoding == .utf16be or current_encoding == .utf16le) {
-            // Read raw UTF-16 line up to two-byte \n into the temporary loop allocator
-            const raw = readUtf16Line(loop_allocator, reader, current_encoding) catch |err| switch (err) {
-                error.EndOfStream => break,
-                else => return err,
-            };
+        var aw = std.Io.Writer.Allocating.init(loop_allocator);
 
-            // Allocation is managed and automatically freed by the arena reset at the end of the loop
-            line = try encoding.convertRawUtf16ToUtf8(loop_allocator, raw, current_encoding);
-        } else {
-            var aw = std.Io.Writer.Allocating.init(loop_allocator);
-            _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
-                error.EndOfStream => {
-                    if (aw.written().len == 0) break;
-                },
-                else => return err,
-            };
+        _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
+            error.EndOfStream => {
+                if (aw.written().len == 0) break;
+            },
+            else => return err,
+        };
 
-            line = aw.written();
+        line = aw.written();
+        if (current_encoding == .utf16le) {
+            line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line, current_encoding);
+            reader.toss(2); // zero byte after delimiter so skip 2 bytes
+        } else if (current_encoding == .utf16be) {
+            // trim 0x00 before 0x0A and toss(1) - zero byte before delimiter so skip 1 byte
+            line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line[0 .. line.len - 1], current_encoding);
             reader.toss(1);
+        } else {
+            reader.toss(1);
+        }
 
-            if (file_encoding) |e| {
-                current_encoding = e;
-            } else {
-                // stdin case. Detect encoding on each line because stdin can be
-                // concatenated from several files using cat
-                const detected = encoding.detectBomMemory(line);
-                if (detected.encoding != .unknown) {
-                    current_encoding = detected.encoding;
-                }
+        if (file_encoding) |e| {
+            current_encoding = e;
+        } else {
+            // stdin case. Detect encoding on each line because stdin can be
+            // concatenated from several files using cat
+            const detected = encoding.detectBomMemory(line);
+            if (detected.encoding != .unknown) {
+                current_encoding = detected.encoding;
             }
         }
 
@@ -112,35 +111,4 @@ pub fn matchStrings(
     if (flags.count) {
         try self.print.printCount(match_counter);
     }
-}
-
-/// Reads one line from a UTF-16 stream (up to a two-byte \n or EOF).
-/// Returns the raw bytes of the line without the delimiter.
-fn readUtf16Line(gpa: std.mem.Allocator, reader: *std.Io.Reader, enc: encoding.Encoding) ![]u8 {
-    const newline: [2]u8 = switch (enc) {
-        .utf16be => .{ 0x00, 0x0A },
-        .utf16le => .{ 0x0A, 0x00 },
-        else => unreachable,
-    };
-
-    var buf: std.ArrayList(u8) = .empty;
-    errdefer buf.deinit(gpa);
-
-    while (true) {
-        var pair: [2]u8 = undefined;
-        reader.readSliceAll(&pair) catch |err| switch (err) {
-            error.EndOfStream => {
-                // If EOF is hit, we verify if there are any trailing bytes left in the buffer.
-                // An odd number of bytes will trigger EndOfStream inside readSliceAll,
-                // allowing us to return accumulated data instead of crashing.
-                if (buf.items.len == 0) return error.EndOfStream;
-                break;
-            },
-            error.ReadFailed => return error.ReadFailed,
-        };
-        if (std.mem.eql(u8, &pair, &newline)) break;
-        try buf.appendSlice(gpa, &pair);
-    }
-
-    return buf.toOwnedSlice(gpa);
 }
