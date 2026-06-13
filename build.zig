@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) void {
     const strip = optimize != .Debug;
     const options = b.addOptions();
 
-    const version_opt = b.option([]const u8, "version", "The version of the app") orelse "0.3.0-dev";
+    const version_opt = b.option([]const u8, "version", "The version of the app") orelse "0.4.0-dev";
     options.addOption([]const u8, "version", version_opt);
 
     const c_code_path = "src/grok";
