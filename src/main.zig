@@ -13,11 +13,14 @@ const Action = struct {
     handler: *const fn (std.mem.Allocator, io: std.Io, yazap.ArgMatches) void,
 };
 
+extern "kernel32" fn SetConsoleOutputCP(wCodePageID: u32) callconv(.winapi) i32;
+extern "kernel32" fn SetConsoleCP(wCodePageID: u32) callconv(.winapi) i32;
+
 pub fn main(init: std.process.Init) !void {
     if (builtin.os.tag == .windows) {
         // Windows-specific UTF-8 setup
-        const kernel32 = std.os.windows.kernel32;
-        _ = kernel32.SetConsoleOutputCP(65001);
+        _ = SetConsoleOutputCP(65001);
+        _ = SetConsoleCP(65001);
     }
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_writer = std.Io.File.stdout().writer(init.io, &stdout_buffer);
