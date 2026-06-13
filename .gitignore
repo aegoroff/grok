@@ -40,3 +40,4 @@ external_lib/
 .DS_Store
 .cache/
 .zed/
+zig-pkg/

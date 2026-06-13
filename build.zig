@@ -7,13 +7,13 @@ pub fn build(b: *std.Build) void {
     const strip = optimize != .Debug;
     const options = b.addOptions();
 
-    const version_opt = b.option([]const u8, "version", "The version of the app") orelse "0.3.0-dev";
+    const version_opt = b.option([]const u8, "version", "The version of the app") orelse "0.4.0-dev";
     options.addOption([]const u8, "version", version_opt);
 
     const c_code_path = "src/grok";
     const generated_path = std.fmt.allocPrint(b.allocator, "{s}/generated", .{c_code_path}) catch "";
 
-    ensureDirExists(b, generated_path) catch unreachable;
+    ensureDirExists(b, generated_path) catch {};
 
     const flex_input = std.fmt.allocPrint(b.allocator, "{s}/grok.lex", .{c_code_path}) catch "";
     const flex_src = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.c", .{generated_path}) catch "";
@@ -80,7 +80,7 @@ pub fn build(b: *std.Build) void {
     exe.step.dependOn(&bison.step);
     deps.applyTo(exe.root_module);
 
-    if (optimize == .ReleaseFast and target.result.os.tag != .macos) {
+    if (optimize == .ReleaseFast and target.result.os.tag != .macos and target.result.os.tag != .windows) {
         exe.lto = .full;
         exe.link_gc_sections = true;
     }
@@ -174,7 +174,7 @@ const ModuleDeps = struct {
 
 fn ensureDirExists(b: *std.Build, dir_path: []const u8) !void {
     const full_path = b.pathFromRoot(dir_path);
-    std.fs.cwd().makePath(full_path) catch |err| {
+    std.Io.Dir.cwd().createDir(b.graph.io, full_path, .default_dir) catch |err| {
         std.debug.print("Failed to create directory '{s}': {s}\n", .{ full_path, @errorName(err) });
         return err;
     };
