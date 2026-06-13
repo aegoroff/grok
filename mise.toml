@@ -1,15 +1,15 @@
 [tools]
-zig = "0.15.2"
+zig = "0.16.0"
 
 [tasks."build:zig"]
 description = "Build project"
 shell = "bash -c"
 run = [
   """
-  [[ -n "${ABI}" ]] || ABI=musl
-  [[ -n "${OS}" ]] || OS=linux
-  [[ -n "${ARCH}" ]] || ARCH=x86_64
-  [[ -n "${VERSION}" ]] || VERSION="0.3.0-dev"
+    [[ -n "${ABI}" ]] || ABI=musl
+    [[ -n "${OS}" ]] || OS=linux
+    [[ -n "${ARCH}" ]] || ARCH=x86_64
+    [[ -z "${VERSION}" || "${VERSION}" =~ ^[0-9]+/merge$ ]] && VERSION="0.4.0-dev"
 
   ZIG_PREFIX_DIR=bin-${ARCH}-${OS}-${ABI}
   OPTIMIZE=ReleaseFast
@@ -24,4 +24,3 @@ run = [
   zig build archive -Doptimize=${OPTIMIZE} ${DCPU} -Dtarget="${ARCH}"-"${OS}"-"${ABI}" -Dversion="${VERSION}" --summary all --prefix-exe-dir "${ZIG_PREFIX_DIR}"
   """
 ]
-
