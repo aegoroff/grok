@@ -63,7 +63,6 @@ pub fn build(b: *std.Build) void {
         .pcre2_dep = pcre2_dep,
         .c_sources = &c_sources,
         .c_code_path = c_code_path,
-        .generated_path = generated_path,
         .options = options,
     };
 
@@ -72,6 +71,9 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    translate_c.addIncludePath(b.path(c_code_path));
+    translate_c.addIncludePath(b.path(generated_path));
+    translate_c.step.dependOn(&bison.step);
 
     const exe = b.addExecutable(.{
         .name = "grok",
@@ -89,7 +91,7 @@ pub fn build(b: *std.Build) void {
             },
         }),
     });
-    exe.step.dependOn(&bison.step);
+    exe.step.dependOn(&translate_c.step);
     deps.applyTo(exe.root_module);
 
     if (optimize == .ReleaseFast and target.result.os.tag != .macos and target.result.os.tag != .windows) {
@@ -114,7 +116,7 @@ pub fn build(b: *std.Build) void {
             },
         }),
     });
-    unit_tests.step.dependOn(&bison.step);
+    unit_tests.step.dependOn(&translate_c.step);
     deps.applyTo(unit_tests.root_module);
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
@@ -176,13 +178,11 @@ const ModuleDeps = struct {
     pcre2_dep: *std.Build.Dependency,
     c_sources: []const []const u8,
     c_code_path: []const u8,
-    generated_path: []const u8,
     options: *std.Build.Step.Options,
 
     fn applyTo(self: ModuleDeps, mod: *std.Build.Module) void {
         mod.addImport("glob", self.glob_dep.module("glob"));
         mod.addImport("yazap", self.yazap.module("yazap"));
-        mod.addIncludePath(self.b.path(self.generated_path));
         mod.addIncludePath(self.b.path(self.c_code_path));
         mod.addCSourceFiles(.{ .files = self.c_sources, .flags = &[_][]const u8{} });
         mod.linkLibrary(self.pcre2_dep.artifact("pcre2-8"));
