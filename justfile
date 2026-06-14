@@ -16,6 +16,7 @@ all optimize = "ReleaseFast": (build optimize) (test optimize)
 build_all optimize = "ReleaseFast" version = "0.4.0-dev":
     #!/usr/bin/env bash
     rm -rf ./zig-out/*.tar.gz
+    rm -rf ./zig-out/bin-*
     for target in \
         "x86_64-linux-musl haswell" \
         "aarch64-linux-musl generic" \
