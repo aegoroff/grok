@@ -4,4 +4,7 @@ pub const GrokError = error{
     UnknownPatternFile,
     InvalidPatternFile,
     InvalidUtf16LineLength,
+    InvalidUtf32LineLength,
+    InvalidEncoding,
+    InvalidUtf32,
 };
