@@ -7,6 +7,7 @@ pub const Encoding = enum {
     utf16le,
     utf16be,
     utf32be,
+    utf32le,
 };
 
 const Bom = struct {
@@ -15,6 +16,14 @@ const Bom = struct {
 };
 
 const signatures: []const Bom = &[_]Bom{
+    Bom{
+        .encoding = .utf32be,
+        .signature = &[_]u8{ 0x00, 0x00, 0xFE, 0xFF },
+    },
+    Bom{
+        .encoding = .utf32le,
+        .signature = &[_]u8{ 0xFF, 0xFE, 0x00, 0x00 },
+    },
     Bom{
         .encoding = .utf8,
         .signature = &[_]u8{ 0xEF, 0xBB, 0xBF },
@@ -26,10 +35,6 @@ const signatures: []const Bom = &[_]Bom{
     Bom{
         .encoding = .utf16be,
         .signature = &[_]u8{ 0xFE, 0xFF },
-    },
-    Bom{
-        .encoding = .utf32be,
-        .signature = &[_]u8{ 0x00, 0x00, 0xFE, 0xFF },
     },
     Bom{
         .encoding = .unknown,
@@ -92,23 +97,30 @@ test "detect Utf8" {
 }
 
 test "detect Utf16le" {
-    const buffer = &[_]u8{ 0xFF, 0xFE, 0x00, 0x00, 0x00, 0x00, 0x00, 0xD1, 0x81, 0xD1, 0x82 };
+    const buffer = &[_]u8{ 0xFF, 0xFE, 0x48, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00 };
     const result = detectBomMemory(buffer);
     try std.testing.expectEqual(.utf16le, result.encoding);
     try std.testing.expectEqual(2, result.offset);
 }
 
 test "detect Utf16be" {
-    const buffer = &[_]u8{ 0xFE, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0xD1, 0x81, 0xD1, 0x82 };
+    const buffer = &[_]u8{ 0xFE, 0xFF, 0x00, 0x48, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F };
     const result = detectBomMemory(buffer);
     try std.testing.expectEqual(.utf16be, result.encoding);
     try std.testing.expectEqual(2, result.offset);
 }
 
 test "detect Utf32be" {
-    const buffer = &[_]u8{ 0x00, 0x00, 0xFE, 0xFF, 0x00, 0x00, 0x00, 0xD1, 0x81, 0xD1, 0x82 };
+    const buffer = &[_]u8{ 0x00, 0x00, 0xFE, 0xFF, 0x00, 0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x69 };
     const result = detectBomMemory(buffer);
     try std.testing.expectEqual(.utf32be, result.encoding);
+    try std.testing.expectEqual(4, result.offset);
+}
+
+test "detect Utf32le" {
+    const buffer = &[_]u8{ 0xFF, 0xFE, 0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x69, 0x00, 0x00, 0x00 };
+    const result = detectBomMemory(buffer);
+    try std.testing.expectEqual(.utf32le, result.encoding);
     try std.testing.expectEqual(4, result.offset);
 }
 
