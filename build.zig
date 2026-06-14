@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) void {
     const c_code_path = "src/grok";
     const generated_path = std.fmt.allocPrint(b.allocator, "{s}/generated", .{c_code_path}) catch "";
 
-    ensureDirExists(b, generated_path) catch {};
+    ensureDirExists(b, generated_path);
 
     const flex_input = std.fmt.allocPrint(b.allocator, "{s}/grok.lex", .{c_code_path}) catch "";
     const flex_src = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.c", .{generated_path}) catch "";
@@ -190,10 +190,13 @@ const ModuleDeps = struct {
     }
 };
 
-fn ensureDirExists(b: *std.Build, dir_path: []const u8) !void {
+fn ensureDirExists(b: *std.Build, dir_path: []const u8) void {
     const full_path = b.pathFromRoot(dir_path);
-    std.Io.Dir.cwd().createDir(b.graph.io, full_path, .default_dir) catch |err| {
-        std.debug.print("Failed to create directory '{s}': {s}\n", .{ full_path, @errorName(err) });
-        return err;
+    var dir = std.Io.Dir.cwd().openDir(b.graph.io, full_path, .{}) catch {
+        std.Io.Dir.cwd().createDir(b.graph.io, full_path, .default_dir) catch |err| {
+            std.debug.print("Failed to create directory '{s}': {s}\n", .{ full_path, @errorName(err) });
+        };
+        return;
     };
+    dir.close(b.graph.io);
 }
