@@ -65,4 +65,4 @@ mise exec zig@0.16.0 -- zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-m
 - Run full test suite after significant changes
 - Follow existing code organization patterns
 - Write code comments only in English
-- Dont write trivial code comments 
+- Don't write trivial code comments
