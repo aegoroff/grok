@@ -1,10 +1,7 @@
 const std = @import("std");
 const front = @import("frontend.zig");
 const grok = @import("grok.zig");
-const re = @cImport({
-    @cDefine("PCRE2_CODE_UNIT_WIDTH", "8");
-    @cInclude("pcre2.h");
-});
+const re = @import("re");
 
 /// A pattern structure that holds a regex string and its associated properties.
 /// This represents a compiled pattern that can be used for matching against text.
