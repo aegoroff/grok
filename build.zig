@@ -95,8 +95,6 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
-    exe.step.dependOn(&pcre.step);
-    exe.step.dependOn(&translate_c.step);
     deps.applyTo(exe.root_module);
 
     if (optimize == .ReleaseFast and target.result.os.tag != .macos and target.result.os.tag != .windows) {
@@ -115,8 +113,6 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
         }),
     });
-    unit_tests.step.dependOn(&pcre.step);
-    unit_tests.step.dependOn(&translate_c.step);
     deps.applyTo(unit_tests.root_module);
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
