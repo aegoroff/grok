@@ -124,11 +124,9 @@ pub export fn fend_on_definition_end(str: [*c]const u8) void {
 
 pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
     const slice = std.mem.span(str);
-
     // Allocate memory for string + null terminator
-    const mem = allocator.alloc(u8, slice.len + 1) catch return null;
+    const mem = allocator.allocSentinel(u8, slice.len, 0) catch return null;
     @memcpy(mem[0..slice.len], slice);
-    mem[slice.len] = 0; // Null terminator
     return @ptrCast(mem.ptr);
 }
 
