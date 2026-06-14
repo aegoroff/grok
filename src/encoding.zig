@@ -149,11 +149,27 @@ test "detect Utf16le" {
     try std.testing.expectEqual(2, result.offset);
 }
 
+test "decode Utf16le" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const buffer = &[_]u8{ 0x48, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00 };
+    const decoded = try convertRawUtf16ToUtf8(arena.allocator(), buffer, .utf16le);
+    try std.testing.expectEqualStrings("Hello", decoded);
+}
+
 test "detect Utf16be" {
     const buffer = &[_]u8{ 0xFE, 0xFF, 0x00, 0x48, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F };
     const result = detectBomMemory(buffer);
     try std.testing.expectEqual(.utf16be, result.encoding);
     try std.testing.expectEqual(2, result.offset);
+}
+
+test "decode Utf16be" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const buffer = &[_]u8{ 0x00, 0x48, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F };
+    const decoded = try convertRawUtf16ToUtf8(arena.allocator(), buffer, .utf16be);
+    try std.testing.expectEqualStrings("Hello", decoded);
 }
 
 test "detect Utf32be" {
@@ -163,11 +179,27 @@ test "detect Utf32be" {
     try std.testing.expectEqual(4, result.offset);
 }
 
+test "decode Utf32be" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const buffer = &[_]u8{ 0x00, 0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x69 };
+    const decoded = try convertRawUtf32ToUtf8(arena.allocator(), buffer, .utf32be);
+    try std.testing.expectEqualStrings("hi", decoded);
+}
+
 test "detect Utf32le" {
     const buffer = &[_]u8{ 0xFF, 0xFE, 0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x69, 0x00, 0x00, 0x00 };
     const result = detectBomMemory(buffer);
     try std.testing.expectEqual(.utf32le, result.encoding);
     try std.testing.expectEqual(4, result.offset);
+}
+
+test "decode Utf32le" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const buffer = &[_]u8{ 0x68, 0x00, 0x00, 0x00, 0x69, 0x00, 0x00, 0x00 };
+    const decoded = try convertRawUtf32ToUtf8(arena.allocator(), buffer, .utf32le);
+    try std.testing.expectEqualStrings("hi", decoded);
 }
 
 test "detect no bom" {
