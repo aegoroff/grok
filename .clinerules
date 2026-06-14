@@ -42,23 +42,23 @@ mise exec zig@0.16.0 -- zig build -Dtarget=x86_64-linux-musl
 # Run tests
 mise exec zig@0.16.0 -- zig build test -Dtarget=x86_64-linux-musl
 
-# Check for errors
-mise exec zig@0.16.0 -- zig build check -Dtarget=x86_64-linux-musl
-
 # Build release
 mise exec zig@0.16.0 -- zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-musl
+
+# Create tarball archive
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=1.0.0
 ```
 
 ## File Structure
 - `src/main.zig` - Entry point
-- `src/grok.zig` - Main grok module
-- `src/matcher.zig` - Pattern matching logic
-- `src/printer.zig` - Results output
-- `src/regex.zig` - Regex support
-- `src/frontend.zig` - Frontend/parser
-- `src/encoding.zig` - Encoding utilities
+- `src/grok/` - C code for lexer (flex) and parser (bison)
+  - `c.h` - C header for Zig translation
+  - `grok.lex` - Flex lexer definition
+  - `grok.y` - Bison parser definition
+  - `generated/` - Generated C source files
 - `src/configuration.zig` - Configuration handling
 - `patterns/` - Pattern definitions
+- `build.zig` - Build configuration (uses flex, bison, pcre2, yazap, glob)
 
 ## Important Notes
 - Always verify build passes before completing tasks
