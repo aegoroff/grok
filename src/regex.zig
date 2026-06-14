@@ -56,7 +56,7 @@ const AllocationHeader = extern struct {
 /// `size` The size of memory to allocate
 /// _: Unused parameter (PCRE2 context)
 /// @return Pointer to the allocated memory or null on failure
-pub export fn pcre_alloc(size: usize, _: ?*anyopaque) ?*anyopaque {
+fn pcre_alloc(size: usize, _: ?*anyopaque) callconv(.c) ?*anyopaque {
     // Allocate space for header + data + padding for alignment
     const header_size = @sizeOf(AllocationHeader);
     const total_size = header_size + size + 7; // +7 for guaranteed alignment
@@ -86,7 +86,7 @@ pub export fn pcre_alloc(size: usize, _: ?*anyopaque) ?*anyopaque {
 ///
 /// `ptr` Pointer to the memory to free
 /// _: Unused parameter (PCRE2 context)
-pub export fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) void {
+fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) callconv(.c) void {
     if (ptr) |p| {
         const data_ptr = @as([*]u8, @ptrCast(p));
         const data_addr = @intFromPtr(data_ptr);
