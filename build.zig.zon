@@ -2,7 +2,7 @@
     .name = .grok,
     .version = "0.4.0-1",
     .fingerprint = 0xe8c56320042e6699,
-
+    .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .pcre2 = .{
             .url = "git+https://github.com/PCRE2Project/pcre2/#ff92e0b9cea5b5ae3af12ba930d03556684f098b",
