@@ -52,6 +52,11 @@ pub fn convertRawUtf16ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encod
     return std.unicode.utf16LeToUtf8Alloc(gpa, wide);
 }
 
+pub fn convertRawUtf32ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encoding: Encoding) ![]u8 {
+    const wide = try charToUtf32(gpa, rawBytes, encoding);
+    return utf32ToUtf8Alloc(gpa, wide);
+}
+
 pub fn detectBomMemory(buffer: []const u8) DetectResult {
     for (signatures) |bom| {
         if (bom.signature.len == 0) continue;
@@ -82,7 +87,48 @@ fn charToWchar(gpa: std.mem.Allocator, buffer: []const u8, encoding: Encoding) !
 
         wide_buffer[i] = switch (encoding) {
             .utf16le => std.mem.readInt(u16, &bytes, .little),
-            else => std.mem.readInt(u16, &bytes, .big),
+            .utf16be => std.mem.readInt(u16, &bytes, .big),
+            else => return grok.GrokError.InvalidEncoding,
+        };
+    }
+
+    return wide_buffer;
+}
+
+fn utf32ToUtf8Alloc(gpa: std.mem.Allocator, utf32_input: []const u32) ![]u8 {
+    var utf8_list = try std.ArrayList(u8).initCapacity(gpa, utf32_input.len * 4);
+    errdefer utf8_list.deinit(gpa);
+
+    var temp_buf: [4]u8 = undefined;
+
+    for (utf32_input) |utf32_val| {
+        if (utf32_val > 0x10FFFF or (utf32_val >= 0xD800 and utf32_val <= 0xDFFF)) {
+            return grok.GrokError.InvalidUtf32;
+        }
+
+        const codepoint: u21 = @intCast(utf32_val);
+        const len = try std.unicode.utf8Encode(codepoint, &temp_buf);
+        try utf8_list.appendSlice(gpa, temp_buf[0..len]);
+    }
+
+    return utf8_list.toOwnedSlice(gpa);
+}
+
+fn charToUtf32(gpa: std.mem.Allocator, buffer: []const u8, encoding: Encoding) ![]u32 {
+    if (buffer.len % 4 != 0) return grok.GrokError.InvalidUtf32LineLength;
+    const len = buffer.len / 4;
+
+    var wide_buffer = try gpa.alloc(u32, len);
+    errdefer gpa.free(wide_buffer);
+
+    var i: usize = 0;
+    while (i < len) : (i += 1) {
+        const bytes = buffer[i * 4 .. (i * 4) + 4][0..4].*;
+
+        wide_buffer[i] = switch (encoding) {
+            .utf32le => std.mem.readInt(u32, &bytes, .little),
+            .utf32be => std.mem.readInt(u32, &bytes, .big),
+            else => return grok.GrokError.InvalidEncoding,
         };
     }
 
