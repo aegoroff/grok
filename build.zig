@@ -65,13 +65,13 @@ pub fn build(b: *std.Build) void {
     translate_c.addIncludePath(b.path(generated_path));
     translate_c.step.dependOn(&bison.step);
 
-    const pcre = b.addTranslateC(.{
+    const translate_pcre = b.addTranslateC(.{
         .root_source_file = pcre2_dep.namedLazyPath("pcre2.h"),
         .target = target,
         .optimize = optimize,
     });
-    pcre.defineCMacro("PCRE2_CODE_UNIT_WIDTH", "8");
-    pcre.step.dependOn(&pcre2_dep.artifact("pcre2-8").step);
+    translate_pcre.defineCMacro("PCRE2_CODE_UNIT_WIDTH", "8");
+    translate_pcre.step.dependOn(&pcre2_dep.artifact("pcre2-8").step);
 
     const deps = ModuleDeps{
         .b = b,
@@ -82,7 +82,7 @@ pub fn build(b: *std.Build) void {
         .c_code_path = c_code_path,
         .options = options,
         .translate_c = translate_c,
-        .pcre = pcre,
+        .translate_pcre = translate_pcre,
     };
 
     const exe = b.addExecutable(.{
@@ -176,7 +176,7 @@ const ModuleDeps = struct {
     c_code_path: []const u8,
     options: *std.Build.Step.Options,
     translate_c: *std.Build.Step.TranslateC,
-    pcre: *std.Build.Step.TranslateC,
+    translate_pcre: *std.Build.Step.TranslateC,
 
     fn applyTo(self: ModuleDeps, mod: *std.Build.Module) void {
         mod.addImport("glob", self.glob_dep.module("glob"));
@@ -186,7 +186,7 @@ const ModuleDeps = struct {
         mod.linkLibrary(self.pcre2_dep.artifact("pcre2-8"));
         mod.addImport("build_options", self.options.createModule());
         mod.addImport("c", self.translate_c.createModule());
-        mod.addImport("re", self.pcre.createModule());
+        mod.addImport("re", self.translate_pcre.createModule());
     }
 };
 
