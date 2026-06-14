@@ -67,6 +67,12 @@ pub fn build(b: *std.Build) void {
         .options = options,
     };
 
+    const translate_c = b.addTranslateC(.{
+        .root_source_file = b.path("src/grok/c.h"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     const exe = b.addExecutable(.{
         .name = "grok",
         .root_module = b.createModule(.{
@@ -75,6 +81,12 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .strip = strip,
             .link_libc = true,
+            .imports = &.{
+                .{
+                    .name = "c",
+                    .module = translate_c.createModule(),
+                },
+            },
         }),
     });
     exe.step.dependOn(&bison.step);
@@ -94,6 +106,12 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .target = target,
             .link_libc = true,
+            .imports = &.{
+                .{
+                    .name = "c",
+                    .module = translate_c.createModule(),
+                },
+            },
         }),
     });
     unit_tests.step.dependOn(&bison.step);

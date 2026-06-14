@@ -2,12 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const grok = @import("grok.zig");
 const glob = @import("glob");
-
-const c = @cImport({
-    @cInclude("stdio.h");
-    @cInclude("grok.h");
-    @cInclude("grok.tab.h");
-});
+const c = @import("c");
 
 pub const Info = struct {
     data: [*c]const u8,
