@@ -75,6 +75,19 @@ pub fn matchStrings(
         };
 
         line = aw.written();
+
+        if (file_encoding) |e| {
+            current_encoding = e;
+        } else {
+            // stdin case. Detect encoding on each line because stdin can be
+            // concatenated from several files using cat
+            const detected = encoding.detectBomMemory(line);
+            if (detected.encoding != .unknown) {
+                current_encoding = detected.encoding;
+                line = line[detected.offset..line.len];
+            }
+        }
+
         switch (current_encoding) {
             .utf16le => {
                 line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line, current_encoding);
@@ -95,18 +108,6 @@ pub fn matchStrings(
                 reader.toss(1); // 3 zero bytes before delimiter so skip 1 byte
             },
             else => reader.toss(1), // skip delimiter itself
-        }
-
-        if (file_encoding) |e| {
-            current_encoding = e;
-        } else {
-            // stdin case. Detect encoding on each line because stdin can be
-            // concatenated from several files using cat
-            const detected = encoding.detectBomMemory(line);
-            if (detected.encoding != .unknown) {
-                current_encoding = detected.encoding;
-                line = line[detected.offset..line.len];
-            }
         }
 
         line_no += 1;
