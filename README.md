@@ -321,10 +321,12 @@ grok stdin -m SYSLOGBASE -j < /var/log/system.log | jq .
 
 ### Prerequisites
 
-- [Zig](https://ziglang.org/) compiler (latest stable version)
+- [Zig](https://ziglang.org/) compiler (version 0.16.0 or compatible)
 - `flex` (or `win_flex` on Windows)
 - `bison` (or `win_bison` on Windows)
 - PCRE2 library (automatically handled by Zig package manager)
+- Optional: [mise](https://mise.jdx.dev/) for managing Zig version and build tasks
+- Optional: [just](https://github.com/casey/just) for running build commands
 
 ### Build Steps
 
@@ -334,33 +336,54 @@ git clone https://github.com/aegoroff/grok.git
 cd grok
 ```
 
-2. Build the project:
+2. (Optional) Install the correct Zig version using mise:
 ```bash
-zig build
+mise install
+```
+
+3. Build the project:
+```bash
+mise exec zig@0.16.0 -- zig build
+```
+
+Or using just:
+```bash
+just build ReleaseFast
 ```
 
 The executable will be in `zig-out/bin/`.
 
-3. Run tests:
+4. Run tests:
 ```bash
-zig build test
+mise exec zig@0.16.0 -- zig build test
 ```
 
-4. Create a release archive:
+Or using just:
 ```bash
-zig build archive
+just test
+```
+
+5. Create a release archive:
+```bash
+mise exec zig@0.16.0 -- zig build archive -Dversion=1.0.0
 ```
 
 ### Cross-Platform Building
 
-The project supports cross-compilation. Use the build scripts:
+The project supports cross-compilation. Use just to build for all platforms:
 
 ```bash
-# Build for all platforms
-./build_all_zig.sh
+just build_all 0.4.0-dev
+```
 
-# Build for Linux only
-./linux_build_zig.sh
+Or build manually for specific targets:
+```bash
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=1.0.0
+mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-linux-musl -Dversion=1.0.0
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-macos-none -Dversion=1.0.0
+mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-macos-none -Dversion=1.0.0
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-windows-gnu -Dversion=1.0.0
+mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-windows-gnu -Dversion=1.0.0
 ```
 
 ## Pattern Files
@@ -378,6 +401,8 @@ MACRONAME regexp
 ```
 
 Macros can reference other macros using `%{MACRONAME:fieldname}` syntax.
+
+You can also create your own pattern files and specify them with the `-p` option.
 
 ## License
 
