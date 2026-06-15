@@ -105,6 +105,7 @@ pub fn matchStrings(
             const detected = encoding.detectBomMemory(line);
             if (detected.encoding != .unknown) {
                 current_encoding = detected.encoding;
+                line = line[detected.offset..line.len];
             }
         }
 
