@@ -46,6 +46,11 @@ pub fn showRegex(self: *const Matcher) !void {
     try self.print.printRegex(self.pattern.regex);
 }
 
+pub fn deinit(self: *Matcher) void {
+    self.prepared.deinit(self.allocator);
+    regex.deinit();
+}
+
 /// Reads strings separated by \n from `reader` and matches them
 pub fn matchStrings(
     self: *Matcher,

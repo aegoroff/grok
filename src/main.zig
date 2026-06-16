@@ -107,6 +107,7 @@ fn macroAction(gpa: std.mem.Allocator, _: std.Io, cmd: yazap.ArgMatches) void {
 
 fn matchString(gpa: std.mem.Allocator, macro: []const u8, subject: []const u8, flags: matcher.OutputFlags) !void {
     var match = try matcher.Matcher.init(gpa, stdout, macro);
+    defer match.deinit();
     try match.matchString(subject, flags);
 }
 
@@ -134,6 +135,7 @@ fn matchFile(gpa: std.mem.Allocator, io: std.Io, macro: []const u8, path: []cons
     }
 
     var match = try matcher.Matcher.init(gpa, stdout, macro);
+    defer match.deinit();
     try match.matchStrings(reader, flags, file_encoding);
 }
 
@@ -141,11 +143,13 @@ fn matchStdin(gpa: std.mem.Allocator, io: std.Io, macro: []const u8, flags: matc
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.Io.File.stdin().reader(io, &file_buffer);
     var match = try matcher.Matcher.init(gpa, stdout, macro);
+    defer match.deinit();
     try match.matchStrings(&file_reader.interface, flags, null);
 }
 
 fn showMacroRegex(gpa: std.mem.Allocator, macro: []const u8) !void {
-    const match = try matcher.Matcher.init(gpa, stdout, macro);
+    var match = try matcher.Matcher.init(gpa, stdout, macro);
+    defer match.deinit();
     try match.showRegex();
 }
 

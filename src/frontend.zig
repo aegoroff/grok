@@ -13,7 +13,7 @@ pub const Info = struct {
 pub const Part = enum { literal, reference };
 
 var allocator: std.mem.Allocator = undefined;
-var composition: std.ArrayList(Info) = undefined;
+var composition: std.ArrayList(Info) = .empty;
 var definitions: std.StringHashMap(std.ArrayList(Info)) = undefined;
 
 pub fn getPattern(key: []const u8) grok.GrokError!std.ArrayList(Info) {
@@ -76,6 +76,7 @@ fn compileDir(io: std.Io, lib_path: []const u8) !void {
                 const matches = glob.match("*.patterns", entry.basename);
                 if (matches) {
                     const p = try entry.dir.realPathFileAlloc(io, entry.basename, allocator);
+                    defer allocator.free(p);
                     const pz = try allocator.dupeSentinel(u8, p, 0);
                     try compileFile(pz);
                 }
@@ -111,7 +112,7 @@ pub export fn fend_on_literal(str: [*c]const u8) void {
 }
 
 pub export fn fend_on_definition() void {
-    composition = std.ArrayList(Info).empty;
+    composition = .empty;
 }
 
 pub export fn fend_on_definition_end(str: [*c]const u8) void {
