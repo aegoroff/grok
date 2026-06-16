@@ -59,7 +59,9 @@ fn stringAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: 
                 .json = configuration.isJsonMode(cmd),
                 .invert_match = configuration.isInvertMatch(cmd),
             }) catch |e| {
-                std.debug.print("Failed string match: {}\n", .{e});
+                writer.print("Failed string match: {}\n", .{e}) catch |write_err| {
+                    std.debug.print("{}\n", .{write_err});
+                };
             };
         }
     }
@@ -75,7 +77,9 @@ fn fileAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: y
                 .print_line_num = configuration.printLineNumber(cmd),
                 .invert_match = configuration.isInvertMatch(cmd),
             }) catch |e| {
-                std.debug.print("Failed file match: {}\n", .{e});
+                writer.print("Failed file match: {}\n", .{e}) catch |write_err| {
+                    std.debug.print("{}\n", .{write_err});
+                };
             };
         }
     }
@@ -90,7 +94,9 @@ fn stdinAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: 
             .print_line_num = configuration.printLineNumber(cmd),
             .invert_match = configuration.isInvertMatch(cmd),
         }) catch |e| {
-            std.debug.print("Failed stdin match: {}\n", .{e});
+            writer.print("Failed stdin match: {}\n", .{e}) catch |write_err| {
+                std.debug.print("{}\n", .{write_err});
+            };
         };
     }
 }
@@ -98,11 +104,15 @@ fn stdinAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: 
 fn macroAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) void {
     if (configuration.getMacroArgValue(cmd)) |macro| {
         showMacroRegex(gpa, writer, macro) catch |e| {
-            std.debug.print("Failed show macro: {}\n", .{e});
+            writer.print("Failed show macro: {}\n", .{e}) catch |write_err| {
+                std.debug.print("{}\n", .{write_err});
+            };
         };
     } else {
         listAllMacroses(gpa, writer) catch |e| {
-            std.debug.print("Failed to list macroses: {}\n", .{e});
+            writer.print("Failed to list macroses: {}\n", .{e}) catch |write_err| {
+                std.debug.print("{}\n", .{write_err});
+            };
         };
     }
 }
@@ -240,6 +250,36 @@ test "integration test macro view" {
 
     // Assert
     try std.testing.expectEqualStrings("(?>\\d\\d){1,2}\n", writer.written());
+}
+
+test "integration test macro view complex pattern" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "macro", "NUMBER", "-p", "./patterns/" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("(?:(?<![0-9.+-])(?>[+-]?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+))))\n", writer.written());
+}
+
+test "integration test macro view bad (not exist) pattern" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "macro", "BAD", "-p", "./patterns/" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("Failed show macro: error.UnknownMacro\n", writer.written());
 }
 
 test {
