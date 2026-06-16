@@ -227,6 +227,21 @@ test "integration test invert match plain string" {
     try std.testing.expectEqualStrings("", writer.written());
 }
 
+test "integration test macro view" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "macro", "YEAR", "-p", "./patterns/" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("(?>\\d\\d){1,2}\n", writer.written());
+}
+
 test {
     @import("std").testing.refAllDecls(@This());
 }
