@@ -100,18 +100,24 @@ pub fn matchStrings(
                 reader.toss(2); // zero byte after delimiter so skip 2 bytes
             },
             .utf16be => {
-                // trim 0x00 before 0x0A
-                line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line[0 .. line.len - 1], current_encoding);
-                reader.toss(1); // zero byte before delimiter so skip 1 byte
+                // if length is less then 2 - we read trash
+                if (line.len >= 2) {
+                    // trim 0x00 before 0x0A
+                    line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line[0 .. line.len - 1], current_encoding);
+                    reader.toss(1); // zero byte before delimiter so skip 1 byte
+                }
             },
             .utf32le => {
                 line = try encoding.convertRawUtf32ToUtf8(loop_allocator, line, current_encoding);
                 reader.toss(4); // 3 zero bytes after delimiter so skip 4 bytes
             },
             .utf32be => {
-                // trim 3 0x00 before 0x0A
-                line = try encoding.convertRawUtf32ToUtf8(loop_allocator, line[0 .. line.len - 3], current_encoding);
-                reader.toss(1); // 3 zero bytes before delimiter so skip 1 byte
+                // if length is less then 4 - we read trash
+                if (line.len >= 4) {
+                    // trim 3 0x00 before 0x0A
+                    line = try encoding.convertRawUtf32ToUtf8(loop_allocator, line[0 .. line.len - 3], current_encoding);
+                    reader.toss(1); // 3 zero bytes before delimiter so skip 1 byte
+                }
             },
             else => reader.toss(1), // skip delimiter itself
         }
