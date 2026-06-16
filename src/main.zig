@@ -6,11 +6,9 @@ const encoding = @import("encoding.zig");
 const configuration = @import("configuration.zig");
 const yazap = @import("yazap");
 
-var stdout: *std.Io.Writer = undefined;
-
 const Action = struct {
     name: []const u8,
-    handler: *const fn (std.mem.Allocator, io: std.Io, yazap.ArgMatches) void,
+    handler: *const fn (std.mem.Allocator, *std.Io.Writer, std.Io, yazap.ArgMatches) void,
 };
 
 extern "kernel32" fn SetConsoleOutputCP(wCodePageID: u32) callconv(.winapi) i32;
@@ -24,7 +22,7 @@ pub fn main(init: std.process.Init) !void {
     }
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_writer = std.Io.File.stdout().writer(init.io, &stdout_buffer);
-    stdout = &stdout_writer.interface;
+    var stdout = &stdout_writer.interface;
     defer {
         stdout.flush() catch {};
     }
@@ -32,7 +30,11 @@ pub fn main(init: std.process.Init) !void {
     const gpa = init.arena.allocator();
 
     const args = try init.minimal.args.toSlice(gpa);
-    var config = try configuration.Config.init(gpa, init.io, args[1..]); // skip exe itself
+    try run(gpa, stdout, init.io, args[1..]); // skip exe itself
+}
+
+fn run(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, argv: []const [:0]const u8) !void {
+    var config = try configuration.Config.init(gpa, io, argv); // skip exe itself
     defer config.deinit();
 
     const actions = &[_]Action{
@@ -43,16 +45,16 @@ pub fn main(init: std.process.Init) !void {
     };
 
     for (actions) |action| {
-        if (config.run(action.name, action.handler)) {
+        if (config.run(action.name, writer, action.handler)) {
             return;
         }
     }
 }
 
-fn stringAction(gpa: std.mem.Allocator, _: std.Io, cmd: yazap.ArgMatches) void {
+fn stringAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) void {
     if (configuration.getMacroOpt(cmd)) |macro| {
         if (configuration.getStringArgValue(cmd)) |str| {
-            matchString(gpa, macro, str, .{
+            matchString(gpa, writer, macro, str, .{
                 .info = configuration.isInfoMode(cmd),
                 .json = configuration.isJsonMode(cmd),
                 .invert_match = configuration.isInvertMatch(cmd),
@@ -63,10 +65,10 @@ fn stringAction(gpa: std.mem.Allocator, _: std.Io, cmd: yazap.ArgMatches) void {
     }
 }
 
-fn fileAction(gpa: std.mem.Allocator, io: std.Io, cmd: yazap.ArgMatches) void {
+fn fileAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) void {
     if (configuration.getMacroOpt(cmd)) |macro| {
         if (configuration.getPathArgValue(cmd)) |path| {
-            matchFile(gpa, io, macro, path, .{
+            matchFile(gpa, writer, io, macro, path, .{
                 .info = configuration.isInfoMode(cmd),
                 .json = configuration.isJsonMode(cmd),
                 .count = configuration.isCountMode(cmd),
@@ -79,9 +81,9 @@ fn fileAction(gpa: std.mem.Allocator, io: std.Io, cmd: yazap.ArgMatches) void {
     }
 }
 
-fn stdinAction(gpa: std.mem.Allocator, io: std.Io, cmd: yazap.ArgMatches) void {
+fn stdinAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) void {
     if (configuration.getMacroOpt(cmd)) |macro| {
-        matchStdin(gpa, io, macro, .{
+        matchStdin(gpa, writer, io, macro, .{
             .info = configuration.isInfoMode(cmd),
             .json = configuration.isJsonMode(cmd),
             .count = configuration.isCountMode(cmd),
@@ -93,29 +95,42 @@ fn stdinAction(gpa: std.mem.Allocator, io: std.Io, cmd: yazap.ArgMatches) void {
     }
 }
 
-fn macroAction(gpa: std.mem.Allocator, _: std.Io, cmd: yazap.ArgMatches) void {
+fn macroAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) void {
     if (configuration.getMacroArgValue(cmd)) |macro| {
-        showMacroRegex(gpa, macro) catch |e| {
+        showMacroRegex(gpa, writer, macro) catch |e| {
             std.debug.print("Failed show macro: {}\n", .{e});
         };
     } else {
-        listAllMacroses(gpa) catch |e| {
+        listAllMacroses(gpa, writer) catch |e| {
             std.debug.print("Failed to list macroses: {}\n", .{e});
         };
     }
 }
 
-fn matchString(gpa: std.mem.Allocator, macro: []const u8, subject: []const u8, flags: matcher.OutputFlags) !void {
-    var match = try matcher.Matcher.init(gpa, stdout, macro);
+fn matchString(
+    gpa: std.mem.Allocator,
+    writer: *std.Io.Writer,
+    macro: []const u8,
+    subject: []const u8,
+    flags: matcher.OutputFlags,
+) !void {
+    var match = try matcher.Matcher.init(gpa, writer, macro);
     defer match.deinit();
     try match.matchString(subject, flags);
 }
 
-fn matchFile(gpa: std.mem.Allocator, io: std.Io, macro: []const u8, path: []const u8, flags: matcher.OutputFlags) !void {
+fn matchFile(
+    gpa: std.mem.Allocator,
+    writer: *std.Io.Writer,
+    io: std.Io,
+    macro: []const u8,
+    path: []const u8,
+    flags: matcher.OutputFlags,
+) !void {
     var file = try std.Io.Dir.openFileAbsolute(io, path, .{ .mode = .read_only });
     defer file.close(io);
     const stat = try file.stat(io);
-    var file_buffer: [16384]u8 = undefined;
+    var file_buffer: [64 * 1024]u8 = undefined;
     var file_reader = file.reader(io, &file_buffer);
     const reader = &file_reader.interface;
     var file_encoding: encoding.Encoding = undefined;
@@ -134,26 +149,39 @@ fn matchFile(gpa: std.mem.Allocator, io: std.Io, macro: []const u8, path: []cons
         }
     }
 
-    var match = try matcher.Matcher.init(gpa, stdout, macro);
+    var match = try matcher.Matcher.init(gpa, writer, macro);
     defer match.deinit();
     try match.matchStrings(reader, flags, file_encoding);
 }
 
-fn matchStdin(gpa: std.mem.Allocator, io: std.Io, macro: []const u8, flags: matcher.OutputFlags) !void {
+fn matchStdin(
+    gpa: std.mem.Allocator,
+    writer: *std.Io.Writer,
+    io: std.Io,
+    macro: []const u8,
+    flags: matcher.OutputFlags,
+) !void {
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.Io.File.stdin().reader(io, &file_buffer);
-    var match = try matcher.Matcher.init(gpa, stdout, macro);
+    var match = try matcher.Matcher.init(gpa, writer, macro);
     defer match.deinit();
     try match.matchStrings(&file_reader.interface, flags, null);
 }
 
-fn showMacroRegex(gpa: std.mem.Allocator, macro: []const u8) !void {
-    var match = try matcher.Matcher.init(gpa, stdout, macro);
+fn showMacroRegex(
+    gpa: std.mem.Allocator,
+    writer: *std.Io.Writer,
+    macro: []const u8,
+) !void {
+    var match = try matcher.Matcher.init(gpa, writer, macro);
     defer match.deinit();
     try match.showRegex();
 }
 
-fn listAllMacroses(gpa: std.mem.Allocator) !void {
+fn listAllMacroses(
+    gpa: std.mem.Allocator,
+    writer: *std.Io.Writer,
+) !void {
     var it = front.getPatterns().keyIterator();
     var macroses: std.ArrayList([]const u8) = try .initCapacity(gpa, it.len);
     while (it.next()) |item| {
@@ -161,12 +189,42 @@ fn listAllMacroses(gpa: std.mem.Allocator) !void {
     }
     std.mem.sort([]const u8, macroses.items, {}, stringLessThan);
     for (macroses.items) |item| {
-        try stdout.print("{s}\n", .{item});
+        try writer.print("{s}\n", .{item});
     }
 }
 
 fn stringLessThan(_: void, lhs: []const u8, rhs: []const u8) bool {
     return std.mem.order(u8, lhs, rhs) == .lt;
+}
+
+test "integration test match plain string" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR", "2010" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("2010\n", writer.written());
+}
+
+test "integration test invert match plain string" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-v", "-m", "YEAR", "2010" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("", writer.written());
 }
 
 test {
