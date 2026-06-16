@@ -6,6 +6,7 @@ description = "Build project"
 shell = "bash -c"
 run = [
   """
+    set -e
     [[ -n "${ABI}" ]] || ABI=musl
     [[ -n "${OS}" ]] || OS=linux
     [[ -n "${ARCH}" ]] || ARCH=x86_64
