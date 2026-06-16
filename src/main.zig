@@ -438,6 +438,21 @@ test "integration test match file UTF-16BE" {
     try std.testing.expectEqualStrings(expected, writer.written());
 }
 
+test "integration test match empty file UTF-16BE" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "DATA", "./test_assets/emptyUTF16BE.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("", writer.written());
+}
+
 test "integration test match file UTF-32LE count" {
     // Arrange
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -508,6 +523,21 @@ test "integration test match file UTF-32BE" {
 
     // Assert
     try std.testing.expectEqualStrings(expected, writer.written());
+}
+
+test "integration test match empty file UTF-32BE" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "DATA", "./test_assets/emptyUTF32BE.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("", writer.written());
 }
 
 test "integration test list all macros" {
@@ -727,7 +757,6 @@ test "integration test macro view for NGINXPROXYACCESS pattern" {
     // Assert - just check it doesn't error and produces some output
     try std.testing.expect(writer.written().len > 0);
 }
-
 
 test "integration test match file no match" {
     // Arrange
