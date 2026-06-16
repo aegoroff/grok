@@ -7,7 +7,6 @@ const printer = @import("printer.zig");
 
 allocator: std.mem.Allocator,
 prepared: regex.Prepared,
-pattern: regex.Pattern,
 print: printer.Printer,
 
 pub const OutputFlags = printer.OutputFlags;
@@ -15,11 +14,10 @@ pub const OutputFlags = printer.OutputFlags;
 pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !Matcher {
     regex.init(gpa);
     const pattern = try regex.createPattern(gpa, macro);
-    const prepared = try regex.prepare(pattern);
+    const prepared = try regex.prepare(gpa, pattern);
     return Matcher{
         .allocator = gpa,
         .prepared = prepared,
-        .pattern = pattern,
         .print = printer.Printer.init(writer, macro),
     };
 }
@@ -43,7 +41,7 @@ fn invertResult(result: regex.MatchResult) regex.MatchResult {
 }
 
 pub fn showRegex(self: *const Matcher) !void {
-    try self.print.printRegex(self.pattern.regex);
+    try self.print.printRegex(self.prepared.regex);
 }
 
 pub fn deinit(self: *Matcher) void {

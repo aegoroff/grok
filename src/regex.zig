@@ -19,6 +19,7 @@ pub const Prepared = struct {
     re: *re.pcre2_code_8,
     /// List of property names that this pattern captures
     properties: std.ArrayList([:0]const u8),
+    regex: []const u8,
 
     pub fn deinit(self: *Prepared, gpa: std.mem.Allocator) void {
         re.pcre2_code_free_8(self.re);
@@ -26,6 +27,7 @@ pub const Prepared = struct {
             gpa.free(prop);
         }
         self.properties.deinit(gpa);
+        gpa.free(self.regex);
     }
 };
 
@@ -175,7 +177,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
 ///
 /// `pattern` The Pattern to compile
 /// @return A Prepared struct containing the compiled regex and properties, or an error
-pub fn prepare(pattern: Pattern) !Prepared {
+pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
 
@@ -188,9 +190,11 @@ pub fn prepare(pattern: Pattern) !Prepared {
         std.debug.print("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}\n", .{ erroroffset, buffer, pattern.regex });
         return grok.GrokError.InvalidRegex;
     };
+    const owned_regex = try gpa.dupe(u8, pattern.regex);
     return Prepared{
         .re = regex,
         .properties = pattern.properties,
+        .regex = owned_regex,
     };
 }
 
