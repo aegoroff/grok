@@ -60,7 +60,7 @@ fn printInfo(self: *Printer, line_no: usize, result: regex.MatchResult) !void {
         while (it.next()) |entry| {
             const key = entry.key_ptr.*;
             const val = entry.value_ptr.*;
-            try self.writer.print("\t{s}: {s}\n", .{ key, val });
+            try self.writer.print("    {s}: {s}\n", .{ key, val });
         }
         try self.writer.print("\n\n", .{});
     }
