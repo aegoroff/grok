@@ -137,7 +137,7 @@ fn matchFile(
     path: []const u8,
     flags: matcher.OutputFlags,
 ) !void {
-    var file = try std.Io.Dir.openFileAbsolute(io, path, .{ .mode = .read_only });
+    var file = try std.Io.Dir.cwd().openFile(io, path, .{ .mode = .read_only });
     defer file.close(io);
     const stat = try file.stat(io);
     var file_buffer: [64 * 1024]u8 = undefined;
@@ -280,6 +280,234 @@ test "integration test macro view bad (not exist) pattern" {
 
     // Assert
     try std.testing.expectEqualStrings("Failed show macro: error.UnknownMacro\n", writer.written());
+}
+
+test "integration test match file UTF-8 count" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "-c", "./test_assets/logUTF8.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("2\n", writer.written());
+}
+
+test "integration test match file UTF-8 invert match - no results" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "-v", "./test_assets/logUTF8.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("", writer.written());
+}
+
+test "integration test match file UTF-8 info" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "-i", "./test_assets/logUTF8.log" };
+
+    const expected =
+        \\line: 1 match: true | pattern: NLOG
+        \\
+        \\  Meta properties found:
+        \\    Occured: 2016-08-13 01:46:09,637
+        \\    Level: INFO
+        \\
+        \\
+        \\line: 2 match: true | pattern: NLOG
+        \\
+        \\  Meta properties found:
+        \\    Occured: 2016-08-13 10:21:58,814
+        \\    Level: INFO
+        \\
+        \\
+        \\
+    ;
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
+}
+
+test "integration test match file UTF-8 json" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "-j", "./test_assets/logUTF8.log" };
+
+    const expected =
+        \\{"line":1,"matched":true,"pattern":"NLOG","text":"2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.","properties":{"Occured":"2016-08-13 01:46:09,637","Level":"INFO"}}
+        \\{"line":2,"matched":true,"pattern":"NLOG","text":"2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному","properties":{"Occured":"2016-08-13 10:21:58,814","Level":"INFO"}}
+        \\
+    ;
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
+}
+
+test "integration test match file UTF-16LE count" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "-c", "./test_assets/logUTF16LE.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("2\n", writer.written());
+}
+
+test "integration test match file UTF-16LE" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/logUTF16LE.log" };
+
+    const expected =
+        \\2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.
+        \\2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному
+        \\
+    ;
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
+}
+
+test "integration test match file UTF-16BE count" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "-c", "./test_assets/logUTF16BE.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("2\n", writer.written());
+}
+
+test "integration test match file UTF-16BE" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/logUTF16BE.log" };
+
+    const expected =
+        \\2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.
+        \\2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному
+        \\
+    ;
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
+}
+
+test "integration test match file UTF-32LE count" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "-c", "./test_assets/logUTF32LE.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("2\n", writer.written());
+}
+
+test "integration test match file UTF-32LE" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/logUTF32LE.log" };
+
+    const expected =
+        \\2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.
+        \\2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному
+        \\
+    ;
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
+}
+
+test "integration test match file UTF-32BE count" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "-c", "./test_assets/logUTF32BE.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("2\n", writer.written());
+}
+
+test "integration test match file UTF-32BE" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/logUTF32BE.log" };
+
+    const expected =
+        \\2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.
+        \\2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному
+        \\
+    ;
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
 }
 
 test {
