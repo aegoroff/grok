@@ -18,6 +18,7 @@ run = [
   [[ -n "${CPU}" ]] && DCPU="-Dcpu=${CPU}"
 
   if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
+    zig build test -Doptimize=Debug ${DCPU} -Dtarget="${ARCH}"-"${OS}"-"${ABI}" -Dversion="${VERSION}" --summary all
     zig build test -Doptimize=${OPTIMIZE} ${DCPU} -Dtarget="${ARCH}"-"${OS}"-"${ABI}" -Dversion="${VERSION}" --summary all
   fi
 
