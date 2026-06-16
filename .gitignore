@@ -21,6 +21,7 @@ Release/
 !src/lib/x64/Debug/
 !src/lib/x64/Release/
 !logUTF*.log
+!emptyUTF*.log
 pcre-vsbuild/
 cmake-build-debug/
 cmake-build-release/
