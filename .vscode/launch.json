@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Debug",
             "program": "${workspaceFolder}/zig-out/bin/grok",
-            "args": ["file", "-m", "NLOG", "/home/egr/code/logviewerULE.log"],
+            "args": ["file", "-m", "NLOG", "/home/egr/code/grok/test_assets/emptyUTF32BE.log"],
             "cwd": "${workspaceFolder}"
         }
     ]
