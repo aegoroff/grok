@@ -26,7 +26,10 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !
 
 /// Matches single string specified in `str` argument
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
-    const result = regex.match(self.allocator, &self.prepared, str);
+    var result = regex.match(self.allocator, &self.prepared, str);
+    if (flags.invert_match) {
+        result = invertResult(result);
+    }
     try self.print.printResult(1, result, flags);
 }
 
