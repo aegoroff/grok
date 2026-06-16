@@ -34,7 +34,7 @@ pub fn main(init: std.process.Init) !void {
 }
 
 fn run(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, argv: []const [:0]const u8) !void {
-    var config = try configuration.Config.init(gpa, io, argv); // skip exe itself
+    var config = try configuration.Config.init(gpa, io, argv);
     defer config.deinit();
 
     const actions = &[_]Action{
