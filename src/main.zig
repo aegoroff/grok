@@ -203,7 +203,7 @@ test "integration test match plain string" {
     defer arena.deinit();
 
     var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR", "2010" };
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-p", "./patterns/", "-m", "YEAR", "2010" };
 
     // Act
     try run(arena.allocator(), &writer.writer, std.testing.io, argv);
@@ -218,7 +218,7 @@ test "integration test invert match plain string" {
     defer arena.deinit();
 
     var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-v", "-m", "YEAR", "2010" };
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-p", "./patterns/", "-v", "-m", "YEAR", "2010" };
 
     // Act
     try run(arena.allocator(), &writer.writer, std.testing.io, argv);
