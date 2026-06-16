@@ -65,7 +65,8 @@ fn compileDir(io: std.Io, lib_path: []const u8) !void {
     var walker = try dir.walk(allocator);
     defer walker.deinit();
     while (true) {
-        const entry_or_null = walker.next(io) catch {
+        const entry_or_null = walker.next(io) catch |walk_err| {
+            std.debug.print("{}\n", .{walk_err});
             continue;
         };
         const entry = entry_or_null orelse {
