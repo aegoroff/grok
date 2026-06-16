@@ -49,11 +49,13 @@ pub const DetectResult = struct {
 
 pub fn convertRawUtf16ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encoding: Encoding) ![]u8 {
     const wide = try charToWchar(gpa, rawBytes, encoding);
+    defer gpa.free(wide);
     return std.unicode.utf16LeToUtf8Alloc(gpa, wide);
 }
 
 pub fn convertRawUtf32ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encoding: Encoding) ![]u8 {
     const wide = try charToUtf32(gpa, rawBytes, encoding);
+    defer gpa.free(wide);
     return utf32ToUtf8Alloc(gpa, wide);
 }
 

@@ -19,6 +19,14 @@ pub const Prepared = struct {
     re: *re.pcre2_code_8,
     /// List of property names that this pattern captures
     properties: std.ArrayList([:0]const u8),
+
+    pub fn deinit(self: *Prepared, gpa: std.mem.Allocator) void {
+        re.pcre2_code_free_8(self.re);
+        for (self.properties.items) |prop| {
+            gpa.free(prop);
+        }
+        self.properties.deinit(gpa);
+    }
 };
 
 /// Result of a regex match operation.
@@ -184,6 +192,10 @@ pub fn prepare(pattern: Pattern) !Prepared {
         .re = regex,
         .properties = pattern.properties,
     };
+}
+
+pub fn deinit() void {
+    re.pcre2_general_context_free_8(general_context);
 }
 
 /// Match a prepared pattern against a subject string.
