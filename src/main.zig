@@ -489,6 +489,21 @@ test "integration test match file UTF-32LE" {
     try std.testing.expectEqualStrings(expected, writer.written());
 }
 
+test "integration test match invalid file UTF-32LE" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/invalidUTF32LE.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("Failed file match: error.InvalidUtf32LineLength\n", writer.written());
+}
+
 test "integration test match file UTF-32BE count" {
     // Arrange
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -532,6 +547,21 @@ test "integration test match empty file UTF-32BE" {
 
     var writer = std.Io.Writer.Allocating.init(arena.allocator());
     const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "DATA", "./test_assets/emptyUTF32BE.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("", writer.written());
+}
+
+test "integration test match invalid file UTF-32BE" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/invalidUTF32BE.log" };
 
     // Act
     try run(arena.allocator(), &writer.writer, std.testing.io, argv);

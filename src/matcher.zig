@@ -73,9 +73,11 @@ pub fn matchStrings(
 
         var aw = std.Io.Writer.Allocating.init(loop_allocator);
 
+        var not_eof = true;
         _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
             error.EndOfStream => {
                 if (aw.written().len == 0) break;
+                not_eof = false;
             },
             else => return err,
         };
@@ -119,7 +121,11 @@ pub fn matchStrings(
                     reader.toss(1); // 3 zero bytes before delimiter so skip 1 byte
                 }
             },
-            else => reader.toss(1), // skip delimiter itself
+            else => {
+                if (not_eof) {
+                    reader.toss(1); // skip delimiter itself if not end of file
+                }
+            },
         }
 
         line_no += 1;
