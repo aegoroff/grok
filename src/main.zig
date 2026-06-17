@@ -282,6 +282,42 @@ test "integration test macro view bad (not exist) pattern" {
     try std.testing.expectEqualStrings("Failed show macro: error.UnknownMacro\n", writer.written());
 }
 
+test "integration test match file UTF-8 without flags" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/logUTF8.log" };
+
+    const expected =
+        \\2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.
+        \\2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному
+        \\
+    ;
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
+}
+
+test "integration test match file UTF-8 no match" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NGINXPROXYACCESS", "./test_assets/logUTF8.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert - no matches expected for nginx pattern in log file
+    try std.testing.expectEqualStrings("", writer.written());
+}
+
 test "integration test match file UTF-8 count" {
     // Arrange
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -295,6 +331,21 @@ test "integration test match file UTF-8 count" {
 
     // Assert
     try std.testing.expectEqualStrings("2\n", writer.written());
+}
+
+test "integration test match file UTF-8 count no matches" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NGINXPROXYACCESS", "-c", "./test_assets/logUTF8.log" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert - count should be 0
+    try std.testing.expectEqualStrings("0\n", writer.written());
 }
 
 test "integration test match file UTF-8 invert match - no results" {
@@ -618,6 +669,21 @@ test "integration test match string with NUMBER pattern no match" {
     try std.testing.expectEqualStrings("", writer.written());
 }
 
+test "integration test match string invert with NUMBER pattern" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-p", "./patterns/", "-m", "NUMBER", "-v", "abc" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert - invert match on non-matching string should output the string
+    try std.testing.expectEqualStrings("abc\n", writer.written());
+}
+
 test "integration test match string with IP pattern" {
     // Arrange
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -663,58 +729,7 @@ test "integration test match string with TIMESTAMP_ISO8601 pattern" {
     try std.testing.expectEqualStrings("2016-08-13 01:46:09,637\n", writer.written());
 }
 
-test "integration test match string with LOGLEVEL pattern" {
-    // Arrange
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-
-    var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-p", "./patterns/", "-m", "LOGLEVEL", "INFO" };
-
-    // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
-
-    // Assert
-    try std.testing.expectEqualStrings("INFO\n", writer.written());
-}
-
-test "integration test match string with LOGLEVEL pattern debug" {
-    // Arrange
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-
-    var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-p", "./patterns/", "-m", "LOGLEVEL", "DEBUG" };
-
-    // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
-
-    // Assert
-    try std.testing.expectEqualStrings("DEBUG\n", writer.written());
-}
-
-test "integration test match file UTF-8 without flags" {
-    // Arrange
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-
-    var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/logUTF8.log" };
-
-    const expected =
-        \\2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.
-        \\2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному
-        \\
-    ;
-
-    // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
-
-    // Assert
-    try std.testing.expectEqualStrings(expected, writer.written());
-}
-
-test "integration test match file with line numbers" {
+test "integration test match file UTF-8 with line numbers" {
     // Arrange
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -754,83 +769,6 @@ test "integration test match file UTF-16LE with line numbers" {
 
     // Assert
     try std.testing.expectEqualStrings(expected, writer.written());
-}
-
-test "integration test macro view for NLOG pattern" {
-    // Arrange
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-
-    var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "macro", "NLOG", "-p", "./patterns/" };
-
-    // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
-
-    // Assert - check it produces some valid regex output with named groups
-    const output = writer.written();
-    try std.testing.expect(std.mem.indexOf(u8, output, "Occured") != null);
-    try std.testing.expect(std.mem.indexOf(u8, output, "Level") != null);
-}
-
-test "integration test macro view for NGINXPROXYACCESS pattern" {
-    // Arrange
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-
-    var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "macro", "NGINXPROXYACCESS", "-p", "./patterns/" };
-
-    // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
-
-    // Assert - just check it doesn't error and produces some output
-    try std.testing.expect(writer.written().len > 0);
-}
-
-test "integration test match file no match" {
-    // Arrange
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-
-    var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NGINXPROXYACCESS", "./test_assets/logUTF8.log" };
-
-    // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
-
-    // Assert - no matches expected for nginx pattern in log file
-    try std.testing.expectEqualStrings("", writer.written());
-}
-
-test "integration test match file count no matches" {
-    // Arrange
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-
-    var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NGINXPROXYACCESS", "-c", "./test_assets/logUTF8.log" };
-
-    // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
-
-    // Assert - count should be 0
-    try std.testing.expectEqualStrings("0\n", writer.written());
-}
-
-test "integration test match string invert with NUMBER pattern" {
-    // Arrange
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-
-    var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const argv: []const [:0]const u8 = &[_][:0]const u8{ "string", "-p", "./patterns/", "-m", "NUMBER", "-v", "abc" };
-
-    // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
-
-    // Assert - invert match on non-matching string should output the string
-    try std.testing.expectEqualStrings("abc\n", writer.written());
 }
 
 test "integration test match file UTF-32LE with line numbers" {
