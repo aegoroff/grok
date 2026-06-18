@@ -148,7 +148,7 @@ pub fn build(b: *std.Build) void {
         .translate_pcre = translate_pcre,
     };
     const fuzzing = b.addTest(.{
-        .name = "fuzz-string",
+        .name = "fuzzing",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/fuzz.zig"),
             .optimize = optimize,
