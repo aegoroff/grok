@@ -52,6 +52,20 @@ pub fn build(b: *std.Build) void {
     const bison = b.addSystemCommand(bison_args);
     bison.step.dependOn(&flex.step);
 
+    const c_lib = b.addLibrary(.{
+        .name = "grok-c",
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        }),
+    });
+    c_lib.root_module.addIncludePath(b.path(c_code_path));
+    c_lib.root_module.addIncludePath(b.path(generated_path));
+    c_lib.root_module.addCSourceFiles(.{ .files = &c_sources, .flags = &[_][]const u8{} });
+    c_lib.step.dependOn(&bison.step);
+
     const yazap = b.dependency("yazap", .{});
     const glob_dep = b.dependency("glob", .{ .target = target, .optimize = optimize });
     const pcre2_dep = b.dependency("pcre2", .{ .target = target, .optimize = optimize });
@@ -79,6 +93,7 @@ pub fn build(b: *std.Build) void {
         .glob_dep = glob_dep,
         .pcre2_dep = pcre2_dep,
         .c_sources = &c_sources,
+        .c_lib = null,
         .c_code_path = c_code_path,
         .options = options,
         .translate_c = translate_c,
@@ -117,7 +132,38 @@ pub fn build(b: *std.Build) void {
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     const test_step = b.step("test", "Run unit tests");
+
+    // ── Fuzz: string mode ─────────────────────────────────────────────────────
+
+    const fuzz_deps = ModuleDeps{
+        .b = b,
+        .yazap = yazap,
+        .glob_dep = glob_dep,
+        .pcre2_dep = pcre2_dep,
+        .c_sources = &.{},
+        .c_lib = c_lib,
+        .c_code_path = c_code_path,
+        .options = options,
+        .translate_c = translate_c,
+        .translate_pcre = translate_pcre,
+    };
+    const fuzz_string = b.addTest(.{
+        .name = "fuzz-string",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/fuzz_string.zig"),
+            .optimize = optimize,
+            .target = target,
+            .link_libc = true,
+        }),
+    });
+    fuzz_deps.applyTo(fuzz_string.root_module);
+
+    const run_fuzz_string = b.addRunArtifact(fuzz_string);
+    const fuzz_string_step = b.step("fuzz-string", "Fuzz string matching mode");
+    fuzz_string_step.dependOn(&run_fuzz_string.step);
+
     test_step.dependOn(&run_unit_tests.step);
+    test_step.dependOn(&run_fuzz_string.step);
 
     // Packaging
     const tr = target.result;
@@ -173,6 +219,7 @@ const ModuleDeps = struct {
     glob_dep: *std.Build.Dependency,
     pcre2_dep: *std.Build.Dependency,
     c_sources: []const []const u8,
+    c_lib: ?*std.Build.Step.Compile,
     c_code_path: []const u8,
     options: *std.Build.Step.Options,
     translate_c: *std.Build.Step.TranslateC,
@@ -182,7 +229,11 @@ const ModuleDeps = struct {
         mod.addImport("glob", self.glob_dep.module("glob"));
         mod.addImport("yazap", self.yazap.module("yazap"));
         mod.addIncludePath(self.b.path(self.c_code_path));
-        mod.addCSourceFiles(.{ .files = self.c_sources, .flags = &[_][]const u8{} });
+        if (self.c_lib) |lib| {
+            mod.linkLibrary(lib);
+        } else {
+            mod.addCSourceFiles(.{ .files = self.c_sources, .flags = &[_][]const u8{} });
+        }
         mod.linkLibrary(self.pcre2_dep.artifact("pcre2-8"));
         mod.addImport("build_options", self.options.createModule());
         mod.addImport("c", self.translate_c.createModule());
