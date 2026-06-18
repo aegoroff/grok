@@ -94,7 +94,6 @@ pub fn build(b: *std.Build) void {
         .glob_dep = glob_dep,
         .pcre2_dep = pcre2_dep,
         .c_lib = c_lib,
-        .c_code_path = c_code_path,
         .options = options,
         .translate_c = translate_c,
         .translate_pcre = translate_pcre,
@@ -206,7 +205,6 @@ const ModuleDeps = struct {
     glob_dep: *std.Build.Dependency,
     pcre2_dep: *std.Build.Dependency,
     c_lib: *std.Build.Step.Compile,
-    c_code_path: []const u8,
     options: *std.Build.Step.Options,
     translate_c: *std.Build.Step.TranslateC,
     translate_pcre: *std.Build.Step.TranslateC,
@@ -214,7 +212,6 @@ const ModuleDeps = struct {
     fn applyTo(self: ModuleDeps, mod: *std.Build.Module) void {
         mod.addImport("glob", self.glob_dep.module("glob"));
         mod.addImport("yazap", self.yazap.module("yazap"));
-        mod.addIncludePath(self.b.path(self.c_code_path));
         mod.linkLibrary(self.c_lib);
         mod.linkLibrary(self.pcre2_dep.artifact("pcre2-8"));
         mod.addImport("build_options", self.options.createModule());
