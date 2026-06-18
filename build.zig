@@ -133,7 +133,7 @@ pub fn build(b: *std.Build) void {
     const run_unit_tests = b.addRunArtifact(unit_tests);
     const test_step = b.step("test", "Run unit tests");
 
-    // ── Fuzz: string mode ─────────────────────────────────────────────────────
+    // Fuzzing
 
     const fuzz_deps = ModuleDeps{
         .b = b,
@@ -147,23 +147,23 @@ pub fn build(b: *std.Build) void {
         .translate_c = translate_c,
         .translate_pcre = translate_pcre,
     };
-    const fuzz_string = b.addTest(.{
+    const fuzzing = b.addTest(.{
         .name = "fuzz-string",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/fuzz_string.zig"),
+            .root_source_file = b.path("src/fuzz.zig"),
             .optimize = optimize,
             .target = target,
             .link_libc = true,
         }),
     });
-    fuzz_deps.applyTo(fuzz_string.root_module);
+    fuzz_deps.applyTo(fuzzing.root_module);
 
-    const run_fuzz_string = b.addRunArtifact(fuzz_string);
-    const fuzz_string_step = b.step("fuzz-string", "Fuzz string matching mode");
-    fuzz_string_step.dependOn(&run_fuzz_string.step);
+    const run_fuzzing = b.addRunArtifact(fuzzing);
+    const fuzz_string_step = b.step("fuzzing", "Fuzzing");
+    fuzz_string_step.dependOn(&run_fuzzing.step);
 
     test_step.dependOn(&run_unit_tests.step);
-    test_step.dependOn(&run_fuzz_string.step);
+    test_step.dependOn(&run_fuzzing.step);
 
     // Packaging
     const tr = target.result;

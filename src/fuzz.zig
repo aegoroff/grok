@@ -1,4 +1,4 @@
-/// Fuzz test for `string` mode (matchString).
+/// Fuzzing test.
 ///
 /// Input format (layout is fixed so fuzzer quickly learns semantics):
 ///   input[0]  — pattern index: input[0] % len(known_macros)
