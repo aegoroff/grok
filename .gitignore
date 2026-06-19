@@ -23,6 +23,7 @@ Release/
 !logUTF*.log
 !emptyUTF*.log
 !invalidUTF*.log
+!crash*.log
 pcre-vsbuild/
 cmake-build-debug/
 cmake-build-release/
