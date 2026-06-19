@@ -100,7 +100,8 @@ pub fn matchStrings(
             .utf16le => {
                 line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line, current_encoding);
                 if (not_eof) {
-                    reader.toss(2); // zero byte after delimiter so skip 2 bytes
+                    const skip = @min(reader.end - reader.seek, 2);
+                    reader.toss(skip); // zero byte after delimiter so skip 2 bytes or rest
                 }
             },
             .utf16be => {
@@ -116,7 +117,8 @@ pub fn matchStrings(
             .utf32le => {
                 line = try encoding.convertRawUtf32ToUtf8(loop_allocator, line, current_encoding);
                 if (not_eof) {
-                    reader.toss(4); // 3 zero bytes after delimiter so skip 4 bytes
+                    const skip = @min(reader.end - reader.seek, 4);
+                    reader.toss(skip); // 3 zero bytes after delimiter so skip 4 bytes or rest
                 }
             },
             .utf32be => {
