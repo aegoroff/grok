@@ -95,6 +95,9 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
         g_ctx = ctx;
         _ = std.Thread.spawn(.{}, watchdogLoop, .{}) catch {};
     }
+    const now = std.Io.Clock.real.now(std.testing.io);
+    ctx.iteration_start_ns.store(@intCast(now.nanoseconds), .release);
+
     var buf: [4096]u8 = undefined;
     const input_len = smith.slice(&buf);
     if (input_len < 2) return;
@@ -137,7 +140,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     }
 
     // ── 6. Build argv exactly like the real CLI / integration tests ──────
-    const macro_z = try gpa.dupeZ(u8, macro);
+    const macro_z = try gpa.dupeSentinel(u8, macro, 0);
 
     var argv_list: std.ArrayList([:0]const u8) = .empty;
     try argv_list.appendSlice(gpa, &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", macro_z });
@@ -149,11 +152,10 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     try argv_list.append(gpa, rel_path);
 
     // ── 7. Writer ──────────────────────────────────────────────────────────
-    var sink_buf: [64 * 1024]u8 = undefined;
-    var sink: std.Io.Writer = .fixed(&sink_buf);
+    var sink = std.Io.Writer.Allocating.init(arena.allocator());
 
     // ── 8. Run through the same entry point as main() / integration tests ──
-    app.run(gpa, &sink, std.testing.io, argv_list.items) catch {};
+    app.run(gpa, &sink.writer, std.testing.io, argv_list.items) catch {};
 }
 
 test "fuzz file mode" {
