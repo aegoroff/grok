@@ -196,6 +196,9 @@ test "fuzz file mode" {
             "\x00\x00" ++ "20\x0024",
             // Multi-line file content
             "\x00\x00" ++ "2024\nnot-a-year\n2025",
+            // Crash reports
+            "\x13\xa2\x0b", // HOSTPORT, json + line-number, vertical tab
+            "\x1f\xca", // NGINXPROXYDEFAULTACCESS, json + count, empty subject
         },
     });
 }
