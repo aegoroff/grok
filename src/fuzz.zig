@@ -1,17 +1,26 @@
 /// Fuzzing test.
 ///
+/// Drives the real CLI entry point (`main.run`) exactly like the integration
+/// tests in `main.zig` do — through Config parsing, pattern library
+/// compilation, file opening, encoding detection and matching.
+///
+/// Only the "file" subcommand is exercised: "file" and "stdin" share the
+/// same underlying `matchStrings` code path, and mocking stdin reliably is
+/// much harder than writing bytes to a temp file, so testing "file" gives
+/// the same coverage for a fraction of the complexity.
+///
 /// Input format (layout is fixed so fuzzer quickly learns semantics):
 ///   input[0]  — pattern index: input[0] % len(known_macros)
-///   input[1]  — OutputFlags bit mask: bit0=info, bit1=json, bit2=invert
+///   input[1]  — flags bit mask: bit0=info, bit1=json, bit2=invert,
+///                                bit3=count, bit4=line-number
 ///   input[2:] — subject (arbitrary bytes, including garbage and UTF-8)
 ///
 /// Invariants (oracle):
 ///   - panic / abort are not allowed
-///   - memory leak is not allowed (detected by GPA)
+///   - memory leak is not allowed (detected by the arena/GPA)
 ///   - errors like UnknownMacro, InvalidRegex, WriteError — expected, not a bug
 const std = @import("std");
-const matcher = @import("matcher.zig");
-const front = @import("frontend.zig");
+const app = @import("main.zig");
 
 /// Known patterns guaranteed to exist in ./patterns/.
 /// Extend this list when adding new .patterns files.
@@ -54,68 +63,101 @@ const known_macros = [_][]const u8{
     "NGINXPROXYDEFAULTACCESS",
 };
 
-/// Fuzzer context: stores state initialized once per process.
-/// std.testing.fuzz calls testOne repeatedly in a single process.
+const watchdog_timeout_ns: i128 = 5 * std.time.ns_per_s;
+
+/// Fuzzer context: stores state shared across iterations within a process.
+/// std.testing.fuzz calls fuzzOne repeatedly in a single process, possibly
+/// from multiple threads, so the file-name counter is atomic.
 const FuzzCtx = struct {
-    frontend_ready: bool,
+    file_counter: std.atomic.Value(usize) = std.atomic.Value(usize).init(0),
+    watchdog_spawned: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
+    iteration_start_ns: std.atomic.Value(i64) = std.atomic.Value(i64).init(0),
 };
+
+var g_ctx: *FuzzCtx = undefined;
+
+fn watchdogLoop() void {
+    while (true) {
+        std.Io.sleep(std.testing.io, .{ .nanoseconds = 200 * std.time.ns_per_ms }, .real) catch return;
+        const start = g_ctx.iteration_start_ns.load(.acquire);
+        if (start == 0) continue; // no iteration in flight right now
+        const now = std.Io.Clock.real.now(std.testing.io);
+        if (now.nanoseconds - start > watchdog_timeout_ns) {
+            std.debug.print("WATCHDOG: iteration exceeded timeout, see last 'fuzz input:' line above for the offending bytes\n", .{});
+            std.process.abort(); // SIGABRT -> hard crash instead of silent hang
+        }
+    }
+}
 
 /// Single fuzz iteration. Called by fuzzer with mutated bytes.
 fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
+    if (ctx.watchdog_spawned.cmpxchgStrong(false, true, .acquire, .monotonic) == null) {
+        g_ctx = ctx;
+        _ = std.Thread.spawn(.{}, watchdogLoop, .{}) catch {};
+    }
     var buf: [4096]u8 = undefined;
     const input_len = smith.slice(&buf);
     if (input_len < 2) return;
 
     const input = buf[0..@intCast(input_len)];
 
-    // ── 1. Initialize frontend once per process ──────────────────────────────
-    if (!ctx.frontend_ready) {
-        var paths = [_][]const u8{"./patterns/"};
-        front.compileLib(
-            std.heap.page_allocator,
-            std.testing.io,
-            paths[0..],
-        ) catch |err| {
-            _ = @errorName(err);
-        };
-        ctx.frontend_ready = true;
-    }
-
-    // ── 2. Select pattern ────────────────────────────────────────────────────
+    // ── 1. Select pattern ────────────────────────────────────────────────
     const macro_idx = input[0] % known_macros.len;
     const macro = known_macros[macro_idx];
 
-    // ── 3. Select output flags ───────────────────────────────────────────────
+    // ── 2. Select flags ──────────────────────────────────────────────────
     const flags_byte = input[1];
-    const flags = matcher.OutputFlags{
-        .info = (flags_byte & 0b001) != 0,
-        .json = (flags_byte & 0b010) != 0,
-        .count = false,
-        .print_line_num = false,
-        .invert_match = (flags_byte & 0b100) != 0,
-    };
 
-    // ── 4. Subject ───────────────────────────────────────────────────────────
+    // ── 3. Subject ───────────────────────────────────────────────────────
     const subject = input[2..];
 
-    // ── 5. Allocator with leak detector ──────────────────────────────────────
+    // std.debug.print("fuzz: macro={s} flags=0x{x:0>2} subject_len={d} subject_hex={x}\n", .{
+    //     macro, flags_byte, subject.len, subject,
+    // });
+
+    // ── 4. Allocator with leak detector ──────────────────────────────────
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const gpa = arena.allocator();
 
-    // ── 6. Writer ────────────────────────────────────────────────────────────
-    var sink_buf: [4096]u8 = undefined;
+    // ── 5. Write subject into a temp file next to ./patterns/ ────────────
+    const id = g_ctx.file_counter.fetchAdd(1, .monotonic);
+    const rel_path = try std.fmt.allocPrintSentinel(gpa, "fuzz_tmp_{d}.log", .{id}, 0);
+    defer std.Io.Dir.cwd().deleteFile(std.testing.io, rel_path) catch |err| {
+        std.debug.print("Failed to delete file '{s}': {s}\n", .{ rel_path, @errorName(err) });
+    };
+
+    {
+        var file = try std.Io.Dir.cwd().createFile(std.testing.io, rel_path, .{});
+        defer file.close(std.testing.io);
+        var write_buf: [4096]u8 = undefined;
+        var file_writer = file.writer(std.testing.io, &write_buf);
+        try file_writer.interface.writeAll(subject);
+        try file_writer.interface.flush();
+    }
+
+    // ── 6. Build argv exactly like the real CLI / integration tests ──────
+    const macro_z = try gpa.dupeZ(u8, macro);
+
+    var argv_list: std.ArrayList([:0]const u8) = .empty;
+    try argv_list.appendSlice(gpa, &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", macro_z });
+    if (flags_byte & 0b00001 != 0) try argv_list.append(gpa, "-i");
+    if (flags_byte & 0b00010 != 0) try argv_list.append(gpa, "-j");
+    if (flags_byte & 0b00100 != 0) try argv_list.append(gpa, "-v");
+    if (flags_byte & 0b01000 != 0) try argv_list.append(gpa, "-c");
+    if (flags_byte & 0b10000 != 0) try argv_list.append(gpa, "-n");
+    try argv_list.append(gpa, rel_path);
+
+    // ── 7. Writer ──────────────────────────────────────────────────────────
+    var sink_buf: [64 * 1024]u8 = undefined;
     var sink: std.Io.Writer = .fixed(&sink_buf);
 
-    // ── 7. Matcher.init + matchString ────────────────────────────────────────
-    var m = matcher.Matcher.init(gpa, &sink, macro) catch return;
-    defer m.deinit();
-
-    m.matchString(subject, flags) catch {};
+    // ── 8. Run through the same entry point as main() / integration tests ──
+    app.run(gpa, &sink, std.testing.io, argv_list.items) catch {};
 }
 
-test "fuzz string mode" {
-    var ctx = FuzzCtx{ .frontend_ready = false };
+test "fuzz file mode" {
+    var ctx = FuzzCtx{};
 
     try std.testing.fuzz(&ctx, fuzzOne, .{
         // Initial corpus: covers different patterns, flags, and edge cases.
@@ -135,6 +177,8 @@ test "fuzz string mode" {
             "\x11\x02" ++ "10.0.0.1", // IP, json
             "\x20\x02" ++ "user@example.com", // EMAILADDRESS, json
             "\x23\x01" ++ "2016-08-13 01:46:09,637 INFO x", // NLOG, info
+            "\x23\x08" ++ "2016-08-13 01:46:09,637 INFO x\nplain line", // NLOG, count
+            "\x23\x10" ++ "2016-08-13 01:46:09,637 INFO x", // NLOG, line-number
             // Edge cases for subject
             "\x00\x00" ++ "", // empty subject
             "\x10\x00" ++ "", // GREEDYDATA + empty
@@ -148,6 +192,8 @@ test "fuzz string mode" {
             "\x10\x00" ++ "x" ** 1024, // GREEDYDATA, very long
             // Null bytes inside subject
             "\x00\x00" ++ "20\x0024",
+            // Multi-line file content
+            "\x00\x00" ++ "2024\nnot-a-year\n2025",
         },
     });
 }

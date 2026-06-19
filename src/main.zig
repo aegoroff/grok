@@ -33,7 +33,7 @@ pub fn main(init: std.process.Init) !void {
     try run(gpa, stdout, init.io, args[1..]); // skip exe itself
 }
 
-fn run(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, argv: []const [:0]const u8) !void {
+pub fn run(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, argv: []const [:0]const u8) !void {
     var config = try configuration.Config.init(gpa, io, argv);
     defer config.deinit();
 
@@ -826,6 +826,23 @@ test "integration test match file UTF-16BE with line numbers" {
         \\2: 2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному
         \\
     ;
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
+}
+
+test "integration test match file UTF-16LE crash" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/crash.log" };
+
+    const expected = "";
 
     // Act
     try run(arena.allocator(), &writer.writer, std.testing.io, argv);
