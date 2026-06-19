@@ -109,9 +109,9 @@ pub fn matchStrings(
                 if (line.len >= 2) {
                     // trim 0x00 before 0x0A
                     line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line[0 .. line.len - 1], current_encoding);
-                    if (not_eof) {
-                        reader.toss(1); // zero byte before delimiter so skip 1 byte
-                    }
+                }
+                if (not_eof) {
+                    reader.toss(1); // zero byte before delimiter so skip 1 byte
                 }
             },
             .utf32le => {
@@ -126,9 +126,9 @@ pub fn matchStrings(
                 if (line.len >= 4) {
                     // trim 3 0x00 before 0x0A
                     line = try encoding.convertRawUtf32ToUtf8(loop_allocator, line[0 .. line.len - 3], current_encoding);
-                    if (not_eof) {
-                        reader.toss(1); // 3 zero bytes before delimiter so skip 1 byte
-                    }
+                }
+                if (not_eof) {
+                    reader.toss(1); // 3 zero bytes before delimiter so skip 1 byte
                 }
             },
             else => {

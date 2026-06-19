@@ -851,6 +851,40 @@ test "integration test match file UTF-16LE crash" {
     try std.testing.expectEqualStrings(expected, writer.written());
 }
 
+test "integration test match file UTF-16BE crash1" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/crash1.log" };
+
+    const expected = "Failed file match: error.UnexpectedSecondSurrogateHalf\n";
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
+}
+
+test "integration test match file UTF-16BE crash2" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/crash2.log" };
+
+    const expected = "Failed file match: error.InvalidUtf16LineLength\n";
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings(expected, writer.written());
+}
+
 test {
     @import("std").testing.refAllDecls(@This());
 }
