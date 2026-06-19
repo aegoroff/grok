@@ -1,15 +1,16 @@
 ver := "0.4.0-dev"
 target := "x86_64-linux-musl"
 cpu := "haswell"
+zig_ver := "0.16"
 
 build optimize = "ReleaseFast":
-  mise exec zig@0.16 -- zig build  -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}
+  mise exec zig@{{zig_ver}} -- zig build  -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}
 
 test optimize = "ReleaseFast":
-  mise exec zig@0.16 -- zig build test -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}
+  mise exec zig@{{zig_ver}} -- zig build test -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}
 
 fuzz optimize = "ReleaseSafe":
-  mise exec zig@0.16 -- zig build test --fuzz -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}}
+  mise exec zig@{{zig_ver}} -- zig build test --fuzz -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}}
 
 linux:
   mise run build:zig
@@ -32,5 +33,5 @@ build_all optimize = "ReleaseFast" version = "0.4.0-dev":
         ARCH_OS_ABI=$1
         CPU=$2
         echo "Building for $ARCH_OS_ABI ($CPU)..."
-        mise exec zig@0.16 -- zig build archive -Doptimize={{optimize}} -Dtarget="$ARCH_OS_ABI" -Dversion="{{version}}" --summary all -Dcpu="$CPU" --prefix-exe-dir "bin-$ARCH_OS_ABI"
+        mise exec zig@{{zig_ver}} -- zig build archive -Doptimize={{optimize}} -Dtarget="$ARCH_OS_ABI" -Dversion="{{version}}" --summary all -Dcpu="$CPU" --prefix-exe-dir "bin-$ARCH_OS_ABI"
     done
