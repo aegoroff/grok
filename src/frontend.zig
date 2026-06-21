@@ -66,7 +66,7 @@ fn compileDir(io: std.Io, lib_path: []const u8) !void {
     defer walker.deinit();
     while (true) {
         const entry_or_null = walker.next(io) catch |walk_err| {
-            std.debug.print("{}\n", .{walk_err});
+            std.log.err("{}", .{walk_err});
             continue;
         };
         const entry = entry_or_null orelse {
@@ -90,14 +90,14 @@ fn compileDir(io: std.Io, lib_path: []const u8) !void {
 fn compileFile(path: []const u8) !void {
     const c_file_ptr = c.fopen(path.ptr, "r") orelse {
         // Handle error
-        std.debug.print("Failed to open file: {s}\n", .{path});
+        std.log.err("Failed to open file: {s}", .{path});
         return grok.GrokError.UnknownPatternFile;
     };
     defer _ = c.fclose(c_file_ptr);
 
     c.yyrestart(c_file_ptr);
     if (c.yyparse() > 0) {
-        std.debug.print("Failed to parse file: {s}\n", .{path});
+        std.log.err("Failed to parse file: {s}", .{path});
         return grok.GrokError.InvalidPatternFile;
     }
 }
@@ -108,7 +108,7 @@ pub export fn fend_on_literal(str: [*c]const u8) void {
         .reference = null,
         .part = .literal,
     }) catch |e| {
-        std.debug.print("Error: {t}\n", .{e});
+        std.log.err("{}", .{e});
     };
 }
 
@@ -120,7 +120,7 @@ pub export fn fend_on_definition_end(str: [*c]const u8) void {
     const slice = std.mem.span(str);
     const len = slice.len;
     definitions.put(slice[0..len], composition) catch |e| {
-        std.debug.print("Error: {t}\n", .{e});
+        std.log.err("{}", .{e});
     };
 }
 
@@ -147,6 +147,6 @@ pub export fn fend_on_grok(m: *c.macro_t) void {
         .reference = m.property,
         .part = .reference,
     }) catch |e| {
-        std.debug.print("Error: {t}\n", .{e});
+        std.log.err("{}", .{e});
     };
 }

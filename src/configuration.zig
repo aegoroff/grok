@@ -131,7 +131,7 @@ pub fn run(self: *Config, command: []const u8, writer: *std.Io.Writer, handler: 
         const patterns = cmd_matches.getMultiValues(patterns_name);
         front.compileLib(self.allocator, self.io, patterns) catch |e| {
             writer.print("Failed to compile lib: {}\n", .{e}) catch |write_err| {
-                std.debug.print("{}\n", .{write_err});
+                std.log.err("{}", .{write_err});
             };
             return true;
         };
