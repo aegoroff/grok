@@ -62,7 +62,7 @@ pub fn deinitLib() void {
         entry.value_ptr.deinit(allocator);
 
         const key = entry.key_ptr.*;
-        allocator.free(key.ptr[0 .. key.len + 1]); // +1: компенсируем sentinel-байт, потерянный при `slice[0..len]` в fend_on_definition_end
+        allocator.free(key.ptr[0 .. key.len + 1]); // +1: compensate sentinel byte, lost under `slice[0..len]` in fend_on_definition_end
     }
     definitions.deinit();
     composition = .empty;
