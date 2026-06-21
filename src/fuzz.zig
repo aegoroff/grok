@@ -127,6 +127,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     // ── 4. Write subject into a temp file ──────────────
     const id = g_ctx.file_counter.fetchAdd(1, .monotonic);
     const rel_path = try std.fmt.allocPrintSentinel(gpa, "fuzz_tmp_{d}.log", .{id}, 0);
+    defer gpa.free(rel_path);
     defer std.Io.Dir.cwd().deleteFile(std.testing.io, rel_path) catch |err| {
         std.debug.print("Failed to delete file '{s}': {s}\n", .{ rel_path, @errorName(err) });
     };
@@ -142,8 +143,10 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
 
     // ── 5. Build argv exactly like the real CLI / integration tests ────────
     const macro_z = try gpa.dupeSentinel(u8, macro, 0);
+    defer gpa.free(macro_z);
 
     var argv_list: std.ArrayList([:0]const u8) = .empty;
+    defer argv_list.deinit(gpa);
     try argv_list.appendSlice(gpa, &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", macro_z });
     if (flags_byte & 0b00001 != 0) try argv_list.append(gpa, "-i");
     if (flags_byte & 0b00010 != 0) try argv_list.append(gpa, "-j");
@@ -154,6 +157,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
 
     // ── 6. Writer ──────────────────────────────────────────────────────────
     var sink = std.Io.Writer.Allocating.init(gpa);
+    defer sink.deinit();
 
     // ── 7. Run through the same entry point as main() / integration tests ────
     app.run(gpa, &sink.writer, std.testing.io, argv_list.items) catch {};
