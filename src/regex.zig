@@ -112,6 +112,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     var stack: std.ArrayList(front.Info) = .empty;
     defer stack.deinit(gpa);
     var composition: std.ArrayList(u8) = .empty;
+    defer composition.deinit(gpa);
     var used_properties = std.StringHashMap(bool).init(gpa);
     defer used_properties.deinit();
     var result = Pattern{ .properties = .empty, .regex = "" };
@@ -159,7 +160,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
             }
         }
     }
-    result.regex = composition.items;
+    result.regex = try composition.toOwnedSlice(gpa);
     return result;
 }
 
@@ -183,6 +184,16 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         var buffer: [256]u8 = undefined;
         _ = re.pcre2_get_error_message_8(errornumber, &buffer, buffer.len);
         std.log.err("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, buffer, pattern.regex });
+
+        // pattern is owned by us now — free it before returning the error,
+        // since the caller has no handle to do it after `try prepare(...)` fails.
+        var props = pattern.properties;
+        for (props.items) |prop| {
+            gpa.free(prop);
+        }
+        props.deinit(gpa);
+        gpa.free(pattern.regex);
+
         return grok.GrokError.InvalidRegex;
     };
     return Prepared{
@@ -193,7 +204,6 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         .general_context = general_context,
     };
 }
-
 /// Match a prepared pattern against a subject string.
 /// `match_context` must be created via `createMatchContext` by the caller and
 /// is reused across calls (e.g. per file, per arena) — NOT tied to `prepared`.
