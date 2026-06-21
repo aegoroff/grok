@@ -114,7 +114,6 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     var stack: std.ArrayList(front.Info) = .empty;
     defer stack.deinit(gpa);
     var composition: std.ArrayList(u8) = .empty;
-    defer composition.deinit(gpa);
     var used_properties = std.StringHashMap(bool).init(gpa);
     defer used_properties.deinit();
     var result = Pattern{ .properties = .empty, .regex = "" };
@@ -162,7 +161,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
             }
         }
     }
-    result.regex = try composition.toOwnedSlice(gpa); // CHANGED: was composition.items
+    result.regex = composition.items;
     return result;
 }
 
@@ -195,7 +194,7 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
     return Prepared{
         .re = regex,
         .properties = pattern.properties,
-        .regex = pattern.regex, // CHANGED: take ownership directly, no dupe
+        .regex = pattern.regex,
         .allocator = gpa,
         .general_context = general_context,
         .boxed_allocator = boxed_allocator,
