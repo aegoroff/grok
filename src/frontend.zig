@@ -15,6 +15,7 @@ pub const Part = enum { literal, reference };
 var allocator: std.mem.Allocator = undefined;
 var composition: std.ArrayList(Info) = .empty;
 var definitions: std.StringHashMap(std.ArrayList(Info)) = undefined;
+var lib_initialized: bool = false;
 
 pub fn getPattern(key: []const u8) grok.GrokError!std.ArrayList(Info) {
     return definitions.get(key) orelse grok.GrokError.UnknownMacro;
@@ -27,6 +28,7 @@ pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
 pub fn compileLib(gpa: std.mem.Allocator, io: std.Io, paths: ?[][]const u8) !void {
     allocator = gpa;
     definitions = std.StringHashMap(std.ArrayList(Info)).init(allocator);
+    lib_initialized = true;
     if (paths) |path_arg| {
         if (path_arg.len == 0) {
             try compileDefault(io);
@@ -34,6 +36,7 @@ pub fn compileLib(gpa: std.mem.Allocator, io: std.Io, paths: ?[][]const u8) !voi
             for (path_arg) |path| {
                 compileDir(io, path) catch {
                     const pathz = try allocator.dupeSentinel(u8, path, 0);
+                    defer allocator.free(pathz);
                     try compileFile(pathz);
                 };
             }
@@ -41,6 +44,29 @@ pub fn compileLib(gpa: std.mem.Allocator, io: std.Io, paths: ?[][]const u8) !voi
     } else {
         try compileDefault(io);
     }
+}
+
+/// Releases everything compileLib accumulated in the global pattern table.
+/// Safe to call even if compileLib was never invoked (e.g. bad-args test path).
+pub fn deinitLib() void {
+    if (!lib_initialized) return;
+
+    var it = definitions.iterator();
+    while (it.next()) |entry| {
+        for (entry.value_ptr.items) |info| {
+            allocator.free(std.mem.span(info.data));
+            if (info.reference) |r| {
+                allocator.free(std.mem.span(r));
+            }
+        }
+        entry.value_ptr.deinit(allocator);
+
+        const key = entry.key_ptr.*;
+        allocator.free(key.ptr[0 .. key.len + 1]); // +1: компенсируем sentinel-байт, потерянный при `slice[0..len]` в fend_on_definition_end
+    }
+    definitions.deinit();
+    composition = .empty;
+    lib_initialized = false;
 }
 
 fn compileDefault(io: std.Io) !void {
@@ -79,6 +105,7 @@ fn compileDir(io: std.Io, lib_path: []const u8) !void {
                     const p = try entry.dir.realPathFileAlloc(io, entry.basename, allocator);
                     defer allocator.free(p);
                     const pz = try allocator.dupeSentinel(u8, p, 0);
+                    defer allocator.free(pz);
                     try compileFile(pz);
                 }
             },
@@ -149,4 +176,5 @@ pub export fn fend_on_grok(m: *c.macro_t) void {
     }) catch |e| {
         std.log.err("{}", .{e});
     };
+    allocator.destroy(m);
 }

@@ -102,7 +102,9 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     const macro_idx = smith.valueRangeAtMost(u8, 0, known_macros.len - 1);
     const macro = known_macros[macro_idx];
 
-    var gpa_alloc = std.heap.DebugAllocator(.{}){};
+    var gpa_alloc = std.heap.DebugAllocator(.{
+        .stack_trace_frames = 10,
+    }){};
     defer std.debug.assert(gpa_alloc.deinit() == .ok);
     const gpa = gpa_alloc.allocator();
 
@@ -126,7 +128,8 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
 
     // ── 4. Write subject into a temp file ──────────────
     const id = g_ctx.file_counter.fetchAdd(1, .monotonic);
-    const rel_path = try std.fmt.allocPrintSentinel(gpa, "fuzz_tmp_{d}.log", .{id}, 0);
+    const tid = std.Thread.getCurrentId();
+    const rel_path = try std.fmt.allocPrintSentinel(gpa, "fuzz_tmp_{d}_{d}.log", .{ tid, id }, 0);
     defer gpa.free(rel_path);
     defer std.Io.Dir.cwd().deleteFile(std.testing.io, rel_path) catch |err| {
         std.debug.print("Failed to delete file '{s}': {s}\n", .{ rel_path, @errorName(err) });
