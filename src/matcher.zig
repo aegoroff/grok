@@ -28,11 +28,7 @@ pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
     defer regex.freeMatchContext(call_context);
 
     var result = regex.match(self.allocator, &self.prepared, str, call_context);
-    defer if (result.properties) |*props| {
-        var it = props.valueIterator();
-        while (it.next()) |v| self.allocator.free(v.*);
-        props.deinit();
-    };
+    defer if (result.properties) |*props| props.deinit();
     if (flags.invert_match) {
         result = invertResult(result);
     }
@@ -150,11 +146,7 @@ pub fn matchStrings(
 
         line_no += 1;
         var result = regex.match(loop_allocator, &self.prepared, line, call_context);
-        defer if (result.properties) |*props| {
-            var it = props.valueIterator();
-            while (it.next()) |v| self.allocator.free(v.*);
-            props.deinit();
-        };
+        defer if (result.properties) |*props| props.deinit();
         if (flags.invert_match) {
             result = invertResult(result);
         }

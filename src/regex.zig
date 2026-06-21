@@ -225,10 +225,7 @@ pub fn match(gpa: std.mem.Allocator, prepared: *const Prepared, subject: []const
             var buffer_size_in_chars: re.PCRE2_SIZE = undefined;
             const get_string_result = re.pcre2_substring_get_byname_8(match_data, value.ptr, &buffer, &buffer_size_in_chars);
             if (get_string_result == 0) {
-                defer re.pcre2_substring_free_8(buffer);
-                const owned_value = gpa.dupe(u8, std.mem.span(buffer)) catch continue; // dupe instead of raw span
-                properties.?.put(value, owned_value) catch {
-                    gpa.free(owned_value); // avoid leaking the dupe if put fails
+                properties.?.put(value, std.mem.span(buffer)) catch {
                     continue;
                 };
             }
