@@ -45,7 +45,7 @@ pub fn showRegex(self: *const Matcher) !void {
 }
 
 pub fn deinit(self: *Matcher) void {
-    self.prepared.deinit(self.allocator);
+    self.prepared.deinit();
     regex.deinit();
 }
 

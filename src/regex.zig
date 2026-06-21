@@ -20,14 +20,16 @@ pub const Prepared = struct {
     /// List of property names that this pattern captures
     properties: std.ArrayList([:0]const u8),
     regex: []const u8,
+    /// Allocator used to prepare this pattern - stored for proper deallocation
+    allocator: std.mem.Allocator,
 
-    pub fn deinit(self: *Prepared, gpa: std.mem.Allocator) void {
+    pub fn deinit(self: *Prepared) void {
         re.pcre2_code_free_8(self.re);
         for (self.properties.items) |prop| {
-            gpa.free(prop);
+            self.allocator.free(prop);
         }
-        self.properties.deinit(gpa);
-        gpa.free(self.regex);
+        self.properties.deinit(self.allocator);
+        self.allocator.free(self.regex);
     }
 };
 
@@ -175,6 +177,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
 /// This function takes a Pattern and compiles it into a PCRE2 regex object
 /// that can be used for matching operations.
 ///
+/// `gpa` The allocator to use for memory allocations
 /// `pattern` The Pattern to compile
 /// @return A Prepared struct containing the compiled regex and properties, or an error
 pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
@@ -195,6 +198,7 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         .re = regex,
         .properties = pattern.properties,
         .regex = owned_regex,
+        .allocator = gpa,
     };
 }
 
