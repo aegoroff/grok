@@ -60,7 +60,7 @@ fn stringAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: 
                 .invert_match = configuration.isInvertMatch(cmd),
             }) catch |e| {
                 writer.print("Failed string match: {}\n", .{e}) catch |write_err| {
-                    std.debug.print("{}\n", .{write_err});
+                    std.log.err("{}", .{write_err});
                 };
             };
         }
@@ -78,7 +78,7 @@ fn fileAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: y
                 .invert_match = configuration.isInvertMatch(cmd),
             }) catch |e| {
                 writer.print("Failed file match: {}\n", .{e}) catch |write_err| {
-                    std.debug.print("{}\n", .{write_err});
+                    std.log.err("{}", .{write_err});
                 };
             };
         }
@@ -95,7 +95,7 @@ fn stdinAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: 
             .invert_match = configuration.isInvertMatch(cmd),
         }) catch |e| {
             writer.print("Failed stdin match: {}\n", .{e}) catch |write_err| {
-                std.debug.print("{}\n", .{write_err});
+                std.log.err("{}", .{write_err});
             };
         };
     }
@@ -105,13 +105,13 @@ fn macroAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: y
     if (configuration.getMacroArgValue(cmd)) |macro| {
         showMacroRegex(gpa, writer, macro) catch |e| {
             writer.print("Failed show macro: {}\n", .{e}) catch |write_err| {
-                std.debug.print("{}\n", .{write_err});
+                std.log.err("{}", .{write_err});
             };
         };
     } else {
         listAllMacroses(gpa, writer) catch |e| {
             writer.print("Failed to list macroses: {}\n", .{e}) catch |write_err| {
-                std.debug.print("{}\n", .{write_err});
+                std.log.err("{}", .{write_err});
             };
         };
     }
