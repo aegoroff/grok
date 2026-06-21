@@ -102,11 +102,15 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     const macro_idx = smith.valueRangeAtMost(u8, 0, known_macros.len - 1);
     const macro = known_macros[macro_idx];
 
-    var gpa_alloc = std.heap.DebugAllocator(.{
-        .stack_trace_frames = 10,
-    }){};
-    defer std.debug.assert(gpa_alloc.deinit() == .ok);
-    const gpa = gpa_alloc.allocator();
+    // var gpa_alloc = std.heap.DebugAllocator(.{
+    //     .stack_trace_frames = 10,
+    // }){};
+    // defer std.debug.assert(gpa_alloc.deinit() == .ok);
+    // const gpa = gpa_alloc.allocator();
+
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const gpa = arena.allocator();
 
     // ── 2. Select flags ────────────────────────────────────────────────────
     const flags_byte = smith.value(u8);
