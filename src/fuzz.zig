@@ -98,13 +98,13 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     const now = std.Io.Clock.real.now(std.testing.io);
     ctx.iteration_start_ns.store(@intCast(now.nanoseconds), .release);
 
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const gpa = arena.allocator();
-
     // ── 1. Select pattern ──────────────────────────────────────────────────
     const macro_idx = smith.valueRangeAtMost(u8, 0, known_macros.len - 1);
     const macro = known_macros[macro_idx];
+
+    var gpa_alloc = std.heap.DebugAllocator(.{}){};
+    defer std.debug.assert(gpa_alloc.deinit() == .ok);
+    const gpa = gpa_alloc.allocator();
 
     // ── 2. Select flags ────────────────────────────────────────────────────
     const flags_byte = smith.value(u8);
@@ -153,7 +153,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     try argv_list.append(gpa, rel_path);
 
     // ── 6. Writer ──────────────────────────────────────────────────────────
-    var sink = std.Io.Writer.Allocating.init(arena.allocator());
+    var sink = std.Io.Writer.Allocating.init(gpa);
 
     // ── 7. Run through the same entry point as main() / integration tests ────
     app.run(gpa, &sink.writer, std.testing.io, argv_list.items) catch {};
