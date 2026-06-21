@@ -44,8 +44,8 @@ pub const MatchResult = struct {
     properties: ?std.StringHashMap([]const u8),
 };
 
-var backend_allocator: std.mem.Allocator = undefined;
-var general_context: *re.pcre2_general_context_8 = undefined;
+threadlocal var backend_allocator: std.mem.Allocator = undefined;
+threadlocal var general_context: *re.pcre2_general_context_8 = undefined;
 
 /// Initialize the regex module with the given allocator.
 /// This sets up the PCRE2 context and allocator for subsequent operations.
