@@ -98,32 +98,32 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     const now = std.Io.Clock.real.now(std.testing.io);
     ctx.iteration_start_ns.store(@intCast(now.nanoseconds), .release);
 
-    var buf: [4096]u8 = undefined;
-    const input_len = smith.slice(&buf);
-    if (input_len < 2) return;
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const gpa = arena.allocator();
 
-    const input = buf[0..@intCast(input_len)];
-
-    // ── 1. Select pattern ────────────────────────────────────────────────
-    const macro_idx = input[0] % known_macros.len;
+    // ── 1. Select pattern ──────────────────────────────────────────────────
+    const macro_idx = smith.valueRangeAtMost(u8, 0, known_macros.len - 1);
     const macro = known_macros[macro_idx];
 
-    // ── 2. Select flags ──────────────────────────────────────────────────
-    const flags_byte = input[1];
+    // ── 2. Select flags ────────────────────────────────────────────────────
+    const flags_byte = smith.value(u8);
 
-    // ── 3. Subject ───────────────────────────────────────────────────────
-    const subject = input[2..];
+    // ── 3. Subject ─────────────────────────────────────────────────────────
+    var subject_list: std.ArrayList(u8) = .empty;
+    defer subject_list.deinit(gpa);
+    while (!smith.eos()) {
+        const len = smith.valueRangeAtMost(u8, 1, 255);
+        const slice = try subject_list.addManyAsSlice(gpa, len);
+        smith.bytes(slice);
+    }
+    const subject = subject_list.items;
 
     // std.debug.print("fuzz: macro={s} flags=0x{x:0>2} subject_len={d} subject_hex={x}\n", .{
     //     macro, flags_byte, subject.len, subject,
     // });
 
-    // ── 4. Allocator with leak detector ──────────────────────────────────
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const gpa = arena.allocator();
-
-    // ── 5. Write subject into a temp file next to ./patterns/ ────────────
+    // ── 4. Write subject into a temp file ──────────────
     const id = g_ctx.file_counter.fetchAdd(1, .monotonic);
     const rel_path = try std.fmt.allocPrintSentinel(gpa, "fuzz_tmp_{d}.log", .{id}, 0);
     defer std.Io.Dir.cwd().deleteFile(std.testing.io, rel_path) catch |err| {
@@ -139,7 +139,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
         try file_writer.interface.flush();
     }
 
-    // ── 6. Build argv exactly like the real CLI / integration tests ──────
+    // ── 5. Build argv exactly like the real CLI / integration tests ────────
     const macro_z = try gpa.dupeSentinel(u8, macro, 0);
 
     var argv_list: std.ArrayList([:0]const u8) = .empty;
@@ -151,10 +151,10 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     if (flags_byte & 0b10000 != 0) try argv_list.append(gpa, "-n");
     try argv_list.append(gpa, rel_path);
 
-    // ── 7. Writer ──────────────────────────────────────────────────────────
+    // ── 6. Writer ──────────────────────────────────────────────────────────
     var sink = std.Io.Writer.Allocating.init(arena.allocator());
 
-    // ── 8. Run through the same entry point as main() / integration tests ──
+    // ── 7. Run through the same entry point as main() / integration tests ────
     app.run(gpa, &sink.writer, std.testing.io, argv_list.items) catch {};
 }
 
