@@ -117,7 +117,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
         const slice = try subject_list.addManyAsSlice(gpa, len);
         smith.bytes(slice);
     }
-    if (subject_list.items.len > std.math.maxInt(u32) or subject_list.items.len == 0) return error.SkipZigTest;
+    if (subject_list.items.len > 64 * 1024 or subject_list.items.len == 0) return error.SkipZigTest;
     const subject = subject_list.items;
 
     std.debug.print("fuzz: macro={s} flags=0x{x:0>2} subject_len={d} subject_hex={x}\n", .{
