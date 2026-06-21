@@ -146,7 +146,6 @@ pub fn matchStrings(
 
         line_no += 1;
         var result = regex.match(loop_allocator, &self.prepared, line, call_context);
-        defer if (result.properties) |*props| props.deinit();
         if (flags.invert_match) {
             result = invertResult(result);
         }
