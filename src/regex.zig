@@ -23,7 +23,6 @@ pub const Prepared = struct {
     /// Allocator used to prepare this pattern - stored for proper deallocation
     allocator: std.mem.Allocator,
     general_context: *re.pcre2_general_context_8,
-    boxed_allocator: *std.mem.Allocator,
 
     pub fn deinit(self: *Prepared) void {
         re.pcre2_code_free_8(self.re);
@@ -33,7 +32,6 @@ pub const Prepared = struct {
         self.properties.deinit(self.allocator);
         self.allocator.free(self.regex);
         re.pcre2_general_context_free_8(self.general_context);
-        self.allocator.destroy(self.boxed_allocator);
     }
 };
 
@@ -173,11 +171,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
 /// `pattern` The Pattern to compile
 /// @return A Prepared struct containing the compiled regex and properties, or an error
 pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
-    const boxed_allocator = try gpa.create(std.mem.Allocator);
-    boxed_allocator.* = gpa;
-    errdefer gpa.destroy(boxed_allocator);
-
-    const general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, boxed_allocator).?;
+    const general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, gpa.ptr).?;
     errdefer re.pcre2_general_context_free_8(general_context);
 
     var errornumber: c_int = undefined;
@@ -197,7 +191,6 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         .regex = pattern.regex,
         .allocator = gpa,
         .general_context = general_context,
-        .boxed_allocator = boxed_allocator,
     };
 }
 
