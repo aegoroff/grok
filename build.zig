@@ -120,12 +120,7 @@ pub fn build(b: *std.Build) void {
 
     // Unit tests
     const unit_tests = b.addTest(.{
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .optimize = optimize,
-            .target = target,
-            .link_libc = true,
-        }),
+        .root_module = exe.root_module,
     });
     deps.applyTo(unit_tests.root_module);
 
