@@ -25,6 +25,7 @@ matches: yazap.ArgMatches,
 allocator: std.mem.Allocator,
 app: yazap.App,
 io: std.Io,
+app_descr: []const u8,
 
 pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Config {
     const app_descr_template =
@@ -37,6 +38,7 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
         app_descr_template,
         .{ build_options.version, @tagName(query.cpu_arch.?) },
     );
+    errdefer gpa.free(app_descr);
 
     var app = yazap.App.init(gpa, "grok", app_descr);
 
@@ -119,11 +121,14 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
         .allocator = gpa,
         .app = app,
         .io = io,
+        .app_descr = app_descr,
     };
 }
 
 pub fn deinit(self: *Config) void {
+    front.deinitLib();
     self.app.deinit();
+    self.allocator.free(self.app_descr);
 }
 
 pub fn run(self: *Config, command: []const u8, writer: *std.Io.Writer, handler: *const fn (std.mem.Allocator, *std.Io.Writer, std.Io, yazap.ArgMatches) void) bool {
