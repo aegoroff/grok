@@ -118,10 +118,13 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
         smith.bytes(slice);
     }
     const subject = subject_list.items;
+    if (subject.len == 0) {
+        return;
+    }
 
-    // std.debug.print("fuzz: macro={s} flags=0x{x:0>2} subject_len={d} subject_hex={x}\n", .{
-    //     macro, flags_byte, subject.len, subject,
-    // });
+    std.debug.print("fuzz: macro={s} flags=0x{x:0>2} subject_len={d} subject_hex={x}\n", .{
+        macro, flags_byte, subject.len, subject,
+    });
 
     // ── 4. Write subject into a temp file ──────────────
     const id = g_ctx.file_counter.fetchAdd(1, .monotonic);
