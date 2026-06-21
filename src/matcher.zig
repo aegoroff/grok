@@ -67,12 +67,12 @@ pub fn matchStrings(
     var current_encoding = file_encoding orelse .unknown;
 
     const loop_allocator = arena.allocator();
-    var call_allocator = loop_allocator;
-    const call_context = regex.createMatchContext(&call_allocator).?;
-    defer regex.freeMatchContext(call_context);
 
     while (true) {
-        // Automatically releases all memory allocated via loop_allocator at the end of the iteration
+        // Each iteration is wrapped in a block so that defer statements execute
+        // at the end of the iteration, not at the end of the function
+        var call_allocator = loop_allocator;
+        const call_context = regex.createMatchContext(&call_allocator).?;
         defer _ = arena.reset(.retain_capacity);
 
         var line: []const u8 = undefined;
