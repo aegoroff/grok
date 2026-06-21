@@ -22,6 +22,7 @@ pub const Prepared = struct {
     regex: []const u8,
     /// Allocator used to prepare this pattern - stored for proper deallocation
     allocator: std.mem.Allocator,
+    allocator_ctx: *std.mem.Allocator, // heap-owned
     general_context: *re.pcre2_general_context_8,
 
     pub fn deinit(self: *Prepared) void {
@@ -32,6 +33,7 @@ pub const Prepared = struct {
         self.properties.deinit(self.allocator);
         self.allocator.free(self.regex);
         re.pcre2_general_context_free_8(self.general_context);
+        self.allocator.destroy(self.allocator_ctx);
     }
 };
 
@@ -172,7 +174,11 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
 /// `pattern` The Pattern to compile
 /// @return A Prepared struct containing the compiled regex and properties, or an error
 pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
-    const general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, gpa.ptr).?;
+    const allocator_ctx = try gpa.create(std.mem.Allocator);
+    allocator_ctx.* = gpa;
+    errdefer gpa.destroy(allocator_ctx);
+
+    const general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, allocator_ctx).?;
     errdefer re.pcre2_general_context_free_8(general_context);
 
     var errornumber: c_int = undefined;
@@ -185,8 +191,6 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         _ = re.pcre2_get_error_message_8(errornumber, &buffer, buffer.len);
         std.log.err("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, buffer, pattern.regex });
 
-        // pattern is owned by us now — free it before returning the error,
-        // since the caller has no handle to do it after `try prepare(...)` fails.
         var props = pattern.properties;
         for (props.items) |prop| {
             gpa.free(prop);
@@ -201,9 +205,11 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         .properties = pattern.properties,
         .regex = pattern.regex,
         .allocator = gpa,
+        .allocator_ctx = allocator_ctx,
         .general_context = general_context,
     };
 }
+
 /// Match a prepared pattern against a subject string.
 /// `match_context` must be created via `createMatchContext` by the caller and
 /// is reused across calls (e.g. per file, per arena) — NOT tied to `prepared`.
