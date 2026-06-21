@@ -12,7 +12,6 @@ print: printer.Printer,
 pub const OutputFlags = printer.OutputFlags;
 
 pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !Matcher {
-    regex.init(gpa);
     const pattern = try regex.createPattern(gpa, macro);
     const prepared = try regex.prepare(gpa, pattern);
     return Matcher{
@@ -24,7 +23,16 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !
 
 /// Matches single string specified in `str` argument
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
-    var result = regex.match(self.allocator, &self.prepared, str);
+    var call_allocator = self.allocator;
+    const call_context = regex.createMatchContext(&call_allocator).?;
+    defer regex.freeMatchContext(call_context);
+
+    var result = regex.match(self.allocator, &self.prepared, str, call_context);
+    defer if (result.properties) |*props| {
+        var it = props.valueIterator();
+        while (it.next()) |v| self.allocator.free(v.*);
+        props.deinit();
+    };
     if (flags.invert_match) {
         result = invertResult(result);
     }
@@ -46,7 +54,6 @@ pub fn showRegex(self: *const Matcher) !void {
 
 pub fn deinit(self: *Matcher) void {
     self.prepared.deinit();
-    regex.deinit();
 }
 
 /// Reads strings separated by \n from `reader` and matches them
@@ -61,13 +68,16 @@ pub fn matchStrings(
 
     var line_no: usize = 0;
     var match_counter: u64 = 0;
-
     var current_encoding = file_encoding orelse .unknown;
+
+    const loop_allocator = arena.allocator();
+    var call_allocator = loop_allocator;
+    const call_context = regex.createMatchContext(&call_allocator).?;
+    defer regex.freeMatchContext(call_context);
 
     while (true) {
         // Automatically releases all memory allocated via loop_allocator at the end of the iteration
         defer _ = arena.reset(.retain_capacity);
-        const loop_allocator = arena.allocator();
 
         var line: []const u8 = undefined;
 
@@ -139,7 +149,12 @@ pub fn matchStrings(
         }
 
         line_no += 1;
-        var result = regex.match(loop_allocator, &self.prepared, line);
+        var result = regex.match(loop_allocator, &self.prepared, line, call_context);
+        defer if (result.properties) |*props| {
+            var it = props.valueIterator();
+            while (it.next()) |v| self.allocator.free(v.*);
+            props.deinit();
+        };
         if (flags.invert_match) {
             result = invertResult(result);
         }

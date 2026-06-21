@@ -22,6 +22,8 @@ pub const Prepared = struct {
     regex: []const u8,
     /// Allocator used to prepare this pattern - stored for proper deallocation
     allocator: std.mem.Allocator,
+    general_context: *re.pcre2_general_context_8,
+    boxed_allocator: *std.mem.Allocator,
 
     pub fn deinit(self: *Prepared) void {
         re.pcre2_code_free_8(self.re);
@@ -30,6 +32,8 @@ pub const Prepared = struct {
         }
         self.properties.deinit(self.allocator);
         self.allocator.free(self.regex);
+        re.pcre2_general_context_free_8(self.general_context);
+        self.allocator.destroy(self.boxed_allocator);
     }
 };
 
@@ -44,44 +48,24 @@ pub const MatchResult = struct {
     properties: ?std.StringHashMap([]const u8),
 };
 
-threadlocal var backend_allocator: std.mem.Allocator = undefined;
-threadlocal var general_context: *re.pcre2_general_context_8 = undefined;
-
-/// Initialize the regex module with the given allocator.
-/// This sets up the PCRE2 context and allocator for subsequent operations.
-///
-/// `gpa` The allocator to use for memory allocations
-pub fn init(gpa: std.mem.Allocator) void {
-    backend_allocator = gpa;
-    general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, null).?;
-}
-
 const AllocationHeader = extern struct {
     original_ptr: [*]u8,
     size: usize,
 };
 
 /// Custom allocator function for PCRE2 that ensures proper alignment.
-/// This function allocates memory with a header for tracking and ensures
-/// 8-byte alignment for the data portion.
-///
-/// `size` The size of memory to allocate
-/// _: Unused parameter (PCRE2 context)
-/// @return Pointer to the allocated memory or null on failure
-fn pcre_alloc(size: usize, _: ?*anyopaque) callconv(.c) ?*anyopaque {
-    // Allocate space for header + data + padding for alignment
+fn pcre_alloc(size: usize, user_data: ?*anyopaque) callconv(.c) ?*anyopaque {
+    const allocator: *std.mem.Allocator = @ptrCast(@alignCast(user_data.?));
     const header_size = @sizeOf(AllocationHeader);
-    const total_size = header_size + size + 7; // +7 for guaranteed alignment
+    const total_size = header_size + size + 7;
 
-    const raw_mem = backend_allocator.alloc(u8, total_size) catch return null;
+    const raw_mem = allocator.alloc(u8, total_size) catch return null;
 
-    // Find aligned pointer for data
     const data_start_ptr = raw_mem.ptr + header_size;
     const data_start_addr = @intFromPtr(data_start_ptr);
     const aligned_data_addr = std.mem.alignForward(usize, data_start_addr, 8);
     const aligned_data_ptr = @as([*]u8, @ptrFromInt(aligned_data_addr));
 
-    // Save header before data
     const header_addr = aligned_data_addr - header_size;
     const header_ptr = @as(*AllocationHeader, @ptrFromInt(header_addr));
     header_ptr.* = .{
@@ -93,24 +77,30 @@ fn pcre_alloc(size: usize, _: ?*anyopaque) callconv(.c) ?*anyopaque {
 }
 
 /// Custom deallocator function for PCRE2 that frees memory allocated by pcre_alloc.
-/// This function retrieves the original allocation information from the header
-/// and frees the entire memory block.
-///
-/// `ptr` Pointer to the memory to free
-/// _: Unused parameter (PCRE2 context)
-fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) callconv(.c) void {
+fn pcre_free(ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.c) void {
     if (ptr) |p| {
+        const allocator: *std.mem.Allocator = @ptrCast(@alignCast(user_data.?));
         const data_ptr = @as([*]u8, @ptrCast(p));
         const data_addr = @intFromPtr(data_ptr);
 
-        // Find header before data
         const header_addr = data_addr - @sizeOf(AllocationHeader);
         const header = @as(*const AllocationHeader, @ptrFromInt(header_addr));
 
-        // Free original memory
         const slice = header.original_ptr[0..header.size];
-        backend_allocator.free(slice);
+        allocator.free(slice);
     }
+}
+
+/// Create a PCRE2 general context bound to the given allocator.
+/// `allocator` must remain stable (same address) for the lifetime of the
+/// returned context, since PCRE2 stores the pointer as opaque user data.
+pub fn createMatchContext(allocator: *std.mem.Allocator) ?*re.pcre2_general_context_8 {
+    return re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, allocator);
+}
+
+/// Free a context created by `createMatchContext`.
+pub fn freeMatchContext(ctx: *re.pcre2_general_context_8) void {
+    re.pcre2_general_context_free_8(ctx);
 }
 
 /// Create a pattern from a macro string by processing nested patterns and references.
@@ -122,8 +112,11 @@ fn pcre_free(ptr: ?*anyopaque, _: ?*anyopaque) callconv(.c) void {
 pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     const m = try front.getPattern(macro);
     var stack: std.ArrayList(front.Info) = .empty;
+    defer stack.deinit(gpa);
     var composition: std.ArrayList(u8) = .empty;
+    defer composition.deinit(gpa);
     var used_properties = std.StringHashMap(bool).init(gpa);
+    defer used_properties.deinit();
     var result = Pattern{ .properties = .empty, .regex = "" };
     for (m.items) |value| {
         try stack.append(gpa, value);
@@ -169,7 +162,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
             }
         }
     }
-    result.regex = composition.items;
+    result.regex = try composition.toOwnedSlice(gpa); // CHANGED: was composition.items
     return result;
 }
 
@@ -181,9 +174,15 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
 /// `pattern` The Pattern to compile
 /// @return A Prepared struct containing the compiled regex and properties, or an error
 pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
+    const boxed_allocator = try gpa.create(std.mem.Allocator);
+    boxed_allocator.* = gpa;
+    errdefer gpa.destroy(boxed_allocator);
+
+    const general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, boxed_allocator).?;
+    errdefer re.pcre2_general_context_free_8(general_context);
+
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
-
     const compile_ctx = re.pcre2_compile_context_create_8(general_context);
     defer re.pcre2_compile_context_free_8(compile_ctx);
 
@@ -193,31 +192,23 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         std.log.err("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, buffer, pattern.regex });
         return grok.GrokError.InvalidRegex;
     };
-    const owned_regex = try gpa.dupe(u8, pattern.regex);
     return Prepared{
         .re = regex,
         .properties = pattern.properties,
-        .regex = owned_regex,
+        .regex = pattern.regex, // CHANGED: take ownership directly, no dupe
         .allocator = gpa,
+        .general_context = general_context,
+        .boxed_allocator = boxed_allocator,
     };
 }
 
-pub fn deinit() void {
-    re.pcre2_general_context_free_8(general_context);
-}
-
 /// Match a prepared pattern against a subject string.
-/// This function performs the actual regex matching and extracts any captured properties.
-///
-/// `gpa` The allocator to use for memory allocations
-/// `prepared` The prepared pattern to match against
-/// `subject` The subject string to match
-/// @return A MatchResult containing the match status and captured properties
-pub fn match(gpa: std.mem.Allocator, prepared: *const Prepared, subject: []const u8) MatchResult {
-    backend_allocator = gpa; // IMPORTANT
-    const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, general_context);
+/// `match_context` must be created via `createMatchContext` by the caller and
+/// is reused across calls (e.g. per file, per arena) — NOT tied to `prepared`.
+pub fn match(gpa: std.mem.Allocator, prepared: *const Prepared, subject: []const u8, match_context: *re.pcre2_general_context_8) MatchResult {
+    const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, match_context);
     defer re.pcre2_match_data_free_8(match_data);
-    const match_ctx = re.pcre2_match_context_create_8(general_context);
+    const match_ctx = re.pcre2_match_context_create_8(match_context);
     defer re.pcre2_match_context_free_8(match_ctx);
 
     _ = re.pcre2_set_match_limit_8(match_ctx, 100_000);
@@ -234,7 +225,10 @@ pub fn match(gpa: std.mem.Allocator, prepared: *const Prepared, subject: []const
             var buffer_size_in_chars: re.PCRE2_SIZE = undefined;
             const get_string_result = re.pcre2_substring_get_byname_8(match_data, value.ptr, &buffer, &buffer_size_in_chars);
             if (get_string_result == 0) {
-                properties.?.put(value, std.mem.span(buffer)) catch {
+                defer re.pcre2_substring_free_8(buffer);
+                const owned_value = gpa.dupe(u8, std.mem.span(buffer)) catch continue; // dupe instead of raw span
+                properties.?.put(value, owned_value) catch {
+                    gpa.free(owned_value); // avoid leaking the dupe if put fails
                     continue;
                 };
             }
