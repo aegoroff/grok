@@ -25,6 +25,43 @@ pub const Prepared = struct {
     boxed_allocator: *std.mem.Allocator, // heap-owned
     general_context: *re.pcre2_general_context_8,
 
+    /// Match a prepared pattern against a subject string.
+    pub fn match(self: *const Prepared, gpa: std.mem.Allocator, subject: []const u8) MatchResult {
+        var call_allocator = gpa;
+        const general_ctx = createGeneralContext(&call_allocator).?;
+
+        const match_data = re.pcre2_match_data_create_from_pattern_8(self.re, general_ctx);
+        defer re.pcre2_match_data_free_8(match_data);
+        const match_ctx = re.pcre2_match_context_create_8(general_ctx);
+        defer re.pcre2_match_context_free_8(match_ctx);
+
+        _ = re.pcre2_set_match_limit_8(match_ctx, 100_000);
+        _ = re.pcre2_set_depth_limit_8(match_ctx, 10_000);
+
+        const rc: c_int = re.pcre2_match_8(self.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
+        const matched = rc > 0;
+
+        var properties: ?std.StringHashMap([]const u8) = null;
+        if (matched and self.properties.items.len > 0) {
+            properties = std.StringHashMap([]const u8).init(gpa);
+            for (self.properties.items) |value| {
+                var buffer: [*c]re.PCRE2_UCHAR8 = undefined;
+                var buffer_size_in_chars: re.PCRE2_SIZE = undefined;
+                const get_string_result = re.pcre2_substring_get_byname_8(match_data, value.ptr, &buffer, &buffer_size_in_chars);
+                if (get_string_result == 0) {
+                    properties.?.put(value, std.mem.span(buffer)) catch {
+                        continue;
+                    };
+                }
+            }
+        }
+        return MatchResult{
+            .matched = matched,
+            .original = subject,
+            .properties = properties,
+        };
+    }
+
     pub fn deinit(self: *Prepared) void {
         re.pcre2_code_free_8(self.re);
         for (self.properties.items) |prop| {
@@ -94,12 +131,12 @@ fn pcre_free(ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.c) void {
 /// Create a PCRE2 general context bound to the given allocator.
 /// `allocator` must remain stable (same address) for the lifetime of the
 /// returned context, since PCRE2 stores the pointer as opaque user data.
-pub fn createGeneralContext(allocator: *std.mem.Allocator) ?*re.pcre2_general_context_8 {
+fn createGeneralContext(allocator: *std.mem.Allocator) ?*re.pcre2_general_context_8 {
     return re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, allocator);
 }
 
 /// Free a context created by `createGeneralContext`.
-pub fn freeGeneralContext(ctx: *re.pcre2_general_context_8) void {
+fn freeGeneralContext(ctx: *re.pcre2_general_context_8) void {
     re.pcre2_general_context_free_8(ctx);
 }
 
@@ -207,44 +244,5 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         .allocator = gpa,
         .boxed_allocator = boxed_allocator,
         .general_context = general_ctx,
-    };
-}
-
-/// Match a prepared pattern against a subject string.
-pub fn match(
-    gpa: std.mem.Allocator,
-    prepared: *const Prepared,
-    subject: []const u8,
-    general_ctx: *re.pcre2_general_context_8,
-) MatchResult {
-    const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, general_ctx);
-    defer re.pcre2_match_data_free_8(match_data);
-    const match_ctx = re.pcre2_match_context_create_8(general_ctx);
-    defer re.pcre2_match_context_free_8(match_ctx);
-
-    _ = re.pcre2_set_match_limit_8(match_ctx, 100_000);
-    _ = re.pcre2_set_depth_limit_8(match_ctx, 10_000);
-
-    const rc: c_int = re.pcre2_match_8(prepared.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
-    const matched = rc > 0;
-
-    var properties: ?std.StringHashMap([]const u8) = null;
-    if (matched and prepared.properties.items.len > 0) {
-        properties = std.StringHashMap([]const u8).init(gpa);
-        for (prepared.properties.items) |value| {
-            var buffer: [*c]re.PCRE2_UCHAR8 = undefined;
-            var buffer_size_in_chars: re.PCRE2_SIZE = undefined;
-            const get_string_result = re.pcre2_substring_get_byname_8(match_data, value.ptr, &buffer, &buffer_size_in_chars);
-            if (get_string_result == 0) {
-                properties.?.put(value, std.mem.span(buffer)) catch {
-                    continue;
-                };
-            }
-        }
-    }
-    return MatchResult{
-        .matched = matched,
-        .original = subject,
-        .properties = properties,
     };
 }
