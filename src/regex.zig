@@ -22,7 +22,7 @@ pub const Prepared = struct {
     regex: []const u8,
     /// Allocator used to prepare this pattern - stored for proper deallocation
     allocator: std.mem.Allocator,
-    allocator_ctx: *std.mem.Allocator, // heap-owned
+    boxed_allocator: *std.mem.Allocator, // heap-owned
     general_context: *re.pcre2_general_context_8,
 
     pub fn deinit(self: *Prepared) void {
@@ -33,7 +33,7 @@ pub const Prepared = struct {
         self.properties.deinit(self.allocator);
         self.allocator.free(self.regex);
         re.pcre2_general_context_free_8(self.general_context);
-        self.allocator.destroy(self.allocator_ctx);
+        self.allocator.destroy(self.boxed_allocator);
     }
 };
 
@@ -94,12 +94,12 @@ fn pcre_free(ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.c) void {
 /// Create a PCRE2 general context bound to the given allocator.
 /// `allocator` must remain stable (same address) for the lifetime of the
 /// returned context, since PCRE2 stores the pointer as opaque user data.
-pub fn createMatchContext(allocator: *std.mem.Allocator) ?*re.pcre2_general_context_8 {
+pub fn createGeneralContext(allocator: *std.mem.Allocator) ?*re.pcre2_general_context_8 {
     return re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, allocator);
 }
 
-/// Free a context created by `createMatchContext`.
-pub fn freeMatchContext(ctx: *re.pcre2_general_context_8) void {
+/// Free a context created by `createGeneralContext`.
+pub fn freeGeneralContext(ctx: *re.pcre2_general_context_8) void {
     re.pcre2_general_context_free_8(ctx);
 }
 
@@ -174,16 +174,16 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
 /// `pattern` The Pattern to compile
 /// @return A Prepared struct containing the compiled regex and properties, or an error
 pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
-    const allocator_ctx = try gpa.create(std.mem.Allocator);
-    allocator_ctx.* = gpa;
-    errdefer gpa.destroy(allocator_ctx);
+    const boxed_allocator = try gpa.create(std.mem.Allocator);
+    boxed_allocator.* = gpa;
+    errdefer gpa.destroy(boxed_allocator);
 
-    const general_context = re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, allocator_ctx).?;
-    errdefer re.pcre2_general_context_free_8(general_context);
+    const general_ctx = createGeneralContext(boxed_allocator).?;
+    errdefer freeGeneralContext(general_ctx);
 
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
-    const compile_ctx = re.pcre2_compile_context_create_8(general_context);
+    const compile_ctx = re.pcre2_compile_context_create_8(general_ctx);
     defer re.pcre2_compile_context_free_8(compile_ctx);
 
     const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
@@ -205,8 +205,8 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         .properties = pattern.properties,
         .regex = pattern.regex,
         .allocator = gpa,
-        .allocator_ctx = allocator_ctx,
-        .general_context = general_context,
+        .boxed_allocator = boxed_allocator,
+        .general_context = general_ctx,
     };
 }
 
