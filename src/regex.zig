@@ -211,12 +211,15 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
 }
 
 /// Match a prepared pattern against a subject string.
-/// `match_context` must be created via `createMatchContext` by the caller and
-/// is reused across calls (e.g. per file, per arena) — NOT tied to `prepared`.
-pub fn match(gpa: std.mem.Allocator, prepared: *const Prepared, subject: []const u8, match_context: *re.pcre2_general_context_8) MatchResult {
-    const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, match_context);
+pub fn match(
+    gpa: std.mem.Allocator,
+    prepared: *const Prepared,
+    subject: []const u8,
+    general_ctx: *re.pcre2_general_context_8,
+) MatchResult {
+    const match_data = re.pcre2_match_data_create_from_pattern_8(prepared.re, general_ctx);
     defer re.pcre2_match_data_free_8(match_data);
-    const match_ctx = re.pcre2_match_context_create_8(match_context);
+    const match_ctx = re.pcre2_match_context_create_8(general_ctx);
     defer re.pcre2_match_context_free_8(match_ctx);
 
     _ = re.pcre2_set_match_limit_8(match_ctx, 100_000);
