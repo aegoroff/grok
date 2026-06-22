@@ -23,11 +23,7 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !
 
 /// Matches single string specified in `str` argument
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
-    var call_allocator = self.allocator;
-    const call_context = regex.createGeneralContext(&call_allocator).?;
-    defer regex.freeGeneralContext(call_context);
-
-    var result = regex.match(self.allocator, &self.prepared, str, call_context);
+    var result = self.prepared.match(self.allocator, str);
     defer if (result.properties) |*props| props.deinit();
     if (flags.invert_match) {
         result = invertResult(result);
@@ -71,8 +67,6 @@ pub fn matchStrings(
     while (true) {
         // Each iteration is wrapped in a block so that defer statements execute
         // at the end of the iteration, not at the end of the function
-        var call_allocator = loop_allocator;
-        const call_context = regex.createGeneralContext(&call_allocator).?;
         defer _ = arena.reset(.retain_capacity);
 
         var line: []const u8 = undefined;
@@ -145,7 +139,7 @@ pub fn matchStrings(
         }
 
         line_no += 1;
-        var result = regex.match(loop_allocator, &self.prepared, line, call_context);
+        var result = self.prepared.match(loop_allocator, line);
         if (flags.invert_match) {
             result = invertResult(result);
         }
