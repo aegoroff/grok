@@ -108,7 +108,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     // defer std.debug.assert(gpa_alloc.deinit() == .ok);
     // const gpa = gpa_alloc.allocator();
 
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const gpa = arena.allocator();
 
@@ -126,9 +126,9 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     if (subject_list.items.len > 64 * 1024) return error.SkipZigTest;
     const subject = subject_list.items;
 
-    std.debug.print("fuzz: macro={s} flags=0x{x:0>2} subject_len={d} subject_hex={x}\n", .{
-        macro, flags_byte, subject.len, subject,
-    });
+    // std.debug.print("fuzz: macro={s} flags=0x{x:0>2} subject_len={d} subject_hex={x}\n", .{
+    //     macro, flags_byte, subject.len, subject,
+    // });
 
     // ── 4. Write subject into a temp file ──────────────
     const id = g_ctx.file_counter.fetchAdd(1, .monotonic);
