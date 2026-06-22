@@ -24,8 +24,8 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !
 /// Matches single string specified in `str` argument
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
     var call_allocator = self.allocator;
-    const call_context = regex.createMatchContext(&call_allocator).?;
-    defer regex.freeMatchContext(call_context);
+    const call_context = regex.createGeneralContext(&call_allocator).?;
+    defer regex.freeGeneralContext(call_context);
 
     var result = regex.match(self.allocator, &self.prepared, str, call_context);
     defer if (result.properties) |*props| props.deinit();
@@ -72,7 +72,7 @@ pub fn matchStrings(
         // Each iteration is wrapped in a block so that defer statements execute
         // at the end of the iteration, not at the end of the function
         var call_allocator = loop_allocator;
-        const call_context = regex.createMatchContext(&call_allocator).?;
+        const call_context = regex.createGeneralContext(&call_allocator).?;
         defer _ = arena.reset(.retain_capacity);
 
         var line: []const u8 = undefined;
