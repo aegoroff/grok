@@ -29,6 +29,7 @@ pub const Prepared = struct {
     pub fn match(self: *const Prepared, gpa: std.mem.Allocator, subject: []const u8) MatchResult {
         var call_allocator = gpa;
         const general_ctx = createGeneralContext(&call_allocator).?;
+        defer freeGeneralContext(general_ctx);
 
         const match_data = re.pcre2_match_data_create_from_pattern_8(self.re, general_ctx);
         defer re.pcre2_match_data_free_8(match_data);
@@ -69,7 +70,7 @@ pub const Prepared = struct {
         }
         self.properties.deinit(self.allocator);
         self.allocator.free(self.regex);
-        re.pcre2_general_context_free_8(self.general_context);
+        freeGeneralContext(self.general_context);
         self.allocator.destroy(self.boxed_allocator);
     }
 };
