@@ -36,9 +36,6 @@ pub const Prepared = struct {
         const match_ctx = re.pcre2_match_context_create_8(general_ctx);
         defer re.pcre2_match_context_free_8(match_ctx);
 
-        _ = re.pcre2_set_match_limit_8(match_ctx, 100_000);
-        _ = re.pcre2_set_depth_limit_8(match_ctx, 10_000);
-
         const rc: c_int = re.pcre2_match_8(self.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
         const matched = rc > 0;
 
