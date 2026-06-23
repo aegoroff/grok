@@ -36,7 +36,7 @@ fn invertResult(result: regex.MatchResult) regex.MatchResult {
     return regex.MatchResult{
         .matched = !result.matched,
         .original = result.original,
-        .properties = result.properties,
+        .properties = null,
     };
 }
 
