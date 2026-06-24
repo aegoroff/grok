@@ -162,7 +162,10 @@ pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
 }
 
 pub export fn fend_on_macro(name: [*c]u8, property: [*c]u8) ?*c.macro_t {
-    const ptr = allocator.create(c.macro_t) catch return null;
+    const ptr = allocator.create(c.macro_t) catch |e| {
+        std.log.err("{}", .{e});
+        return null;
+    };
     ptr.* = c.macro_t{
         .name = name,
         .property = property,
