@@ -116,7 +116,6 @@ fn compileDir(io: std.Io, lib_path: []const u8) !void {
 
 fn compileFile(path: []const u8) !void {
     const c_file_ptr = c.fopen(path.ptr, "r") orelse {
-        // Handle error
         std.log.err("Failed to open file: {s}", .{path});
         return grok.GrokError.UnknownPatternFile;
     };
@@ -154,7 +153,10 @@ pub export fn fend_on_definition_end(str: [*c]const u8) void {
 pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
     const slice = std.mem.span(str);
     // Allocate memory for string + null terminator
-    const mem = allocator.allocSentinel(u8, slice.len, 0) catch return null;
+    const mem = allocator.allocSentinel(u8, slice.len, 0) catch |e| {
+        std.log.err("{}", .{e});
+        return null;
+    };
     @memcpy(mem[0..slice.len], slice);
     return @ptrCast(mem.ptr);
 }
