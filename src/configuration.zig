@@ -23,7 +23,7 @@ pub const stdin_command_name: []const u8 = "stdin";
 
 matches: yazap.ArgMatches,
 allocator: std.mem.Allocator,
-app: yazap.App,
+app: *yazap.App,
 io: std.Io,
 app_descr: []const u8,
 
@@ -40,7 +40,9 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
     );
     errdefer gpa.free(app_descr);
 
-    var app = yazap.App.init(gpa, "grok", app_descr);
+    const app = try gpa.create(yazap.App);
+    errdefer gpa.destroy(app);
+    app.* = yazap.App.init(gpa, "grok", app_descr);
 
     var root_cmd = app.rootCommand();
     root_cmd.setProperty(.help_on_empty_args);
@@ -128,6 +130,7 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
 pub fn deinit(self: *Config) void {
     front.deinitLib();
     self.app.deinit();
+    self.allocator.destroy(self.app);
     self.allocator.free(self.app_descr);
 }
 
