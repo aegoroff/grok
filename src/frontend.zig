@@ -4,6 +4,11 @@ const grok = @import("grok.zig");
 const glob = @import("glob");
 const c = @import("c");
 
+const ErrorReporter = @import("fehler").ErrorReporter;
+const Diagnostic = @import("fehler").Diagnostic;
+const Severity = @import("fehler").Severity;
+const SourceRange = @import("fehler").SourceRange;
+
 pub const Info = struct {
     data: [*c]const u8,
     reference: [*c]const u8,
@@ -13,7 +18,9 @@ pub const Info = struct {
 pub const Part = enum { literal, reference };
 
 var allocator: std.mem.Allocator = undefined;
+var io: std.Io = undefined;
 var composition: std.ArrayList(Info) = .empty;
+var current_file: ?[]const u8 = null;
 var definitions: std.StringHashMap(std.ArrayList(Info)) = undefined;
 var lib_initialized: bool = false;
 
@@ -25,16 +32,17 @@ pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
     return definitions;
 }
 
-pub fn compileLib(gpa: std.mem.Allocator, io: std.Io, paths: ?[][]const u8) !void {
+pub fn compileLib(gpa: std.mem.Allocator, stdio: std.Io, paths: ?[][]const u8) !void {
     allocator = gpa;
+    io = stdio;
     definitions = std.StringHashMap(std.ArrayList(Info)).init(allocator);
     lib_initialized = true;
     if (paths) |path_arg| {
         if (path_arg.len == 0) {
-            try compileDefault(io);
+            try compileDefault();
         } else {
             for (path_arg) |path| {
-                compileDir(io, path) catch {
+                compileDir(path) catch {
                     const pathz = try allocator.dupeSentinel(u8, path, 0);
                     defer allocator.free(pathz);
                     try compileFile(pathz);
@@ -42,7 +50,7 @@ pub fn compileLib(gpa: std.mem.Allocator, io: std.Io, paths: ?[][]const u8) !voi
             }
         }
     } else {
-        try compileDefault(io);
+        try compileDefault();
     }
 }
 
@@ -69,7 +77,7 @@ pub fn deinitLib() void {
     lib_initialized = false;
 }
 
-fn compileDefault(io: std.Io) !void {
+fn compileDefault() !void {
     var lib_path: []const u8 = undefined;
     if (builtin.os.tag == .linux) {
         lib_path = "/usr/share/grok/patterns";
@@ -77,10 +85,10 @@ fn compileDefault(io: std.Io) !void {
         lib_path = try std.process.executableDirPathAlloc(io, allocator);
     }
 
-    try compileDir(io, lib_path);
+    try compileDir(lib_path);
 }
 
-fn compileDir(io: std.Io, lib_path: []const u8) !void {
+fn compileDir(lib_path: []const u8) !void {
     var dir: std.Io.Dir = undefined;
     const options: std.Io.Dir.OpenOptions = .{ .iterate = true };
     if (std.fs.path.isAbsolute(lib_path)) {
@@ -115,6 +123,7 @@ fn compileDir(io: std.Io, lib_path: []const u8) !void {
 }
 
 fn compileFile(path: []const u8) !void {
+    current_file = path;
     const c_file_ptr = c.fopen(path.ptr, "r") orelse {
         std.log.err("Failed to open file: {s}", .{path});
         return grok.GrokError.UnknownPatternFile;
@@ -185,11 +194,35 @@ pub export fn fend_on_grok(m: *c.macro_t) void {
 }
 
 export fn fend_print_error(first_line: c_int, first_column: c_int, last_line: c_int, last_column: c_int, message: [*:0]const u8) callconv(.c) void {
-    std.log.err("{d}.{d}-{d}.{d}: error: {s}", .{
-        first_line,
-        first_column,
-        last_line,
-        last_column,
-        message,
-    });
+    var reporter = ErrorReporter.init(allocator);
+
+    defer reporter.deinit();
+
+    var memory = std.Io.Writer.Allocating.init(allocator);
+    defer memory.deinit();
+    var file = std.Io.Dir.cwd().openFile(io, current_file.?, .{ .mode = .read_only }) catch {
+        std.log.err("No file: {s}", .{current_file.?});
+        return;
+    };
+    defer file.close(io);
+    var file_buffer: [64 * 1024]u8 = undefined;
+    var file_reader = file.reader(io, &file_buffer);
+    _ = file_reader.interface.streamRemaining(&memory.writer) catch |e| {
+        std.log.err("File '{s}' reading failed: {}", .{ current_file.?, e });
+    };
+
+    reporter.addSource(current_file.?, memory.written()) catch |e| {
+        std.log.err("Add source '{s}' failed with: {}", .{ current_file.?, e });
+    };
+
+    const diagnostic = Diagnostic.init(.err, std.mem.span(message))
+        .withRange(SourceRange.span(
+        current_file.?,
+        @intCast(first_line),
+        @intCast(first_column),
+        @intCast(last_line),
+        @intCast(last_column),
+    ));
+
+    reporter.report(diagnostic);
 }

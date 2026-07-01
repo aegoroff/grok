@@ -16,6 +16,10 @@
             .url = "https://github.com/prajwalch/yazap/archive/refs/tags/0.7.0.tar.gz",
             .hash = "yazap-0.7.0-Z1t-EjH4AQBTpC18eKV-K4K8b8Sl9KGrygK6iNqXDb4M",
         },
+        .fehler = .{
+            .url = "git+https://github.com/ciathefed/fehler?ref=v0.7.0#3e23144aafd28ec6502ffd23fcd0cacf81fc3810",
+            .hash = "fehler-0.7.0-8HnVmWizAAAogDb8PFePSq4RJFAiwpmbcBrhzjRydsyR",
+        },
     },
     .paths = .{
         "LICENSE.txt",
