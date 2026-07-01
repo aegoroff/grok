@@ -15,6 +15,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+/* External lexer state for location tracking */
+extern int yycolumn;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

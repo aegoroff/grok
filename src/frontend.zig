@@ -131,6 +131,12 @@ fn compileFile(path: []const u8) !void {
     defer _ = c.fclose(c_file_ptr);
 
     c.yyrestart(c_file_ptr);
+    // Initialize location tracking
+    c.yylloc.first_line = 1;
+    c.yylloc.last_line = 1;
+    c.yylloc.first_column = 1;
+    c.yylloc.last_column = 1;
+    c.yycolumn = 1;
     if (c.yyparse() > 0) {
         std.log.err("Failed to parse file: {s}", .{path});
         return grok.GrokError.InvalidPatternFile;

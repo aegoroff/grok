@@ -10,16 +10,27 @@
 #endif
 
 #define YY_USER_ACTION \
-    yylloc.first_line = yylloc.last_line; \
-    yylloc.first_column = yylloc.last_column; \
+    /* Save the starting position of this token */ \
+    yylloc.first_line = yylineno; \
+    yylloc.first_column = yycolumn; \
+    /* Update position for each character in the token */ \
     for(int i = 0; yytext[i] != '\0'; i++) { \
         if(yytext[i] == '\n') { \
-            yylloc.last_line++; \
-            yylloc.last_column = 0; \
+            yylineno++; \
+            yycolumn = 1; \
         } \
         else { \
-            yylloc.last_column++; \
+            yycolumn++; \
         } \
+    } \
+    /* Set last position to the last character of the token */ \
+    /* For newline tokens, last_line should be the line containing the newline */ \
+    if (yytext[0] == '\n' || yytext[0] == '\r') { \
+        yylloc.last_line = yylloc.first_line; \
+        yylloc.last_column = yylloc.first_column; \
+    } else { \
+        yylloc.last_line = yylineno; \
+        yylloc.last_column = yycolumn - 1; \
     }
 %}
 
@@ -79,10 +90,12 @@ LITERAL ([^%\r\n]|%[^\{]|%\{\})
 
 %%
 
-{PATTERN_DEFINITION} { 
-	BEGIN(INDEFINITION); 
+[ \t]+ { /* skip whitespace but update position via YY_USER_ACTION */ }
+
+{PATTERN_DEFINITION} {
+	BEGIN(INDEFINITION);
 	yylval.str = fend_strdup(yytext);
-	return PATTERN_DEFINITION; 
+	return PATTERN_DEFINITION;
 }
 
 ^#[^\r\n]* { BEGIN(INCOMMENT); return COMMENT; }
