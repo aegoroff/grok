@@ -2,7 +2,7 @@
 	#include "grok.tab.h"
 
 	extern int yylineno;
-        extern char *yytext;
+	extern char *yytext;
 
 	void yyerror(char *s, ...);
 	void lyyerror(YYLTYPE t, char *s, ...);
@@ -53,13 +53,18 @@
 
 %%
 
-translation_unit : lines ;
+translation_unit : lines opt_trailing_crlf ;
 
-lines 
+lines
     : line
     | lines CRLF line
     ;
-	
+
+opt_trailing_crlf
+    : CRLF
+    |
+    ;
+
 line
     : key WS groks { fend_on_definition_end($1); }
     | COMMENT
@@ -129,10 +134,15 @@ member
 
 %%
 
+int yyerror_flag = 0;
+
 void yyerror(char *format, ...) {
+	if (yyerror_flag) return;  // Already reported
+	yyerror_flag = 1;
+
 	va_list ap;
 	va_start(ap, format);
-	lyyerror(yylloc, format, ap);	
+	lyyerror(yylloc, format, ap);
 	va_end(ap);
 }
 

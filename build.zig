@@ -17,7 +17,9 @@ pub fn build(b: *std.Build) void {
 
     const flex_input = std.fmt.allocPrint(b.allocator, "{s}/grok.lex", .{c_code_path}) catch "";
     const flex_src = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.c", .{generated_path}) catch "";
+    const flex_hdr = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.h", .{generated_path}) catch "";
     const flex_opt = std.fmt.allocPrint(b.allocator, "--outfile={s}", .{flex_src}) catch "";
+    const flex_hdr_opt = std.fmt.allocPrint(b.allocator, "--header-file={s}", .{flex_hdr}) catch "";
 
     const bison_input = std.fmt.allocPrint(b.allocator, "{s}/grok.y", .{c_code_path}) catch "";
     const bison_src = std.fmt.allocPrint(b.allocator, "{s}/grok.tab.c", .{generated_path}) catch "";
@@ -33,15 +35,15 @@ pub fn build(b: *std.Build) void {
 
     switch (builtin.os.tag) {
         .linux => {
-            flex_args = &[_][]const u8{ "flex", "--fast", flex_opt, flex_input };
+            flex_args = &[_][]const u8{ "flex", "--fast", flex_opt, flex_hdr_opt, flex_input };
             bison_args = &[_][]const u8{ "bison", bison_opt, "-dy", "-Wno-yacc", "-Wno-other", bison_input };
         },
         .windows => {
-            flex_args = &[_][]const u8{ "win_flex.exe", "--fast", "--wincompat", flex_opt, flex_input };
+            flex_args = &[_][]const u8{ "win_flex.exe", "--fast", "--wincompat", flex_opt, flex_hdr_opt, flex_input };
             bison_args = &[_][]const u8{ "win_bison.exe", bison_opt, "-dy", "-Wno-yacc", "-Wno-other", bison_input };
         },
         .macos => {
-            flex_args = &[_][]const u8{ "/usr/local/opt/flex/bin/flex", "--fast", flex_opt, flex_input };
+            flex_args = &[_][]const u8{ "/usr/local/opt/flex/bin/flex", "--fast", flex_opt, flex_hdr_opt, flex_input };
             bison_args = &[_][]const u8{ "/usr/local/opt/bison/bin/bison", bison_opt, "-dy", "-Wno-yacc", "-Wno-other", bison_input };
         },
         else => @compileError("Unsupported OS: " ++ @tagName(builtin.os.tag)),

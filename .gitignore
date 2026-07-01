@@ -11,6 +11,7 @@ packages/
 *.DotSettings.user
 *.csproj.user
 grok.flex.c
+grok.flex.h
 grok.tab.c
 grok.tab.h
 grok.output
