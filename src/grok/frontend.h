@@ -12,6 +12,9 @@
 #ifndef GROK_FRONTEND_H_
 #define GROK_FRONTEND_H_
 
+#include <stdio.h>
+#include <stdarg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,6 +35,8 @@ extern void fend_on_grok(macro_t *str);
 extern macro_t *fend_on_macro(char *name, char *prop);
 
 extern char *fend_strdup(char *str);
+
+extern void fend_print_error(int first_line, int first_column, int last_line, int last_column, const char *message);
 
 #ifdef __cplusplus
 }

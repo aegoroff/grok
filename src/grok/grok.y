@@ -12,7 +12,6 @@
 
 %code requires
 {
-	#include "lib.h"
 	#include "frontend.h"
 }
 
@@ -127,23 +126,30 @@ member
 
 %%
 
-void yyerror(char *s, ...) {
+void yyerror(char *format, ...) {
 	va_list ap;
-	va_start(ap, s);
-	lyyerror(yylloc, s, ap);	
+	va_start(ap, format);
+	lyyerror(yylloc, format, ap);	
 	va_end(ap);
 }
 
-void lyyerror(YYLTYPE t, char *s, ...) {
-	va_list ap;
-	va_start(ap, s);
-	if(t.first_line)
-		lib_fprintf(stderr, "%d.%d-%d.%d: error: ", t.first_line, t.first_column, t.last_line, t.last_column);
+void lyyerror(YYLTYPE t, char *format, ...) {
+    va_list params;
+    va_start(params, format);
+
+    char buf[4096];
+    int result;
+
 #ifdef __STDC_WANT_SECURE_LIB__
-    vfprintf_s(stderr, s, ap);
+    result = vsnprintf_s(buf, sizeof(buf), (size_t)-1, format, params);
 #else
-    vfprintf(stderr, s, ap);
+    result = vsnprintf(buf, sizeof(buf), format, params);
 #endif
-	va_end(ap);
-	lib_fprintf(stderr, "\n");
+	va_end(params);
+
+	if (result >= 0) {
+		fend_print_error(t.first_line, t.first_column, t.last_line, t.last_column, buf);
+    } else {
+		fend_print_error(t.first_line, t.first_column, t.last_line, t.last_column, "");
+	}
 }
