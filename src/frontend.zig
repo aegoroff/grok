@@ -183,3 +183,13 @@ pub export fn fend_on_grok(m: *c.macro_t) void {
     };
     allocator.destroy(m);
 }
+
+export fn fend_print_error(first_line: c_int, first_column: c_int, last_line: c_int, last_column: c_int, message: [*:0]const u8) callconv(.c) void {
+    std.log.err("{d}.{d}-{d}.{d}: error: {s}", .{
+        first_line,
+        first_column,
+        last_line,
+        last_column,
+        message,
+    });
+}

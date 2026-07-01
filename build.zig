@@ -26,7 +26,6 @@ pub fn build(b: *std.Build) void {
     const c_sources = [_][]const u8{
         flex_src,
         bison_src,
-        std.fmt.allocPrint(b.allocator, "{s}/lib.c", .{c_code_path}) catch "",
     };
 
     var flex_args: []const []const u8 = undefined;
