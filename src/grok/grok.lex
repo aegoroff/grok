@@ -10,21 +10,19 @@
 #endif
 
 #define YY_USER_ACTION \
-    /* Save the starting position of this token */ \
+    /* Save the starting position of this token from flex's yylineno */ \
     yylloc.first_line = yylineno; \
     yylloc.first_column = yycolumn; \
-    /* Update position for each character in the token */ \
+    /* Update column based on token length */ \
     for(int i = 0; yytext[i] != '\0'; i++) { \
         if(yytext[i] == '\n') { \
-            yylineno++; \
             yycolumn = 1; \
         } \
-        else { \
+        else if(yytext[i] != '\r') { \
             yycolumn++; \
         } \
     } \
-    /* Set last position to the last character of the token */ \
-    /* For newline tokens, last_line should be the line containing the newline */ \
+    /* Set last position - flex already updated yylineno */ \
     if (yytext[0] == '\n' || yytext[0] == '\r') { \
         yylloc.last_line = yylloc.first_line; \
         yylloc.last_column = yylloc.first_column; \
