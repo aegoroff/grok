@@ -52,6 +52,8 @@ pub fn build(b: *std.Build) void {
     bison.step.dependOn(&flex.step);
 
     const yazap = b.dependency("yazap", .{});
+    const fehler = b.dependency("fehler", .{});
+
     const glob_dep = b.dependency("glob", .{ .target = target, .optimize = optimize });
     const pcre2_dep = b.dependency("pcre2", .{ .target = target, .optimize = optimize });
 
@@ -90,6 +92,7 @@ pub fn build(b: *std.Build) void {
     const deps = ModuleDeps{
         .b = b,
         .yazap = yazap,
+        .fehler = fehler,
         .glob_dep = glob_dep,
         .pcre2_dep = pcre2_dep,
         .c_lib = c_lib,
@@ -196,6 +199,7 @@ pub fn build(b: *std.Build) void {
 const ModuleDeps = struct {
     b: *std.Build,
     yazap: *std.Build.Dependency,
+    fehler: *std.Build.Dependency,
     glob_dep: *std.Build.Dependency,
     pcre2_dep: *std.Build.Dependency,
     c_lib: *std.Build.Step.Compile,
@@ -206,6 +210,7 @@ const ModuleDeps = struct {
     fn applyTo(self: ModuleDeps, mod: *std.Build.Module) void {
         mod.addImport("glob", self.glob_dep.module("glob"));
         mod.addImport("yazap", self.yazap.module("yazap"));
+        mod.addImport("fehler", self.fehler.module("fehler"));
         mod.linkLibrary(self.c_lib);
         mod.linkLibrary(self.pcre2_dep.artifact("pcre2-8"));
         mod.addImport("build_options", self.options.createModule());
