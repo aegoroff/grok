@@ -137,7 +137,7 @@ fn compileFile(path: []const u8) !void {
     c.yylloc.last_line = 1;
     c.yylloc.first_column = 1;
     c.yylloc.last_column = 1;
-    c.yyerror_flag = 0;  // Reset error flag
+    c.yyerror_flag = 0; // Reset error flag
     c.yyrestart(c_file_ptr);
     const result = c.yyparse();
     if (result > 0) {
@@ -202,36 +202,45 @@ pub export fn fend_on_grok(m: *c.macro_t) void {
     allocator.destroy(m);
 }
 
-export fn fend_print_error(first_line: c_int, first_column: c_int, last_line: c_int, last_column: c_int, message: [*:0]const u8) callconv(.c) void {
-    var reporter = ErrorReporter.init(allocator);
+export fn fend_print_error(
+    first_line: c_int,
+    first_column: c_int,
+    last_line: c_int,
+    last_column: c_int,
+    message: [*:0]const u8,
+) callconv(.c) void {
+    if (current_file) |path| {
+        var reporter = ErrorReporter.init(allocator);
+        defer reporter.deinit();
 
-    defer reporter.deinit();
+        var memory = std.Io.Writer.Allocating.init(allocator);
+        defer memory.deinit();
+        var file = std.Io.Dir.cwd().openFile(io, path, .{ .mode = .read_only }) catch {
+            std.log.err("No file: {s}", .{path});
+            return;
+        };
+        defer file.close(io);
+        var file_buffer: [64 * 1024]u8 = undefined;
+        var file_reader = file.reader(io, &file_buffer);
+        _ = file_reader.interface.streamRemaining(&memory.writer) catch |e| {
+            std.log.err("File '{s}' reading failed: {}", .{ path, e });
+        };
 
-    var memory = std.Io.Writer.Allocating.init(allocator);
-    defer memory.deinit();
-    var file = std.Io.Dir.cwd().openFile(io, current_file.?, .{ .mode = .read_only }) catch {
-        std.log.err("No file: {s}", .{current_file.?});
-        return;
-    };
-    defer file.close(io);
-    var file_buffer: [64 * 1024]u8 = undefined;
-    var file_reader = file.reader(io, &file_buffer);
-    _ = file_reader.interface.streamRemaining(&memory.writer) catch |e| {
-        std.log.err("File '{s}' reading failed: {}", .{ current_file.?, e });
-    };
+        reporter.addSource(path, memory.written()) catch |e| {
+            std.log.err("Add source '{s}' failed with: {}", .{ path, e });
+        };
 
-    reporter.addSource(current_file.?, memory.written()) catch |e| {
-        std.log.err("Add source '{s}' failed with: {}", .{ current_file.?, e });
-    };
+        const diagnostic = Diagnostic.init(.err, std.mem.span(message))
+            .withRange(SourceRange.span(
+            path,
+            @intCast(first_line),
+            @intCast(first_column),
+            @intCast(last_line),
+            @intCast(last_column),
+        ));
 
-    const diagnostic = Diagnostic.init(.err, std.mem.span(message))
-        .withRange(SourceRange.span(
-        current_file.?,
-        @intCast(first_line),
-        @intCast(first_column),
-        @intCast(last_line),
-        @intCast(last_column),
-    ));
-
-    reporter.report(diagnostic);
+        reporter.report(diagnostic);
+    } else {
+        std.log.err("An errror occured during library compilation: {s}", .{std.mem.span(message)});
+    }
 }
