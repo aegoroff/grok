@@ -282,6 +282,21 @@ test "integration test macro view bad (not exist) pattern" {
     try std.testing.expectEqualStrings("Failed show macro: error.UnknownMacro\n", writer.written());
 }
 
+test "integration test macro with unknown nested reference" {
+    // Arrange
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var writer = std.Io.Writer.Allocating.init(arena.allocator());
+    const argv: []const [:0]const u8 = &[_][:0]const u8{ "macro", "BADNESTED", "-p", "./test_assets/bad_nested.patterns" };
+
+    // Act
+    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+
+    // Assert
+    try std.testing.expectEqualStrings("Failed show macro: error.UnknownMacro\n", writer.written());
+}
+
 test "integration test match file UTF-8 without flags" {
     // Arrange
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);

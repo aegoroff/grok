@@ -153,6 +153,12 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     var used_properties = std.StringHashMap(bool).init(gpa);
     defer used_properties.deinit();
     var result = Pattern{ .properties = .empty, .regex = "" };
+    errdefer {
+        for (result.properties.items) |prop| {
+            gpa.free(prop);
+        }
+        result.properties.deinit(gpa);
+    }
     for (m.items) |value| {
         try stack.append(gpa, value);
         while (stack.pop()) |current| {
@@ -161,6 +167,8 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
                 // plain literal case
                 try composition.appendSlice(gpa, current_slice);
             } else {
+                const childs = try front.getPattern(current_slice);
+
                 if (current.reference) |current_reference| {
                     // leading (?<name> immediately into composition
                     var reference = std.mem.span(current_reference);
@@ -187,9 +195,6 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
                     const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
                     try stack.append(gpa, trail_paren);
                 }
-                const childs = front.getPattern(current_slice) catch {
-                    continue;
-                };
                 var rev_iter = std.mem.reverseIterator(childs.items);
                 while (rev_iter.next()) |child| {
                     try stack.append(gpa, child);
