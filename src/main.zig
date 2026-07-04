@@ -1,3 +1,4 @@
+const grok = @import("grok.zig");
 const std = @import("std");
 const builtin = @import("builtin");
 const front = @import("frontend.zig");
@@ -8,7 +9,7 @@ const yazap = @import("yazap");
 
 const Action = struct {
     name: []const u8,
-    handler: *const fn (std.mem.Allocator, *std.Io.Writer, std.Io, yazap.ArgMatches) void,
+    handler: *const fn (std.mem.Allocator, *std.Io.Writer, std.Io, yazap.ArgMatches) anyerror!void,
 };
 
 extern "kernel32" fn SetConsoleOutputCP(wCodePageID: u32) callconv(.winapi) i32;
@@ -30,7 +31,9 @@ pub fn main(init: std.process.Init) !void {
     const gpa = init.arena.allocator();
 
     const args = try init.minimal.args.toSlice(gpa);
-    try run(gpa, stdout, init.io, args[1..]); // skip exe itself
+    run(gpa, stdout, init.io, args[1..]) catch { // skip exe itself
+        std.process.exit(1);
+    };
 }
 
 pub fn run(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, argv: []const [:0]const u8) !void {
@@ -45,74 +48,64 @@ pub fn run(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, argv: []c
     };
 
     for (actions) |action| {
-        if (config.run(action.name, writer, action.handler)) {
+        if (try config.run(action.name, writer, action.handler)) {
             return;
         }
     }
 }
 
-fn stringAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) void {
-    if (configuration.getMacroOpt(cmd)) |macro| {
-        if (configuration.getStringArgValue(cmd)) |str| {
-            matchString(gpa, writer, macro, str, .{
-                .info = configuration.isInfoMode(cmd),
-                .json = configuration.isJsonMode(cmd),
-                .invert_match = configuration.isInvertMatch(cmd),
-            }) catch |e| {
-                writer.print("Failed string match: {}\n", .{e}) catch |write_err| {
-                    std.log.err("{}", .{write_err});
-                };
-            };
-        }
-    }
+fn stringAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) !void {
+    const macro = configuration.getMacroOpt(cmd) orelse return;
+    const str = configuration.getStringArgValue(cmd) orelse return;
+    matchString(gpa, writer, macro, str, .{
+        .info = configuration.isInfoMode(cmd),
+        .json = configuration.isJsonMode(cmd),
+        .invert_match = configuration.isInvertMatch(cmd),
+    }) catch |e| {
+        try writer.print("Failed string match: {}\n", .{e});
+        return e;
+    };
 }
 
-fn fileAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) void {
-    if (configuration.getMacroOpt(cmd)) |macro| {
-        if (configuration.getPathArgValue(cmd)) |path| {
-            matchFile(gpa, writer, io, macro, path, .{
-                .info = configuration.isInfoMode(cmd),
-                .json = configuration.isJsonMode(cmd),
-                .count = configuration.isCountMode(cmd),
-                .print_line_num = configuration.printLineNumber(cmd),
-                .invert_match = configuration.isInvertMatch(cmd),
-            }) catch |e| {
-                writer.print("Failed file match: {}\n", .{e}) catch |write_err| {
-                    std.log.err("{}", .{write_err});
-                };
-            };
-        }
-    }
+fn fileAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) !void {
+    const macro = configuration.getMacroOpt(cmd) orelse return;
+    const path = configuration.getPathArgValue(cmd) orelse return;
+    matchFile(gpa, writer, io, macro, path, .{
+        .info = configuration.isInfoMode(cmd),
+        .json = configuration.isJsonMode(cmd),
+        .count = configuration.isCountMode(cmd),
+        .print_line_num = configuration.printLineNumber(cmd),
+        .invert_match = configuration.isInvertMatch(cmd),
+    }) catch |e| {
+        try writer.print("Failed file match: {}\n", .{e});
+        return e;
+    };
 }
 
-fn stdinAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) void {
-    if (configuration.getMacroOpt(cmd)) |macro| {
-        matchStdin(gpa, writer, io, macro, .{
-            .info = configuration.isInfoMode(cmd),
-            .json = configuration.isJsonMode(cmd),
-            .count = configuration.isCountMode(cmd),
-            .print_line_num = configuration.printLineNumber(cmd),
-            .invert_match = configuration.isInvertMatch(cmd),
-        }) catch |e| {
-            writer.print("Failed stdin match: {}\n", .{e}) catch |write_err| {
-                std.log.err("{}", .{write_err});
-            };
-        };
-    }
+fn stdinAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) !void {
+    const macro = configuration.getMacroOpt(cmd) orelse return;
+    matchStdin(gpa, writer, io, macro, .{
+        .info = configuration.isInfoMode(cmd),
+        .json = configuration.isJsonMode(cmd),
+        .count = configuration.isCountMode(cmd),
+        .print_line_num = configuration.printLineNumber(cmd),
+        .invert_match = configuration.isInvertMatch(cmd),
+    }) catch |e| {
+        try writer.print("Failed stdin match: {}\n", .{e});
+        return e;
+    };
 }
 
-fn macroAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) void {
+fn macroAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) !void {
     if (configuration.getMacroArgValue(cmd)) |macro| {
         showMacroRegex(gpa, writer, macro) catch |e| {
-            writer.print("Failed show macro: {}\n", .{e}) catch |write_err| {
-                std.log.err("{}", .{write_err});
-            };
+            try writer.print("Failed show macro: {}\n", .{e});
+            return e;
         };
     } else {
         listAllMacroses(gpa, writer) catch |e| {
-            writer.print("Failed to list macroses: {}\n", .{e}) catch |write_err| {
-                std.log.err("{}", .{write_err});
-            };
+            try writer.print("Failed to list macroses: {}\n", .{e});
+            return e;
         };
     }
 }
@@ -276,9 +269,10 @@ test "integration test macro view bad (not exist) pattern" {
     const argv: []const [:0]const u8 = &[_][:0]const u8{ "macro", "BAD", "-p", "./patterns/" };
 
     // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+    const err = run(arena.allocator(), &writer.writer, std.testing.io, argv);
 
     // Assert
+    try std.testing.expectError(grok.GrokError.UnknownMacro, err);
     try std.testing.expectEqualStrings("Failed show macro: error.UnknownMacro\n", writer.written());
 }
 
@@ -291,9 +285,10 @@ test "integration test macro with unknown nested reference" {
     const argv: []const [:0]const u8 = &[_][:0]const u8{ "macro", "BADNESTED", "-p", "./test_assets/bad_nested.patterns" };
 
     // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+    const err = run(arena.allocator(), &writer.writer, std.testing.io, argv);
 
     // Assert
+    try std.testing.expectError(grok.GrokError.UnknownMacro, err);
     try std.testing.expectEqualStrings("Failed show macro: error.UnknownMacro\n", writer.written());
 }
 
@@ -564,9 +559,10 @@ test "integration test match invalid file UTF-32LE" {
     const argv: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", "NLOG", "./test_assets/invalidUTF32LE.log" };
 
     // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+    const err = run(arena.allocator(), &writer.writer, std.testing.io, argv);
 
     // Assert
+    try std.testing.expectError(grok.GrokError.InvalidUtf32LineLength, err);
     try std.testing.expectEqualStrings("Failed file match: error.InvalidUtf32LineLength\n", writer.written());
 }
 
@@ -877,10 +873,11 @@ test "integration test match file UTF-16BE crash1" {
     const expected = "Failed file match: error.UnexpectedSecondSurrogateHalf\n";
 
     // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
-
-    // Assert
-    try std.testing.expectEqualStrings(expected, writer.written());
+    run(arena.allocator(), &writer.writer, std.testing.io, argv) catch {
+        try std.testing.expectEqualStrings(expected, writer.written());
+        return;
+    };
+    try std.testing.expect(false);
 }
 
 test "integration test match file UTF-16BE crash2" {
@@ -894,9 +891,10 @@ test "integration test match file UTF-16BE crash2" {
     const expected = "Failed file match: error.InvalidUtf16LineLength\n";
 
     // Act
-    try run(arena.allocator(), &writer.writer, std.testing.io, argv);
+    const err = run(arena.allocator(), &writer.writer, std.testing.io, argv);
 
     // Assert
+    try std.testing.expectError(grok.GrokError.InvalidUtf16LineLength, err);
     try std.testing.expectEqualStrings(expected, writer.written());
 }
 
