@@ -18,6 +18,7 @@ Instead of writing complex regular expressions, you can use a macro name defined
 - 🔗 **Pattern composition** - groks can reference other groks
 - 📁 **Multiple input modes**: files, strings, and stdin
 - 🎯 **Info mode** for detailed match information
+- 🌐 **Multi-encoding support** - automatic BOM detection for UTF-8, UTF-16, and UTF-32 (file and stdin modes)
 - 🌍 **Cross-platform** support (Linux, macOS, Windows)
 - 📦 **Pre-built binaries** for easy installation
 - 🔍 **Built-in pattern libraries** for common use cases
@@ -161,6 +162,8 @@ grok file [OPTIONS] <PATH>
 **Arguments:**
 - `PATH` - Full path to file to read data from
 
+**Encoding:** UTF-8 is used by default. Files with a BOM are read as UTF-8, UTF-16 (LE/BE), or UTF-32 (LE/BE) automatically.
+
 **Options:**
 - `-c, --count` - Print only the number of matched lines
 - `-n, --line-number` - Print line numbers with matching lines
@@ -178,6 +181,8 @@ Process input from standard input (pipes, redirects, etc.).
 ```bash
 grok stdin [OPTIONS]
 ```
+
+**Encoding:** UTF-8 is used by default. A BOM on any line switches decoding for subsequent input (useful when piping encoded log files).
 
 **Example:**
 ```bash
@@ -353,7 +358,7 @@ just build ReleaseFast
 
 The executable will be in `zig-out/bin/`.
 
-4. Run tests:
+4. Run tests (unit tests and fuzz tests):
 ```bash
 mise exec zig@0.16.0 -- zig build test
 ```
@@ -363,9 +368,19 @@ Or using just:
 just test
 ```
 
-5. Create a release archive:
+5. Run fuzzing (optional, dedicated fuzz run):
 ```bash
-mise exec zig@0.16.0 -- zig build archive -Dversion=1.0.0
+mise exec zig@0.16.0 -- zig build test --fuzz -Doptimize=ReleaseSafe
+```
+
+Or using just:
+```bash
+just fuzz
+```
+
+6. Create a release archive:
+```bash
+mise exec zig@0.16.0 -- zig build archive -Dversion=0.4.0-dev
 ```
 
 ### Cross-Platform Building
@@ -378,13 +393,15 @@ just build_all 0.4.0-dev
 
 Or build manually for specific targets:
 ```bash
-mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=1.0.0
-mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-linux-musl -Dversion=1.0.0
-mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-macos-none -Dversion=1.0.0
-mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-macos-none -Dversion=1.0.0
-mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-windows-gnu -Dversion=1.0.0
-mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-windows-gnu -Dversion=1.0.0
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=0.4.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-linux-musl -Dversion=0.4.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-macos-none -Dversion=0.4.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-macos-none -Dversion=0.4.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-windows-gnu -Dversion=0.4.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-windows-gnu -Dversion=0.4.0-dev
 ```
+
+Archives are created in `zig-out/` as `grok-<version>-<arch>-<os>-<abi>.tar.gz` and include the binary, `LICENSE.txt`, and pattern files.
 
 ## Pattern Files
 
@@ -400,7 +417,7 @@ Pattern files use a simple syntax:
 MACRONAME regexp
 ```
 
-Macros can reference other macros using `%{MACRONAME:fieldname}` syntax.
+Macros can reference other macros using `%{MACRONAME}` syntax. Named capture groups use `%{MACRONAME:fieldname}`.
 
 You can also create your own pattern files and specify them with the `-p` option.
 
