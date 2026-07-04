@@ -193,7 +193,7 @@ test "correct string parsing and run integration test" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
 
-    const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-m", "YEAR", "2000" };
+    const command_line: []const [:0]const u8 = &[_][:0]const u8{ "string", "-p", "./patterns/", "-m", "YEAR", "2000" };
     var config = try Config.init(arena.allocator(), std.testing.io, command_line);
     defer config.deinit();
 
