@@ -1,4 +1,4 @@
-# Cline Rules for Grok Project
+# Rules for Grok Project
 
 ## Project Overview
 - **Language**: Zig
