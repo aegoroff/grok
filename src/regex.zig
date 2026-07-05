@@ -53,7 +53,7 @@ pub const Prepared = struct {
                 }
             }
         }
-        return MatchResult{
+        return .{
             .matched = matched,
             .original = subject,
             .properties = properties,
