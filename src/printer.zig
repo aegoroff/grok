@@ -15,7 +15,7 @@ writer: *std.Io.Writer,
 macro: []const u8,
 
 pub fn init(writer: *std.Io.Writer, macro: []const u8) Printer {
-    return Printer{
+    return .{
         .writer = writer,
         .macro = macro,
     };

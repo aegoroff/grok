@@ -118,7 +118,7 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
 
     const matches = try app.parseFrom(io, argv);
 
-    return Config{
+    return .{
         .matches = matches,
         .allocator = gpa,
         .app = app,

@@ -240,7 +240,7 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
 
         return grok.GrokError.InvalidRegex;
     };
-    return Prepared{
+    return .{
         .re = regex,
         .properties = pattern.properties,
         .regex = pattern.regex,

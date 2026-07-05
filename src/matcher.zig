@@ -14,7 +14,7 @@ pub const OutputFlags = printer.OutputFlags;
 pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !Matcher {
     const pattern = try regex.createPattern(gpa, macro);
     const prepared = try regex.prepare(gpa, pattern);
-    return Matcher{
+    return .{
         .allocator = gpa,
         .prepared = prepared,
         .print = printer.Printer.init(writer, macro),
