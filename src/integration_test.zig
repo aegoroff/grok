@@ -38,8 +38,20 @@ const nlog_json =
     \\
 ;
 
+const nlog_string_info =
+    \\line: 1 match: true | pattern: NLOG
+    \\
+    \\  Meta properties found:
+    \\    Occured: 2016-08-13 01:46:09,637
+    \\    Level: INFO
+    \\
+    \\
+    \\
+;
+
 const patterns = "./patterns/";
 const nlog_file_utf8 = "./test_assets/logUTF8.log";
+const nlog_file_utf8_bom = "./test_assets/logUTF8BOM.log";
 const nlog_file_utf16le = "./test_assets/logUTF16LE.log";
 const nlog_file_utf16be = "./test_assets/logUTF16BE.log";
 const nlog_file_utf32le = "./test_assets/logUTF32LE.log";
@@ -284,6 +296,31 @@ const cases = [_]Case{
                 .output = "Failed file match: error.InvalidUtf16LineLength\n",
             },
         },
+    },
+    .{
+        .name = "match string info with NLOG captures",
+        .argv = &.{ "string", "-p", patterns, "-m", "NLOG", "-i", "2016-08-13 01:46:09,637 INFO logviewer Value cannot be null." },
+        .expected = .{ .success = nlog_string_info },
+    },
+    .{
+        .name = "match file invert NGINXPROXYACCESS",
+        .argv = &.{ "file", "-p", patterns, "-m", "NGINXPROXYACCESS", "-v", nlog_file_utf8 },
+        .expected = .{ .success = nlog_matches },
+    },
+    .{
+        .name = "match string unknown macro",
+        .argv = &.{ "string", "-p", patterns, "-m", "UNKNOWN", "foo" },
+        .expected = .{
+            .failure = .{
+                .err = grok.GrokError.UnknownMacro,
+                .output = "Failed string match: error.UnknownMacro\n",
+            },
+        },
+    },
+    .{
+        .name = "match file UTF-8 BOM",
+        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", nlog_file_utf8_bom },
+        .expected = .{ .success = nlog_matches },
     },
 };
 
