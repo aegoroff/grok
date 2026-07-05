@@ -34,6 +34,12 @@
 3. Check for similar issues in related code
 4. Verify fix doesn't break existing tests
 
+### C/Zig Boundary
+- Parser/lexer: flex + bison → `src/grok/generated/`
+- Zig callbacks in `frontend.zig` implement `frontend.h` interface
+- Never commit or hand-edit generated files
+- After changing `grok.lex` or `grok.y`, rebuild to regenerate C sources
+
 ## Build & Test Commands
 ```bash
 # Build
