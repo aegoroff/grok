@@ -3,7 +3,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const front = @import("frontend.zig");
 const matcher = @import("matcher.zig");
-const encoding = @import("encoding.zig");
+const line_reader = @import("line_reader.zig");
 const configuration = @import("configuration.zig");
 const yazap = @import("yazap");
 
@@ -136,21 +136,9 @@ fn matchFile(
     var file_buffer: [64 * 1024]u8 = undefined;
     var file_reader = file.reader(io, &file_buffer);
     const reader = &file_reader.interface;
-    var file_encoding: encoding.Encoding = undefined;
-    if (stat.size < 2) {
-        file_encoding = .utf8;
-    } else {
-        const min = @min(stat.size, 4); // 4 is max possible BOM size
-        const encoding_buffer = try reader.take(min);
-        const detection = encoding.detectBomMemory(encoding_buffer);
-        try file_reader.seekTo(detection.offset); // skip bom if any or set to begin if no bom detected
-
-        if (detection.encoding == .unknown) {
-            file_encoding = .utf8; // set default to utf-8
-        } else {
-            file_encoding = detection.encoding;
-        }
-    }
+    const detection = try line_reader.probeFileEncoding(reader, stat.size);
+    try file_reader.seekTo(detection.offset);
+    const file_encoding = line_reader.encodingFromDetection(detection);
 
     var match = try matcher.Matcher.init(gpa, writer, macro);
     defer match.deinit();

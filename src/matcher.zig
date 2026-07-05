@@ -3,6 +3,7 @@ pub const Matcher = @This();
 const std = @import("std");
 const regex = @import("regex.zig");
 const encoding = @import("encoding.zig");
+const line_reader = @import("line_reader.zig");
 const printer = @import("printer.zig");
 
 allocator: std.mem.Allocator,
@@ -60,83 +61,14 @@ pub fn matchStrings(
 
     var line_no: usize = 0;
     var match_counter: u64 = 0;
-    var current_encoding = file_encoding orelse .unknown;
 
     const loop_allocator = arena.allocator();
+    var liner = line_reader.LineReader.init(reader, file_encoding);
 
-    while (true) {
+    while (try liner.readLine(loop_allocator)) |line| {
         // Each iteration is wrapped in a block so that defer statements execute
         // at the end of the iteration, not at the end of the function
         defer _ = arena.reset(.retain_capacity);
-
-        var line: []const u8 = undefined;
-
-        var aw = std.Io.Writer.Allocating.init(loop_allocator);
-
-        var not_eof = true;
-        _ = reader.streamDelimiter(&aw.writer, '\n') catch |err| switch (err) {
-            error.EndOfStream => {
-                if (aw.written().len == 0) break;
-                not_eof = false;
-            },
-            else => return err,
-        };
-
-        line = aw.written();
-
-        if (file_encoding) |e| {
-            current_encoding = e;
-        } else {
-            // stdin case. Detect encoding on each line because stdin can be
-            // concatenated from several files using cat
-            const detected = encoding.detectBomMemory(line);
-            if (detected.encoding != .unknown) {
-                current_encoding = detected.encoding;
-                line = line[detected.offset..line.len];
-            }
-        }
-
-        switch (current_encoding) {
-            .utf16le => {
-                line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line, current_encoding);
-                if (not_eof) {
-                    const skip = @min(reader.end - reader.seek, 2);
-                    reader.toss(skip); // zero byte after delimiter so skip 2 bytes or rest
-                }
-            },
-            .utf16be => {
-                // if length is less then 2 - we read trash
-                if (line.len >= 2) {
-                    // trim 0x00 before 0x0A
-                    line = try encoding.convertRawUtf16ToUtf8(loop_allocator, line[0 .. line.len - 1], current_encoding);
-                }
-                if (not_eof) {
-                    reader.toss(1); // zero byte before delimiter so skip 1 byte
-                }
-            },
-            .utf32le => {
-                line = try encoding.convertRawUtf32ToUtf8(loop_allocator, line, current_encoding);
-                if (not_eof) {
-                    const skip = @min(reader.end - reader.seek, 4);
-                    reader.toss(skip); // 3 zero bytes after delimiter so skip 4 bytes or rest
-                }
-            },
-            .utf32be => {
-                // if length is less then 4 - we read trash
-                if (line.len >= 4) {
-                    // trim 3 0x00 before 0x0A
-                    line = try encoding.convertRawUtf32ToUtf8(loop_allocator, line[0 .. line.len - 3], current_encoding);
-                }
-                if (not_eof) {
-                    reader.toss(1); // 3 zero bytes before delimiter so skip 1 byte
-                }
-            },
-            else => {
-                if (not_eof) {
-                    reader.toss(1); // skip delimiter itself if not end of file
-                }
-            },
-        }
 
         line_no += 1;
         var result = self.prepared.match(loop_allocator, line);
