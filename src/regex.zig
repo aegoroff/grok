@@ -74,6 +74,11 @@ pub const Prepared = struct {
 
 /// Result of a regex match operation.
 /// Contains information about whether the match was successful and any captured properties.
+///
+/// Captured property values point into memory allocated by the `gpa` passed to
+/// `Prepared.match`. The caller should use an arena (or otherwise reclaim that
+/// allocator in bulk). `StringHashMap.deinit` on `properties` frees only the map
+/// nodes, not the captured value slices.
 pub const MatchResult = struct {
     /// Whether the pattern matched the subject text
     matched: bool,
