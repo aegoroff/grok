@@ -1,4 +1,4 @@
-ver := "0.4.0-dev"
+ver := "0.5.0-dev"
 target := "x86_64-linux-musl"
 cpu := "haswell"
 zig_ver := "0.16"
@@ -17,7 +17,7 @@ linux:
 
 all optimize = "ReleaseFast": (build optimize) (test optimize)
 
-build_all optimize = "ReleaseFast" version = "0.4.0-dev":
+build_all optimize = "ReleaseFast" version = "0.5.0-dev":
     #!/usr/bin/env bash
     rm -rf ./zig-out/*.tar.gz
     rm -rf ./zig-out/bin-*
