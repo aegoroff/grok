@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
+    const target = resolveTarget(b);
     const optimize = b.standardOptimizeOption(.{});
     const strip = optimize != .Debug;
     const options = b.addOptions();
@@ -230,4 +230,56 @@ fn ensureDirExists(b: *std.Build, dir_path: []const u8) void {
         return;
     };
     dir.close(b.graph.io);
+}
+
+// Pin glibc on the default Linux-gnu target so Zig links against its
+// bundled CRT instead of the system crt1.o. GCC >= 15 emits a .sframe
+// section there that Zig 0.16's linker cannot handle.
+const pinned_glibc: std.Target.Query.SemanticVersion = .{
+    .major = 2,
+    .minor = 38,
+    .patch = 0,
+};
+
+fn materializeHostTriple(query: *std.Target.Query) void {
+    if (query.cpu_arch == null) query.cpu_arch = builtin.cpu.arch;
+    if (query.os_tag == null) query.os_tag = builtin.target.os.tag;
+    if (query.abi == null) query.abi = builtin.target.abi;
+}
+
+fn needsHostTripleMaterialization(query: std.Target.Query) bool {
+    if (query.cpu_arch != null or query.os_tag != null) return false;
+    return switch (query.cpu_model) {
+        .native, .explicit => true,
+        .baseline, .determined_by_arch_os => false,
+    };
+}
+
+fn resolveTarget(b: *std.Build) std.Build.ResolvedTarget {
+    const default_target: std.Target.Query = .{
+        .abi = .gnu,
+        .glibc_version = pinned_glibc,
+    };
+
+    var query = b.standardTargetOptionsQueryOnly(.{
+        .default_target = default_target,
+    });
+
+    // `-Dcpu=...` without `-Dtarget` parses arch/os as "native"; use the host triple.
+    if (needsHostTripleMaterialization(query)) {
+        materializeHostTriple(&query);
+    }
+
+    // `-Dcpu=native` parses "native" without inheriting `default_target.glibc_version`.
+    if (query.glibc_version == null) {
+        const os = query.os_tag orelse builtin.target.os.tag;
+        if (os == .linux) {
+            const abi = query.abi orelse builtin.target.abi;
+            if (abi.isGnu()) {
+                query.glibc_version = pinned_glibc;
+            }
+        }
+    }
+
+    return b.resolveTargetQuery(query);
 }
