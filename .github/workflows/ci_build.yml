@@ -104,7 +104,7 @@ jobs:
         id: git-cliff
         with:
           config: cliff.toml
-          args: --latest --strip header -- 6f7e30723eb0b9415dabadd9bb871f417c0f76af..bc5046f2fae4f84b237e79eaabd373f6f24bd52d
+          args: --latest --strip header
         env:
           OUTPUT: CHANGES.md
 
