@@ -52,7 +52,7 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
         patterns_name,
         'p',
         "One or more pattern files. If not set, current directory used to search all *.patterns files",
-        512,
+        1,
     );
 
     var macro_opt = yazap.Arg.singleValueOption(macro_name, 'm', "Pattern macros to build regexp");
