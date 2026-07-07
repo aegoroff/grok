@@ -57,7 +57,7 @@ jobs:
             processor: apple_m1
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Query version number
         id: get_version
         shell: bash
@@ -122,7 +122,7 @@ jobs:
           echo "version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
 
       - name: Download artefacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: release
 
@@ -169,7 +169,7 @@ jobs:
           commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
