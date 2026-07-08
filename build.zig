@@ -126,7 +126,6 @@ pub fn build(b: *std.Build) void {
     const unit_tests = b.addTest(.{
         .root_module = exe.root_module,
     });
-    deps.applyTo(unit_tests.root_module);
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     const test_step = b.step("test", "Run unit tests");
