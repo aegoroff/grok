@@ -4,6 +4,7 @@ pub const GrokError = error{
     CircularMacro,
     UnknownPatternFile,
     InvalidPatternFile,
+    OutOfMemory,
     InvalidUtf16LineLength,
     InvalidUtf32LineLength,
     InvalidEncoding,

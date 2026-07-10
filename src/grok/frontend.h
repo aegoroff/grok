@@ -19,6 +19,7 @@
 extern int yylineno;
 extern int yycolumn;
 extern int yyerror_flag;
+extern int fend_oom_flag;
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,6 +29,8 @@ typedef struct macro {
     char *name;
     char *property;
 } macro_t;
+
+extern void fend_signal_oom(void);
 
 extern void fend_on_definition(void);
 

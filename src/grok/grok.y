@@ -134,10 +134,17 @@ member
 
 %%
 
+int fend_oom_flag = 0;
+
+void fend_signal_oom(void) {
+	fend_oom_flag = 1;
+}
+
 int yyerror_flag = 0;
 
 void yyerror(char *format, ...) {
 	if (yyerror_flag) return;  // Already reported
+	if (fend_oom_flag) return;
 	yyerror_flag = 1;
 
 	va_list ap;
@@ -147,6 +154,8 @@ void yyerror(char *format, ...) {
 }
 
 void lyyerror(YYLTYPE t, char *format, ...) {
+    if (fend_oom_flag) return;
+
     va_list params;
     va_start(params, format);
 

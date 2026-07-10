@@ -23,6 +23,14 @@ var composition: std.ArrayList(Info) = .empty;
 var current_file: ?[]const u8 = null;
 var definitions: std.StringHashMap(std.ArrayList(Info)) = undefined;
 var lib_initialized: bool = false;
+var oom_jmp_buf: ?*c.jmp_buf = null;
+
+fn noteOom() void {
+    c.fend_signal_oom();
+    if (oom_jmp_buf) |buf| {
+        c.longjmp(&buf[0], 1);
+    }
+}
 
 pub fn getPattern(key: []const u8) grok.GrokError!std.ArrayList(Info) {
     return definitions.get(key) orelse grok.GrokError.UnknownMacro;
@@ -138,9 +146,22 @@ fn compileFile(path: []const u8) !void {
     c.yylloc.first_column = 1;
     c.yylloc.last_column = 1;
     c.yyerror_flag = 0; // Reset error flag
+    c.fend_oom_flag = 0;
     c.yyrestart(c_file_ptr);
+
+    var oom_jmp: c.jmp_buf = undefined;
+    oom_jmp_buf = &oom_jmp;
+    defer oom_jmp_buf = null;
+
+    if (c.setjmp(&oom_jmp[0]) != 0) {
+        return grok.GrokError.OutOfMemory;
+    }
+
     const result = c.yyparse();
-    if (result > 0) {
+    if (c.fend_oom_flag != 0) {
+        return grok.GrokError.OutOfMemory;
+    }
+    if (result != 0) {
         std.log.err("Failed to parse file: {s} at line {d}", .{ path, c.yylineno });
         return grok.GrokError.InvalidPatternFile;
     }
@@ -151,8 +172,8 @@ pub export fn fend_on_literal(str: [*c]const u8) void {
         .data = str,
         .reference = null,
         .part = .literal,
-    }) catch |e| {
-        std.log.err("{}", .{e});
+    }) catch {
+        noteOom();
     };
 }
 
@@ -163,16 +184,15 @@ pub export fn fend_on_definition() void {
 pub export fn fend_on_definition_end(str: [*c]const u8) void {
     const slice = std.mem.span(str);
     const len = slice.len;
-    definitions.put(slice[0..len], composition) catch |e| {
-        std.log.err("{}", .{e});
+    definitions.put(slice[0..len], composition) catch {
+        noteOom();
     };
 }
 
 pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
     const slice = std.mem.span(str);
-    // Allocate memory for string + null terminator
-    const mem = allocator.allocSentinel(u8, slice.len, 0) catch |e| {
-        std.log.err("{}", .{e});
+    const mem = allocator.allocSentinel(u8, slice.len, 0) catch {
+        noteOom();
         return null;
     };
     @memcpy(mem[0..slice.len], slice);
@@ -180,8 +200,12 @@ pub export fn fend_strdup(str: [*c]const u8) [*c]const u8 {
 }
 
 pub export fn fend_on_macro(name: [*c]u8, property: [*c]u8) ?*c.macro_t {
-    const ptr = allocator.create(c.macro_t) catch |e| {
-        std.log.err("{}", .{e});
+    if (name == null) {
+        noteOom();
+        return null;
+    }
+    const ptr = allocator.create(c.macro_t) catch {
+        noteOom();
         return null;
     };
     ptr.* = c.macro_t{
@@ -191,15 +215,19 @@ pub export fn fend_on_macro(name: [*c]u8, property: [*c]u8) ?*c.macro_t {
     return ptr;
 }
 
-pub export fn fend_on_grok(m: *c.macro_t) void {
-    composition.append(allocator, Info{
-        .data = m.name,
-        .reference = m.property,
-        .part = .reference,
-    }) catch |e| {
-        std.log.err("{}", .{e});
+pub export fn fend_on_grok(m: ?*c.macro_t) void {
+    const macro = m orelse {
+        noteOom();
+        return;
     };
-    allocator.destroy(m);
+    composition.append(allocator, Info{
+        .data = macro.name,
+        .reference = macro.property,
+        .part = .reference,
+    }) catch {
+        noteOom();
+    };
+    allocator.destroy(macro);
 }
 
 export fn fend_print_error(
@@ -243,4 +271,10 @@ export fn fend_print_error(
     } else {
         std.log.err("An errror occured during library compilation: {s}", .{std.mem.span(message)});
     }
+}
+
+test "fend_signal_oom sets parser flag" {
+    c.fend_oom_flag = 0;
+    c.fend_signal_oom();
+    try std.testing.expect(c.fend_oom_flag != 0);
 }
