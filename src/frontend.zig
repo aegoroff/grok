@@ -78,13 +78,13 @@ pub fn deinitLib() void {
 }
 
 fn compileDefault() !void {
-    var lib_path: []const u8 = undefined;
     if (builtin.os.tag == .linux) {
-        lib_path = "/usr/share/grok/patterns";
-    } else {
-        lib_path = try std.process.executableDirPathAlloc(io, allocator);
+        try compileDir("/usr/share/grok/patterns");
+        return;
     }
 
+    const lib_path = try std.process.executableDirPathAlloc(io, allocator);
+    defer allocator.free(lib_path);
     try compileDir(lib_path);
 }
 
