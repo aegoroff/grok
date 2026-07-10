@@ -143,6 +143,11 @@ fn freeGeneralContext(ctx: *re.pcre2_general_context_8) void {
     re.pcre2_general_context_free_8(ctx);
 }
 
+const StackItem = union(enum) {
+    info: front.Info,
+    expansion_end: []const u8,
+};
+
 /// Create a pattern from a macro string by processing nested patterns and references.
 /// This function expands macros and creates a regex pattern with named capture groups.
 ///
@@ -151,8 +156,10 @@ fn freeGeneralContext(ctx: *re.pcre2_general_context_8) void {
 /// @return A Pattern struct containing the processed regex and properties, or an error
 pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     const m = try front.getPattern(macro);
-    var stack: std.ArrayList(front.Info) = .empty;
+    var stack: std.ArrayList(StackItem) = .empty;
     defer stack.deinit(gpa);
+    var expanding = std.StringHashMap(void).init(gpa);
+    defer expanding.deinit();
     var composition: std.ArrayList(u8) = .empty;
     defer composition.deinit(gpa);
     var used_properties = std.StringHashMap(bool).init(gpa);
@@ -165,45 +172,55 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
         result.properties.deinit(gpa);
     }
     for (m.items) |value| {
-        try stack.append(gpa, value);
-        while (stack.pop()) |current| {
-            const current_slice = std.mem.span(current.data);
-            if (current.part == .literal) {
-                // plain literal case
-                try composition.appendSlice(gpa, current_slice);
-            } else {
-                const childs = try front.getPattern(current_slice);
+        try stack.append(gpa, .{ .info = value });
+        while (stack.pop()) |item| {
+            switch (item) {
+                .expansion_end => |macro_name| {
+                    _ = expanding.remove(macro_name);
+                },
+                .info => |current| {
+                    const current_slice = std.mem.span(current.data);
+                    if (current.part == .literal) {
+                        try composition.appendSlice(gpa, current_slice);
+                    } else {
+                        const gop = try expanding.getOrPut(current_slice);
+                        if (gop.found_existing) return grok.GrokError.CircularMacro;
 
-                if (current.reference) |current_reference| {
-                    // leading (?<name> immediately into composition
-                    var reference = std.mem.span(current_reference);
-                    var concat: std.ArrayList(u8) = .empty;
-                    defer concat.deinit(gpa);
+                        const childs = try front.getPattern(current_slice);
 
-                    if (used_properties.contains(reference)) {
-                        try concat.appendSlice(gpa, current_slice);
-                        try concat.appendSlice(gpa, "_");
-                        try concat.appendSlice(gpa, reference);
-                        try concat.append(gpa, 0);
-                        reference = concat.items[0 .. concat.items.len - 1 :0];
+                        if (current.reference) |current_reference| {
+                            // leading (?<name> immediately into composition
+                            var reference = std.mem.span(current_reference);
+                            var concat: std.ArrayList(u8) = .empty;
+                            defer concat.deinit(gpa);
+
+                            if (used_properties.contains(reference)) {
+                                try concat.appendSlice(gpa, current_slice);
+                                try concat.appendSlice(gpa, "_");
+                                try concat.appendSlice(gpa, reference);
+                                try concat.append(gpa, 0);
+                                reference = concat.items[0 .. concat.items.len - 1 :0];
+                            }
+                            try used_properties.put(reference, true);
+
+                            try composition.appendSlice(gpa, "(?<");
+                            try composition.appendSlice(gpa, reference);
+                            try composition.appendSlice(gpa, ">");
+
+                            const owned = try gpa.dupeSentinel(u8, reference, 0);
+                            try result.properties.append(gpa, owned);
+
+                            // trailing ) into stack bottom
+                            const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
+                            try stack.append(gpa, .{ .info = trail_paren });
+                        }
+                        try stack.append(gpa, .{ .expansion_end = current_slice });
+                        var rev_iter = std.mem.reverseIterator(childs.items);
+                        while (rev_iter.next()) |child| {
+                            try stack.append(gpa, .{ .info = child });
+                        }
                     }
-                    try used_properties.put(reference, true);
-
-                    try composition.appendSlice(gpa, "(?<");
-                    try composition.appendSlice(gpa, reference);
-                    try composition.appendSlice(gpa, ">");
-
-                    const owned = try gpa.dupeSentinel(u8, reference, 0);
-                    try result.properties.append(gpa, owned);
-
-                    // trailing ) into stack bottom
-                    const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
-                    try stack.append(gpa, trail_paren);
-                }
-                var rev_iter = std.mem.reverseIterator(childs.items);
-                while (rev_iter.next()) |child| {
-                    try stack.append(gpa, child);
-                }
+                },
             }
         }
     }
@@ -253,4 +270,18 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         .boxed_allocator = boxed_allocator,
         .general_context = general_ctx,
     };
+}
+
+test "createPattern detects circular macros" {
+    const gpa = std.testing.allocator;
+    front.deinitLib();
+    defer front.deinitLib();
+
+    var paths_buf = [_][]const u8{"./test_assets/circular.patterns"};
+    const paths: [][]const u8 = paths_buf[0..];
+    try front.compileLib(gpa, std.testing.io, paths);
+
+    try std.testing.expectError(grok.GrokError.CircularMacro, createPattern(gpa, "CYCLEA"));
+    try std.testing.expectError(grok.GrokError.CircularMacro, createPattern(gpa, "CYCLEB"));
+    try std.testing.expectError(grok.GrokError.CircularMacro, createPattern(gpa, "SELFREF"));
 }

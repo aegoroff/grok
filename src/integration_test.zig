@@ -114,6 +114,26 @@ const cases = [_]Case{
         },
     },
     .{
+        .name = "macro with circular reference",
+        .argv = &.{ "macro", "CYCLEA", "-p", "./test_assets/circular.patterns" },
+        .expected = .{
+            .failure = .{
+                .err = grok.GrokError.CircularMacro,
+                .output = "Failed show macro: error.CircularMacro\n",
+            },
+        },
+    },
+    .{
+        .name = "macro with self reference",
+        .argv = &.{ "macro", "SELFREF", "-p", "./test_assets/circular.patterns" },
+        .expected = .{
+            .failure = .{
+                .err = grok.GrokError.CircularMacro,
+                .output = "Failed show macro: error.CircularMacro\n",
+            },
+        },
+    },
+    .{
         .name = "match file UTF-8 without flags",
         .argv = &.{ "file", "-p", patterns, "-m", "NLOG", nlog_file_utf8 },
         .expected = .{ .success = nlog_matches },
