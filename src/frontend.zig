@@ -21,6 +21,7 @@ var allocator: std.mem.Allocator = undefined;
 var io: std.Io = undefined;
 var composition: std.ArrayList(Info) = .empty;
 var current_file: ?[]const u8 = null;
+var current_source: ?[]const u8 = null;
 var definitions: std.StringHashMap(std.ArrayList(Info)) = undefined;
 var lib_initialized: bool = false;
 var oom_jmp_buf: ?*c.jmp_buf = null;
@@ -132,13 +133,32 @@ fn compileDir(lib_path: []const u8) !void {
 
 fn compileFile(path: []const u8) !void {
     current_file = path;
-    const c_file_ptr = c.fopen(path.ptr, "r") orelse {
+    defer current_file = null;
+
+    var file_buffer: [64 * 1024]u8 = undefined;
+    var file = std.Io.Dir.cwd().openFile(io, path, .{ .mode = .read_only }) catch {
         std.log.err("Failed to open file: {s}", .{path});
         return grok.GrokError.UnknownPatternFile;
     };
-    defer _ = c.fclose(c_file_ptr);
+    defer file.close(io);
 
-    // Initialize location tracking BEFORE restart
+    var memory = std.Io.Writer.Allocating.init(allocator);
+    defer memory.deinit();
+    var file_reader = file.reader(io, &file_buffer);
+    _ = try file_reader.interface.streamRemaining(&memory.writer);
+
+    const source = try allocator.dupe(u8, memory.written());
+    defer allocator.free(source);
+    current_source = source;
+    defer current_source = null;
+
+    const source_z = try allocator.dupeSentinel(u8, source, 0);
+    defer allocator.free(source_z);
+
+    const scan_buf = c.yy_scan_string(source_z.ptr);
+    defer c.yy_delete_buffer(scan_buf);
+
+    // Initialize location tracking BEFORE scanning
     c.yyset_lineno(1);
     c.yycolumn = 1;
     c.yylloc.first_line = 1;
@@ -147,7 +167,6 @@ fn compileFile(path: []const u8) !void {
     c.yylloc.last_column = 1;
     c.yyerror_flag = 0; // Reset error flag
     c.fend_oom_flag = 0;
-    c.yyrestart(c_file_ptr);
 
     var oom_jmp: c.jmp_buf = undefined;
     oom_jmp_buf = &oom_jmp;
@@ -241,20 +260,12 @@ export fn fend_print_error(
         var reporter = ErrorReporter.init(allocator);
         defer reporter.deinit();
 
-        var memory = std.Io.Writer.Allocating.init(allocator);
-        defer memory.deinit();
-        var file = std.Io.Dir.cwd().openFile(io, path, .{ .mode = .read_only }) catch {
-            std.log.err("No file: {s}", .{path});
+        const source = current_source orelse {
+            std.log.err("No source text for file: {s}", .{path});
             return;
         };
-        defer file.close(io);
-        var file_buffer: [64 * 1024]u8 = undefined;
-        var file_reader = file.reader(io, &file_buffer);
-        _ = file_reader.interface.streamRemaining(&memory.writer) catch |e| {
-            std.log.err("File '{s}' reading failed: {}", .{ path, e });
-        };
 
-        reporter.addSource(path, memory.written()) catch |e| {
+        reporter.addSource(path, source) catch |e| {
             std.log.err("Add source '{s}' failed with: {}", .{ path, e });
         };
 
