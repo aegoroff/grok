@@ -48,13 +48,31 @@ pub const DetectResult = struct {
 };
 
 pub fn convertRawUtf16ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encoding: Encoding) ![]u8 {
-    const wide = try charToWchar(gpa, rawBytes, encoding);
+    const wide = try bytesToCodeUnits(
+        gpa,
+        rawBytes,
+        encoding,
+        u16,
+        2,
+        error.InvalidUtf16LineLength,
+        .utf16le,
+        .utf16be,
+    );
     defer gpa.free(wide);
     return std.unicode.utf16LeToUtf8Alloc(gpa, wide);
 }
 
 pub fn convertRawUtf32ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encoding: Encoding) ![]u8 {
-    const wide = try charToUtf32(gpa, rawBytes, encoding);
+    const wide = try bytesToCodeUnits(
+        gpa,
+        rawBytes,
+        encoding,
+        u32,
+        4,
+        error.InvalidUtf32LineLength,
+        .utf32le,
+        .utf32be,
+    );
     defer gpa.free(wide);
     return utf32ToUtf8Alloc(gpa, wide);
 }
@@ -76,20 +94,31 @@ pub fn detectBomMemory(buffer: []const u8) DetectResult {
     return .{ .encoding = .unknown, .offset = 0 };
 }
 
-fn charToWchar(gpa: std.mem.Allocator, buffer: []const u8, encoding: Encoding) ![]u16 {
-    if (buffer.len % 2 != 0) return grok.GrokError.InvalidUtf16LineLength;
-    const len = buffer.len / 2;
+fn bytesToCodeUnits(
+    gpa: std.mem.Allocator,
+    buffer: []const u8,
+    encoding: Encoding,
+    comptime Unit: type,
+    comptime unit_size: usize,
+    comptime invalid_length: grok.GrokError,
+    comptime le_encoding: Encoding,
+    comptime be_encoding: Encoding,
+) ![]Unit {
+    comptime std.debug.assert(@sizeOf(Unit) == unit_size);
 
-    var wide_buffer = try gpa.alloc(u16, len);
+    if (buffer.len % unit_size != 0) return invalid_length;
+    const len = buffer.len / unit_size;
+
+    var wide_buffer = try gpa.alloc(Unit, len);
     errdefer gpa.free(wide_buffer);
 
     var i: usize = 0;
     while (i < len) : (i += 1) {
-        const bytes = buffer[i * 2 .. (i * 2) + 2][0..2].*;
+        const bytes = buffer[i * unit_size .. (i + 1) * unit_size][0..unit_size].*;
 
         wide_buffer[i] = switch (encoding) {
-            .utf16le => std.mem.readInt(u16, &bytes, .little),
-            .utf16be => std.mem.readInt(u16, &bytes, .big),
+            le_encoding => std.mem.readInt(Unit, &bytes, .little),
+            be_encoding => std.mem.readInt(Unit, &bytes, .big),
             else => return grok.GrokError.InvalidEncoding,
         };
     }
@@ -114,27 +143,6 @@ fn utf32ToUtf8Alloc(gpa: std.mem.Allocator, utf32_input: []const u32) ![]u8 {
     }
 
     return utf8_list.toOwnedSlice(gpa);
-}
-
-fn charToUtf32(gpa: std.mem.Allocator, buffer: []const u8, encoding: Encoding) ![]u32 {
-    if (buffer.len % 4 != 0) return grok.GrokError.InvalidUtf32LineLength;
-    const len = buffer.len / 4;
-
-    var wide_buffer = try gpa.alloc(u32, len);
-    errdefer gpa.free(wide_buffer);
-
-    var i: usize = 0;
-    while (i < len) : (i += 1) {
-        const bytes = buffer[i * 4 .. (i * 4) + 4][0..4].*;
-
-        wide_buffer[i] = switch (encoding) {
-            .utf32le => std.mem.readInt(u32, &bytes, .little),
-            .utf32be => std.mem.readInt(u32, &bytes, .big),
-            else => return grok.GrokError.InvalidEncoding,
-        };
-    }
-
-    return wide_buffer;
 }
 
 test "detect Utf8" {
