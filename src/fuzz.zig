@@ -26,6 +26,7 @@
 ///   - memory leak is not allowed (detected by the arena/GPA)
 ///   - errors like UnknownMacro, InvalidRegex, WriteError — expected, not a bug
 const std = @import("std");
+const builtin = @import("builtin");
 const app = @import("main.zig");
 const frontend = @import("frontend.zig");
 const pattern_macros = @import("fuzz_macros");
@@ -33,6 +34,7 @@ const pattern_macros = @import("fuzz_macros");
 const known_macros = pattern_macros.names;
 
 const watchdog_timeout_ns: i128 = 5 * std.time.ns_per_s;
+const fuzz_active_root = ".zig-cache/tmp/.fuzz-active";
 
 const CorpusPart = union(enum) {
     int: u64,
@@ -108,10 +110,153 @@ const FuzzCtx = struct {
 };
 
 var g_ctx: *FuzzCtx = undefined;
+var watchdog_stop = std.atomic.Value(bool).init(false);
+var interrupt_requested = std.atomic.Value(bool).init(false);
+var interrupt_cleanup_done = std.atomic.Value(bool).init(false);
+var active_tmp_dir: ?*std.testing.TmpDir = null;
+var active_registry_path: [128]u8 = undefined;
+var active_registry_path_len: usize = 0;
+
+const sigint_cleanup_supported = @hasDecl(std.posix, "sigaction") and @hasDecl(std.posix.SIG, "INT");
+
+fn processId() std.posix.pid_t {
+    return switch (builtin.os.tag) {
+        .linux => std.os.linux.getpid(),
+        .macos, .ios, .tvos, .watchos, .visionos => blk: {
+            const rc = std.c.getpid();
+            break :blk @intCast(rc);
+        },
+        else => @compileError("fuzz temp cleanup unsupported on this OS"),
+    };
+}
+
+fn isProcessAlive(pid: std.posix.pid_t) bool {
+    if (builtin.os.tag == .linux) {
+        var path_buf: [64]u8 = undefined;
+        const path = std.fmt.bufPrint(&path_buf, "/proc/{d}", .{pid}) catch return true;
+        std.Io.Dir.cwd().access(std.testing.io, path, .{}) catch return false;
+        return true;
+    }
+    return true;
+}
+
+fn cleanupStaleFuzzTmpDirs() void {
+    const io = std.testing.io;
+    var tmp_root = std.Io.Dir.cwd().openDir(io, ".zig-cache/tmp", .{}) catch return;
+    defer tmp_root.close(io);
+    var active_root = tmp_root.createDirPathOpen(io, ".fuzz-active", .{
+        .open_options = .{ .iterate = true },
+    }) catch return;
+    defer active_root.close(io);
+
+    var it = active_root.iterate();
+    while (it.next(io) catch null) |entry| {
+        if (entry.kind != .file) continue;
+        const pid = std.fmt.parseInt(std.posix.pid_t, entry.name, 10) catch continue;
+        if (isProcessAlive(pid)) continue;
+
+        const registry = active_root.readFileAlloc(io, entry.name, std.testing.allocator, .unlimited) catch continue;
+        defer std.testing.allocator.free(registry);
+        const sub_path = std.mem.trim(u8, registry, " \t\r\n");
+        if (sub_path.len == 0) continue;
+
+        tmp_root.deleteTree(io, sub_path) catch {};
+        active_root.deleteFile(io, entry.name) catch {};
+    }
+}
+
+fn registerActiveFuzzTmpDir(tmp_dir: *std.testing.TmpDir) void {
+    const io = std.testing.io;
+    const pid = processId();
+    const written = std.fmt.bufPrint(
+        &active_registry_path,
+        fuzz_active_root ++ "/{d}",
+        .{pid},
+    ) catch return;
+    active_registry_path_len = written.len;
+    active_tmp_dir = tmp_dir;
+
+    var tmp_root = std.Io.Dir.cwd().openDir(io, ".zig-cache/tmp", .{}) catch return;
+    defer tmp_root.close(io);
+    var active_root = tmp_root.createDirPathOpen(io, ".fuzz-active", .{}) catch return;
+    defer active_root.close(io);
+
+    var pid_buf: [32]u8 = undefined;
+    const pid_name = std.fmt.bufPrint(&pid_buf, "{d}", .{pid}) catch return;
+    var registry = active_root.createFile(io, pid_name, .{}) catch return;
+    defer registry.close(io);
+    var write_buf: [64]u8 = undefined;
+    var file_writer = registry.writer(io, &write_buf);
+    file_writer.interface.writeAll(tmp_dir.sub_path[0..]) catch {};
+    file_writer.interface.flush() catch {};
+}
+
+fn unregisterActiveFuzzTmpDir() void {
+    if (active_registry_path_len == 0) return;
+    const io = std.testing.io;
+    std.Io.Dir.cwd().deleteFile(io, active_registry_path[0..active_registry_path_len]) catch {};
+    active_registry_path_len = 0;
+    active_tmp_dir = null;
+}
+
+fn cleanupActiveFuzzTmpDir() void {
+    if (active_tmp_dir) |dir| {
+        dir.cleanup();
+        active_tmp_dir = null;
+    }
+    unregisterActiveFuzzTmpDir();
+}
+
+fn finishAfterInterrupt() noreturn {
+    if (interrupt_cleanup_done.swap(true, .release)) std.process.exit(130);
+    cleanupActiveFuzzTmpDir();
+    std.process.exit(130);
+}
+
+const SigintCleanup = if (sigint_cleanup_supported) struct {
+    var prev_int: std.posix.Sigaction = undefined;
+    var prev_term: std.posix.Sigaction = undefined;
+    var installed = false;
+
+    fn interruptHandler(sig: std.posix.SIG) callconv(.c) void {
+        _ = sig;
+        interrupt_requested.store(true, .release);
+    }
+
+    fn install() void {
+        const act = std.posix.Sigaction{
+            .handler = .{ .handler = interruptHandler },
+            .mask = std.posix.sigemptyset(),
+            .flags = 0,
+        };
+        std.posix.sigaction(.INT, &act, if (installed) null else &prev_int);
+        if (@hasDecl(std.posix.SIG, "TERM")) {
+            std.posix.sigaction(.TERM, &act, if (installed) null else &prev_term);
+        }
+        installed = true;
+    }
+
+    fn restore() void {
+        if (!installed) return;
+        std.posix.sigaction(.INT, &prev_int, null);
+        if (@hasDecl(std.posix.SIG, "TERM")) {
+            std.posix.sigaction(.TERM, &prev_term, null);
+        }
+        installed = false;
+    }
+} else struct {
+    fn install() void {}
+    fn restore() void {}
+};
 
 fn watchdogLoop() void {
-    while (true) {
+    while (!watchdog_stop.load(.acquire)) {
+        if (interrupt_requested.load(.acquire)) {
+            const start = g_ctx.iteration_start_ns.load(.acquire);
+            if (start == 0) finishAfterInterrupt();
+        }
         std.Io.sleep(std.testing.io, .{ .nanoseconds = 200 * std.time.ns_per_ms }, .real) catch return;
+        if (watchdog_stop.load(.acquire)) return;
         const start = g_ctx.iteration_start_ns.load(.acquire);
         if (start == 0) continue; // no iteration in flight right now
         const now = std.Io.Clock.real.now(std.testing.io);
@@ -124,6 +269,8 @@ fn watchdogLoop() void {
 
 /// Single fuzz iteration. Called by fuzzer with mutated bytes.
 fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
+    if (interrupt_requested.load(.acquire)) finishAfterInterrupt();
+
     if (ctx.watchdog_spawned.cmpxchgStrong(false, true, .acquire, .monotonic) == null) {
         g_ctx = ctx;
         _ = std.Thread.spawn(.{}, watchdogLoop, .{}) catch {};
@@ -165,19 +312,11 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     // });
 
     // ── 4. Write subject into a temp file ──────────────
-    const id = g_ctx.file_counter.fetchAdd(1, .monotonic);
+    const id = ctx.file_counter.fetchAdd(1, .monotonic);
     const tid = std.Thread.getCurrentId();
     const basename = try std.fmt.allocPrintSentinel(gpa, "fuzz_{d}_{d}.log", .{ tid, id }, 0);
     defer gpa.free(basename);
     defer ctx.tmp_dir.dir.deleteFile(std.testing.io, basename) catch {};
-
-    const file_path = try std.fmt.allocPrintSentinel(
-        gpa,
-        ".zig-cache/tmp/{s}/{s}",
-        .{ ctx.tmp_dir.sub_path[0..], basename },
-        0,
-    );
-    defer gpa.free(file_path);
 
     {
         var file = try ctx.tmp_dir.dir.createFile(std.testing.io, basename, .{});
@@ -187,6 +326,14 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
         try file_writer.interface.writeAll(subject);
         try file_writer.interface.flush();
     }
+
+    const file_path = try std.fmt.allocPrintSentinel(
+        gpa,
+        ".zig-cache/tmp/{s}/{s}",
+        .{ ctx.tmp_dir.sub_path[0..], basename },
+        0,
+    );
+    defer gpa.free(file_path);
 
     // ── 5. Build argv exactly like the real CLI / integration tests ────────
     const macro_z = try gpa.dupeSentinel(u8, macro, 0);
@@ -232,8 +379,19 @@ test "known macros exist in ./patterns/" {
 }
 
 test "fuzz file mode" {
+    interrupt_requested.store(false, .release);
+    interrupt_cleanup_done.store(false, .release);
+    watchdog_stop.store(false, .release);
+    cleanupStaleFuzzTmpDirs();
+
     var tmp_dir = std.testing.tmpDir(.{});
-    defer tmp_dir.cleanup();
+    registerActiveFuzzTmpDir(&tmp_dir);
+    SigintCleanup.install();
+    defer {
+        watchdog_stop.store(true, .release);
+        SigintCleanup.restore();
+        cleanupActiveFuzzTmpDir();
+    }
 
     var ctx = FuzzCtx{ .tmp_dir = &tmp_dir };
 
