@@ -11,6 +11,7 @@
 ///
 /// Input is decoded through `std.testing.Smith` (same in fuzz and smoke-test modes):
 ///   1. macro index — `smith.valueRangeAtMost(u8, 0, len(known_macros) - 1)`
+///      (`known_macros` is generated from `patterns/*.patterns` in build.zig)
 ///   2. flags byte  — `smith.value(u8)`; bit0=info, bit1=json, bit2=invert,
 ///                    bit3=count, bit4=line-number
 ///   3. subject     — zero or more chunks until `smith.eos()` returns true:
@@ -26,47 +27,10 @@
 ///   - errors like UnknownMacro, InvalidRegex, WriteError — expected, not a bug
 const std = @import("std");
 const app = @import("main.zig");
+const frontend = @import("frontend.zig");
+const pattern_macros = @import("fuzz_macros");
 
-/// Known patterns guaranteed to exist in ./patterns/.
-/// Extend this list when adding new .patterns files.
-const known_macros = [_][]const u8{
-    "YEAR",
-    "MONTH",
-    "MONTHDAY",
-    "HOUR",
-    "MINUTE",
-    "SECOND",
-    "TIME",
-    "DATE",
-    "NUMBER",
-    "BASE10NUM",
-    "INT",
-    "POSINT",
-    "WORD",
-    "NOTSPACE",
-    "SPACE",
-    "DATA",
-    "GREEDYDATA",
-    "IP",
-    "IPORHOST",
-    "HOSTNAME",
-    "HOSTPORT",
-    "PATH",
-    "URIPROTO",
-    "URIHOST",
-    "URIPATH",
-    "URIPARAM",
-    "URIPATHPARAM",
-    "URI",
-    "USERNAME",
-    "USER",
-    "EMAILADDRESS",
-    "HTTPDUSER",
-    "TIMESTAMP_ISO8601",
-    "NLOG",
-    "NGINXPROXYACCESS",
-    "NGINXPROXYDEFAULTACCESS",
-};
+const known_macros = pattern_macros.names;
 
 const watchdog_timeout_ns: i128 = 5 * std.time.ns_per_s;
 
@@ -165,6 +129,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     }
     const now = std.Io.Clock.real.now(std.testing.io);
     ctx.iteration_start_ns.store(@intCast(now.nanoseconds), .release);
+    defer ctx.iteration_start_ns.store(0, .release);
 
     // ── 1. Select pattern ──────────────────────────────────────────────────
     const macro_idx = smith.valueRangeAtMost(u8, 0, known_macros.len - 1);
@@ -236,6 +201,27 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
 
     // ── 7. Run through the same entry point as main() / integration tests ────
     app.run(gpa, &sink.writer, std.testing.io, argv_list.items) catch {};
+}
+
+test "known macros exist in ./patterns/" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var paths_buf = [_][]const u8{"./patterns/"};
+    const paths: [][]const u8 = paths_buf[0..];
+    try frontend.compileLib(arena.allocator(), std.testing.io, paths);
+    defer frontend.deinitLib();
+
+    inline for (known_macros) |name| {
+        _ = try frontend.getPattern(name);
+    }
+
+    var loaded: usize = 0;
+    var it = frontend.getPatterns().keyIterator();
+    while (it.next()) |key| {
+        _ = key.*;
+        loaded += 1;
+    }
+    try std.testing.expectEqual(known_macros.len, loaded);
 }
 
 test "fuzz file mode" {
