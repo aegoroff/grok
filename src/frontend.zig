@@ -137,6 +137,7 @@ fn compileDir(lib_path: []const u8) !void {
     } else {
         dir = try std.Io.Dir.cwd().openDir(io, lib_path, options);
     }
+    defer dir.close(io);
     var walker = try dir.walk(allocator);
     defer walker.deinit();
     while (true) {
