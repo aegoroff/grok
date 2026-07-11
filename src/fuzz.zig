@@ -12,8 +12,10 @@
 /// Input is decoded through `std.testing.Smith` (same in fuzz and smoke-test modes):
 ///   1. macro index — `smith.valueRangeAtMost(u8, 0, len(known_macros) - 1)`
 ///      (`known_macros` is generated from `patterns/*.patterns` in build.zig)
-///   2. flags byte  — `smith.value(u8)`; bit0=info, bit1=json, bit2=invert,
-///                    bit3=count, bit4=line-number
+///   2. flags byte  — `smith.value(u8)`; bits0-4=CLI flags (bit0=info, bit1=json,
+///                    bit2=invert, bit3=count, bit4=line-number); bits5-7=file
+///                    encoding (0=raw, 1=UTF-8 BOM, 2=UTF-16LE, 3=UTF-16BE,
+///                    4=UTF-32LE, 5=UTF-32BE, 6-7=raw)
 ///   3. subject     — zero or more chunks until `smith.eos()` returns true:
 ///        eos=false, chunk_len (1..255), chunk bytes, …, eos=true
 ///
@@ -30,6 +32,7 @@ const app = @import("main.zig");
 const frontend = @import("frontend.zig");
 const pattern_macros = @import("fuzz_macros");
 const fuzz_corpus = @import("fuzz_corpus");
+const fuzz_encoding = @import("fuzz_encoding.zig");
 
 const known_macros = pattern_macros.names;
 
@@ -241,8 +244,10 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     defer arena.deinit();
     const gpa = arena.allocator();
 
-    // ── 2. Select flags ────────────────────────────────────────────────────
+    // ── 2. Select flags and file encoding ──────────────────────────────────
     const flags_byte = smith.value(u8);
+    const cli_flags = flags_byte & 0x1F;
+    const file_encoding = fuzz_encoding.FileEncoding.fromFlagsByte(flags_byte);
 
     // ── 3. Subject ─────────────────────────────────────────────────────────
     var subject_list: std.ArrayList(u8) = .empty;
@@ -259,14 +264,18 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     //     macro, flags_byte, subject.len, subject,
     // });
 
-    // ── 4. Write subject into a temp file (one reused file per thread) ─────
+    // ── 4. Write encoded subject into a temp file (one reused file per thread)
+    const payload = try fuzz_encoding.encodeSubjectForFile(gpa, subject, file_encoding);
+    defer gpa.free(payload);
+    if (payload.len > 256 * 1024) return error.SkipZigTest;
+
     const basename = threadInputBasename();
     {
         var file = try ctx.tmp_dir.dir.createFile(std.testing.io, basename, .{});
         defer file.close(std.testing.io);
         var write_buf: [4096]u8 = undefined;
         var file_writer = file.writer(std.testing.io, &write_buf);
-        try file_writer.interface.writeAll(subject);
+        try file_writer.interface.writeAll(payload);
         try file_writer.interface.flush();
     }
 
@@ -285,11 +294,11 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     var argv_list: std.ArrayList([:0]const u8) = .empty;
     defer argv_list.deinit(gpa);
     try argv_list.appendSlice(gpa, &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", macro_z });
-    if (flags_byte & 0b00001 != 0) try argv_list.append(gpa, "-i");
-    if (flags_byte & 0b00010 != 0) try argv_list.append(gpa, "-j");
-    if (flags_byte & 0b00100 != 0) try argv_list.append(gpa, "-v");
-    if (flags_byte & 0b01000 != 0) try argv_list.append(gpa, "-c");
-    if (flags_byte & 0b10000 != 0) try argv_list.append(gpa, "-n");
+    if (cli_flags & 0b00001 != 0) try argv_list.append(gpa, "-i");
+    if (cli_flags & 0b00010 != 0) try argv_list.append(gpa, "-j");
+    if (cli_flags & 0b00100 != 0) try argv_list.append(gpa, "-v");
+    if (cli_flags & 0b01000 != 0) try argv_list.append(gpa, "-c");
+    if (cli_flags & 0b10000 != 0) try argv_list.append(gpa, "-n");
     try argv_list.append(gpa, file_path);
 
     // ── 6. Writer ──────────────────────────────────────────────────────────
