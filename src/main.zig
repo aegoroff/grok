@@ -3,6 +3,7 @@ const builtin = @import("builtin");
 const front = @import("frontend.zig");
 const matcher = @import("matcher.zig");
 const line_reader = @import("line_reader.zig");
+const encoding = @import("encoding.zig");
 const configuration = @import("configuration.zig");
 const yazap = @import("yazap");
 
@@ -53,59 +54,33 @@ pub fn run(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, argv: []c
     }
 }
 
+fn reportFailure(writer: *std.Io.Writer, comptime context: []const u8, err: anyerror) !void {
+    try writer.print("Failed {s}: {}\n", .{ context, err });
+    return err;
+}
+
 fn stringAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) !void {
     const macro = configuration.getMacroOpt(cmd) orelse return;
     const str = configuration.getStringArgValue(cmd) orelse return;
-    matchString(gpa, writer, macro, str, .{
-        .info = configuration.isInfoMode(cmd),
-        .json = configuration.isJsonMode(cmd),
-        .invert_match = configuration.isInvertMatch(cmd),
-    }) catch |e| {
-        try writer.print("Failed string match: {}\n", .{e});
-        return e;
-    };
+    matchString(gpa, writer, macro, str, configuration.outputFlags(cmd, false)) catch |e| return reportFailure(writer, "string match", e);
 }
 
 fn fileAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) !void {
     const macro = configuration.getMacroOpt(cmd) orelse return;
     const path = configuration.getPathArgValue(cmd) orelse return;
-    matchFile(gpa, writer, io, macro, path, .{
-        .info = configuration.isInfoMode(cmd),
-        .json = configuration.isJsonMode(cmd),
-        .count = configuration.isCountMode(cmd),
-        .print_line_num = configuration.printLineNumber(cmd),
-        .invert_match = configuration.isInvertMatch(cmd),
-    }) catch |e| {
-        try writer.print("Failed file match: {}\n", .{e});
-        return e;
-    };
+    matchFile(gpa, writer, io, macro, path, configuration.outputFlags(cmd, true)) catch |e| return reportFailure(writer, "file match", e);
 }
 
 fn stdinAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) !void {
     const macro = configuration.getMacroOpt(cmd) orelse return;
-    matchStdin(gpa, writer, io, macro, .{
-        .info = configuration.isInfoMode(cmd),
-        .json = configuration.isJsonMode(cmd),
-        .count = configuration.isCountMode(cmd),
-        .print_line_num = configuration.printLineNumber(cmd),
-        .invert_match = configuration.isInvertMatch(cmd),
-    }) catch |e| {
-        try writer.print("Failed stdin match: {}\n", .{e});
-        return e;
-    };
+    matchStdin(gpa, writer, io, macro, configuration.outputFlags(cmd, true)) catch |e| return reportFailure(writer, "stdin match", e);
 }
 
 fn macroAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) !void {
     if (configuration.getMacroArgValue(cmd)) |macro| {
-        showMacroRegex(gpa, writer, macro) catch |e| {
-            try writer.print("Failed show macro: {}\n", .{e});
-            return e;
-        };
+        showMacroRegex(gpa, writer, macro) catch |e| return reportFailure(writer, "show macro", e);
     } else {
-        listAllMacroses(gpa, writer) catch |e| {
-            try writer.print("Failed to list macroses: {}\n", .{e});
-            return e;
-        };
+        listAllMacroses(gpa, writer) catch |e| return reportFailure(writer, "to list macroses", e);
     }
 }
 
@@ -137,11 +112,7 @@ fn matchFile(
     const reader = &file_reader.interface;
     const detection = try line_reader.probeFileEncoding(reader, stat.size);
     try file_reader.seekTo(detection.offset);
-    const file_encoding = line_reader.encodingFromDetection(detection);
-
-    var match = try matcher.Matcher.init(gpa, writer, macro);
-    defer match.deinit();
-    try match.matchStrings(reader, flags, file_encoding);
+    try matchReader(gpa, writer, macro, reader, flags, line_reader.encodingFromDetection(detection));
 }
 
 fn matchStdin(
@@ -153,9 +124,20 @@ fn matchStdin(
 ) !void {
     var file_buffer: [16384]u8 = undefined;
     var file_reader = std.Io.File.stdin().reader(io, &file_buffer);
+    try matchReader(gpa, writer, macro, &file_reader.interface, flags, null);
+}
+
+fn matchReader(
+    gpa: std.mem.Allocator,
+    writer: *std.Io.Writer,
+    macro: []const u8,
+    reader: *std.Io.Reader,
+    flags: matcher.OutputFlags,
+    file_encoding: ?encoding.Encoding,
+) !void {
     var match = try matcher.Matcher.init(gpa, writer, macro);
     defer match.deinit();
-    try match.matchStrings(&file_reader.interface, flags, null);
+    try match.matchStrings(reader, flags, file_encoding);
 }
 
 fn showMacroRegex(

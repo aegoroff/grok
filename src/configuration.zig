@@ -5,6 +5,7 @@ const yazap = @import("yazap");
 const builtin = @import("builtin");
 const build_options = @import("build_options");
 const front = @import("frontend.zig");
+const printer = @import("printer.zig");
 
 const patterns_name: []const u8 = "patterns";
 const count_name: []const u8 = "count";
@@ -187,6 +188,17 @@ pub fn printLineNumber(match: yazap.ArgMatches) bool {
 
 pub fn isInvertMatch(match: yazap.ArgMatches) bool {
     return match.containsArg(invert_name);
+}
+
+/// Builds output flags from parsed CLI args. Stream commands (file, stdin) expose count and line-number options.
+pub fn outputFlags(match: yazap.ArgMatches, stream: bool) printer.OutputFlags {
+    return .{
+        .info = isInfoMode(match),
+        .json = isJsonMode(match),
+        .count = stream and isCountMode(match),
+        .print_line_num = stream and printLineNumber(match),
+        .invert_match = isInvertMatch(match),
+    };
 }
 
 test "correct string parsing and run integration test" {
