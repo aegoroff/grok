@@ -251,7 +251,7 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
     const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
         var buffer: [256]u8 = undefined;
         _ = re.pcre2_get_error_message_8(errornumber, &buffer, buffer.len);
-        std.log.err("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, buffer, pattern.regex });
+        std.log.warn("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, buffer, pattern.regex });
 
         var props = pattern.properties;
         for (props.items) |prop| {

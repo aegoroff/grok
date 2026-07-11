@@ -141,7 +141,7 @@ fn compileDir(lib_path: []const u8) !void {
     defer walker.deinit();
     while (true) {
         const entry_or_null = walker.next(io) catch |walk_err| {
-            std.log.err("{}", .{walk_err});
+            std.log.warn("{}", .{walk_err});
             continue;
         };
         const entry = entry_or_null orelse {
@@ -169,7 +169,7 @@ fn compileFile(path: []const u8) !void {
 
     var file_buffer: [64 * 1024]u8 = undefined;
     var file = std.Io.Dir.cwd().openFile(io, path, .{ .mode = .read_only }) catch {
-        std.log.err("Failed to open file: {s}", .{path});
+        std.log.warn("Failed to open file: {s}", .{path});
         return grok.GrokError.UnknownPatternFile;
     };
     defer file.close(io);
@@ -215,7 +215,7 @@ fn compileFile(path: []const u8) !void {
         return grok.GrokError.OutOfMemory;
     }
     if (result != 0) {
-        std.log.err("Failed to parse file: {s} at line {d}", .{ path, c.yylineno });
+        std.log.warn("Failed to parse file: {s} at line {d}", .{ path, c.yylineno });
         return grok.GrokError.InvalidPatternFile;
     }
 }
@@ -296,12 +296,13 @@ export fn fend_print_error(
         defer reporter.deinit();
 
         const source = current_source orelse {
-            std.log.err("No source text for file: {s}", .{path});
+            std.log.warn("No source text for file: {s}", .{path});
             return;
         };
 
         reporter.addSource(path, source) catch |e| {
-            std.log.err("Add source '{s}' failed with: {}", .{ path, e });
+            std.log.warn("Add source '{s}' failed with: {}", .{ path, e });
+            return;
         };
 
         const diagnostic = Diagnostic.init(.err, std.mem.span(message))
@@ -315,7 +316,7 @@ export fn fend_print_error(
 
         reporter.report(diagnostic);
     } else {
-        std.log.err("An errror occured during library compilation: {s}", .{std.mem.span(message)});
+        std.log.warn("An errror occured during library compilation: {s}", .{std.mem.span(message)});
     }
 }
 
