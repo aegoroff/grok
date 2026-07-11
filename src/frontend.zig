@@ -24,13 +24,36 @@ var current_file: ?[]const u8 = null;
 var current_source: ?[]const u8 = null;
 var definitions: std.StringHashMap(std.ArrayList(Info)) = undefined;
 var lib_initialized: bool = false;
-var oom_jmp_buf: ?*c.jmp_buf = null;
+var lib_mutex: std.Io.Mutex = .init;
+threadlocal var oom_jmp_buf: ?*c.jmp_buf = null;
 
 fn noteOom() void {
     c.fend_signal_oom();
     if (oom_jmp_buf) |buf| {
         c.longjmp(&buf[0], 1);
     }
+}
+
+fn freeInfo(info: Info) void {
+    allocator.free(std.mem.span(info.data));
+    if (info.reference) |r| {
+        allocator.free(std.mem.span(r));
+    }
+}
+
+fn freeMacro(macro: *c.macro_t) void {
+    allocator.free(std.mem.span(macro.name));
+    if (macro.property != null) {
+        allocator.free(std.mem.span(macro.property));
+    }
+    allocator.destroy(macro);
+}
+
+fn clearComposition() void {
+    for (composition.items) |info| {
+        freeInfo(info);
+    }
+    composition.clearRetainingCapacity();
 }
 
 pub fn getPattern(key: []const u8) grok.GrokError!std.ArrayList(Info) {
@@ -42,6 +65,10 @@ pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
 }
 
 pub fn compileLib(gpa: std.mem.Allocator, stdio: std.Io, paths: ?[][]const u8) !void {
+    try lib_mutex.lock(stdio);
+    defer lib_mutex.unlock(stdio);
+
+    if (lib_initialized) deinitLibUnlocked();
     allocator = gpa;
     io = stdio;
     definitions = std.StringHashMap(std.ArrayList(Info)).init(allocator);
@@ -67,14 +94,18 @@ pub fn compileLib(gpa: std.mem.Allocator, stdio: std.Io, paths: ?[][]const u8) !
 /// Safe to call even if compileLib was never invoked (e.g. bad-args test path).
 pub fn deinitLib() void {
     if (!lib_initialized) return;
+    lib_mutex.lock(io) catch return;
+    defer lib_mutex.unlock(io);
+    deinitLibUnlocked();
+}
+
+fn deinitLibUnlocked() void {
+    if (!lib_initialized) return;
 
     var it = definitions.iterator();
     while (it.next()) |entry| {
         for (entry.value_ptr.items) |info| {
-            allocator.free(std.mem.span(info.data));
-            if (info.reference) |r| {
-                allocator.free(std.mem.span(r));
-            }
+            freeInfo(info);
         }
         entry.value_ptr.deinit(allocator);
 
@@ -83,6 +114,7 @@ pub fn deinitLib() void {
     }
     definitions.deinit();
     composition = .empty;
+    _ = c.yylex_destroy();
     lib_initialized = false;
 }
 
@@ -155,8 +187,8 @@ fn compileFile(path: []const u8) !void {
     const source_z = try allocator.dupeSentinel(u8, source, 0);
     defer allocator.free(source_z);
 
-    const scan_buf = c.yy_scan_string(source_z.ptr);
-    defer c.yy_delete_buffer(scan_buf);
+    _ = c.yy_scan_string(source_z.ptr);
+    defer _ = c.yypop_buffer_state();
 
     // Initialize location tracking BEFORE scanning
     c.yyset_lineno(1);
@@ -173,11 +205,13 @@ fn compileFile(path: []const u8) !void {
     defer oom_jmp_buf = null;
 
     if (c.setjmp(&oom_jmp[0]) != 0) {
+        clearComposition();
         return grok.GrokError.OutOfMemory;
     }
 
     const result = c.yyparse();
     if (c.fend_oom_flag != 0) {
+        clearComposition();
         return grok.GrokError.OutOfMemory;
     }
     if (result != 0) {
@@ -244,6 +278,7 @@ pub export fn fend_on_grok(m: ?*c.macro_t) void {
         .reference = macro.property,
         .part = .reference,
     }) catch {
+        freeMacro(macro);
         noteOom();
     };
     allocator.destroy(macro);
@@ -288,4 +323,20 @@ test "fend_signal_oom sets parser flag" {
     c.fend_oom_flag = 0;
     c.fend_signal_oom();
     try std.testing.expect(c.fend_oom_flag != 0);
+}
+
+test "compileLib/deinitLib loop has no GPA leak" {
+    var gpa_state = std.heap.DebugAllocator(.{}){};
+    const gpa = gpa_state.allocator();
+    var paths_buf = [_][]const u8{"./patterns/"};
+    const paths: [][]const u8 = paths_buf[0..];
+
+    for (0..500) |_| {
+        var arena = std.heap.ArenaAllocator.init(gpa);
+        defer arena.deinit();
+        try compileLib(arena.allocator(), std.testing.io, paths);
+        deinitLib();
+    }
+
+    try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
 }

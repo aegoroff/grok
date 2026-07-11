@@ -37,14 +37,25 @@ const watchdog_timeout_ns: i128 = 5 * std.time.ns_per_s;
 const fuzz_active_root = ".zig-cache/tmp/.fuzz-active";
 
 /// Fuzzer context: stores state shared across iterations within a process.
-/// std.testing.fuzz calls fuzzOne repeatedly in a single process, possibly
-/// from multiple threads, so the file-name counter is atomic.
 const FuzzCtx = struct {
     tmp_dir: *std.testing.TmpDir,
-    file_counter: std.atomic.Value(usize) = std.atomic.Value(usize).init(0),
     watchdog_spawned: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
     iteration_start_ns: std.atomic.Value(i64) = std.atomic.Value(i64).init(0),
 };
+
+threadlocal var fuzz_input_basename_buf: [32]u8 = undefined;
+threadlocal var fuzz_input_basename_len: usize = 0;
+
+fn threadInputBasename() [:0]const u8 {
+    if (fuzz_input_basename_len == 0) {
+        const written = std.fmt.bufPrint(&fuzz_input_basename_buf, "fuzz_{d}.log", .{
+            std.Thread.getCurrentId(),
+        }) catch unreachable;
+        fuzz_input_basename_buf[written.len] = 0;
+        fuzz_input_basename_len = written.len;
+    }
+    return fuzz_input_basename_buf[0..fuzz_input_basename_len :0];
+}
 
 var g_ctx: *FuzzCtx = undefined;
 var watchdog_stop = std.atomic.Value(bool).init(false);
@@ -248,13 +259,8 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     //     macro, flags_byte, subject.len, subject,
     // });
 
-    // ── 4. Write subject into a temp file ──────────────
-    const id = ctx.file_counter.fetchAdd(1, .monotonic);
-    const tid = std.Thread.getCurrentId();
-    const basename = try std.fmt.allocPrintSentinel(gpa, "fuzz_{d}_{d}.log", .{ tid, id }, 0);
-    defer gpa.free(basename);
-    defer ctx.tmp_dir.dir.deleteFile(std.testing.io, basename) catch {};
-
+    // ── 4. Write subject into a temp file (one reused file per thread) ─────
+    const basename = threadInputBasename();
     {
         var file = try ctx.tmp_dir.dir.createFile(std.testing.io, basename, .{});
         defer file.close(std.testing.io);
