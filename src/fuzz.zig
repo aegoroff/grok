@@ -9,11 +9,16 @@
 /// much harder than writing bytes to a temp file, so testing "file" gives
 /// the same coverage for a fraction of the complexity.
 ///
-/// Input format (layout is fixed so fuzzer quickly learns semantics):
-///   input[0]  — pattern index: input[0] % len(known_macros)
-///   input[1]  — flags bit mask: bit0=info, bit1=json, bit2=invert,
-///                                bit3=count, bit4=line-number
-///   input[2:] — subject (arbitrary bytes, including garbage and UTF-8)
+/// Input is decoded through `std.testing.Smith` (same in fuzz and smoke-test modes):
+///   1. macro index — `smith.valueRangeAtMost(u8, 0, len(known_macros) - 1)`
+///   2. flags byte  — `smith.value(u8)`; bit0=info, bit1=json, bit2=invert,
+///                    bit3=count, bit4=line-number
+///   3. subject     — zero or more chunks until `smith.eos()` returns true:
+///        eos=false, chunk_len (1..255), chunk bytes, …, eos=true
+///
+/// Corpus entries for smoke tests (`zig build test` without `--fuzz`) must use
+/// Smith wire format: each integer is u64 little-endian, each eos is one byte
+/// (0 = more chunks, 1 = end). See `corpusInput` below.
 ///
 /// Invariants (oracle):
 ///   - panic / abort are not allowed
@@ -64,6 +69,69 @@ const known_macros = [_][]const u8{
 };
 
 const watchdog_timeout_ns: i128 = 5 * std.time.ns_per_s;
+
+const CorpusPart = union(enum) {
+    int: u64,
+    eos: bool,
+    bytes: []const u8,
+};
+
+fn macroIdx(comptime name: []const u8) u8 {
+    inline for (known_macros, 0..) |macro, i| {
+        if (comptime std.mem.eql(u8, macro, name)) return @intCast(i);
+    }
+    @compileError("unknown macro: " ++ name);
+}
+
+/// Builds a Smith-wire corpus entry for smoke tests and initial fuzz seeds.
+fn corpusInput(comptime macro_name: []const u8, comptime flags: u8, comptime subject: []const u8) []const u8 {
+    const result = comptime result: {
+        var parts: [512]CorpusPart = undefined;
+        var n: usize = 0;
+        parts[n] = .{ .int = macroIdx(macro_name) };
+        n += 1;
+        parts[n] = .{ .int = flags };
+        n += 1;
+        if (subject.len == 0) {
+            parts[n] = .{ .eos = true };
+            n += 1;
+        } else {
+            var offset: usize = 0;
+            while (offset < subject.len) {
+                const chunk_len = @min(subject.len - offset, 255);
+                parts[n] = .{ .eos = false };
+                n += 1;
+                parts[n] = .{ .int = chunk_len };
+                n += 1;
+                parts[n] = .{ .bytes = subject[offset .. offset + chunk_len] };
+                n += 1;
+                offset += chunk_len;
+            }
+            parts[n] = .{ .eos = true };
+            n += 1;
+        }
+
+        var total_len: usize = 0;
+        for (parts[0..n]) |part| {
+            total_len += switch (part) {
+                .int => 8,
+                .eos => 1,
+                .bytes => |b| b.len,
+            };
+        }
+        var buf: [total_len]u8 = undefined;
+        var writer: std.Io.Writer = .fixed(&buf);
+        for (parts[0..n]) |part| {
+            switch (part) {
+                .int => |v| writer.writeInt(u64, v, .little) catch unreachable,
+                .eos => |v| writer.writeByte(@intFromBool(v)) catch unreachable,
+                .bytes => |b| writer.writeAll(b) catch unreachable,
+            }
+        }
+        break :result buf;
+    };
+    return &result;
+}
 
 /// Fuzzer context: stores state shared across iterations within a process.
 /// std.testing.fuzz calls fuzzOne repeatedly in a single process, possibly
@@ -174,40 +242,33 @@ test "fuzz file mode" {
     var ctx = FuzzCtx{};
 
     try std.testing.fuzz(&ctx, fuzzOne, .{
-        // Initial corpus: covers different patterns, flags, and edge cases.
-        // byte[0]=macro_idx, byte[1]=flags_bits, rest=subject
-        .corpus = &[_][]const u8{
-            "\x00\x00" ++ "2024", // YEAR, plain, match
-            "\x00\x02" ++ "2024", // YEAR, json, match
-            "\x00\x01" ++ "2024", // YEAR, info, match
-            "\x00\x00" ++ "not-a-year", // YEAR, plain, no match
-            "\x00\x04" ++ "not-a-year", // YEAR, invert, should output
-            "\x08\x00" ++ "12345", // NUMBER, plain, match
-            "\x08\x00" ++ "-3.14", // NUMBER, negative float
-            "\x08\x01" ++ "not-a-number", // NUMBER, info, no match
-            "\x08\x04" ++ "no-match", // NUMBER, invert
-            "\x11\x00" ++ "192.168.1.1", // IP, match
-            "\x11\x00" ++ "999.999.999.999", // IP, no match
-            "\x11\x02" ++ "10.0.0.1", // IP, json
-            "\x20\x02" ++ "user@example.com", // EMAILADDRESS, json
-            "\x23\x01" ++ "2016-08-13 01:46:09,637 INFO x", // NLOG, info
-            "\x23\x08" ++ "2016-08-13 01:46:09,637 INFO x\nplain line", // NLOG, count
-            "\x23\x10" ++ "2016-08-13 01:46:09,637 INFO x", // NLOG, line-number
-            // Edge cases for subject
-            "\x00\x00" ++ "", // empty subject
-            "\x10\x00" ++ "", // GREEDYDATA + empty
-            "\x00\x00\x00\xff\xfe", // binary garbage
-            "\x00\x00\n\r\t", // control characters
-            // UTF-8 multibyte characters (Cyrillic)
-            "\x00\x00\xd0\xb3\xd1\x80\xd0\xbe\xd0\xba",
-            // Stress test for PCRE2 backtracking
-            "\x0e\x00" ++ "a" ** 512, // NOTSPACE, long input
-            "\x0f\x00" ++ " " ** 512, // SPACE, long input
-            "\x10\x00" ++ "x" ** 1024, // GREEDYDATA, very long
-            // Null bytes inside subject
-            "\x00\x00" ++ "20\x0024",
-            // Multi-line file content
-            "\x00\x00" ++ "2024\nnot-a-year\n2025",
+        .corpus = &.{
+            corpusInput("YEAR", 0, "2024"),
+            corpusInput("YEAR", 0b10, "2024"),
+            corpusInput("YEAR", 0b01, "2024"),
+            corpusInput("YEAR", 0, "not-a-year"),
+            corpusInput("YEAR", 0b100, "not-a-year"),
+            corpusInput("NUMBER", 0, "12345"),
+            corpusInput("NUMBER", 0, "-3.14"),
+            corpusInput("NUMBER", 0b01, "not-a-number"),
+            corpusInput("NUMBER", 0b100, "no-match"),
+            corpusInput("IP", 0, "192.168.1.1"),
+            corpusInput("IP", 0, "999.999.999.999"),
+            corpusInput("IP", 0b10, "10.0.0.1"),
+            corpusInput("EMAILADDRESS", 0b10, "user@example.com"),
+            corpusInput("NLOG", 0b01, "2016-08-13 01:46:09,637 INFO x"),
+            corpusInput("NLOG", 0b1000, "2016-08-13 01:46:09,637 INFO x\nplain line"),
+            corpusInput("NLOG", 0b10000, "2016-08-13 01:46:09,637 INFO x"),
+            corpusInput("YEAR", 0, ""),
+            corpusInput("GREEDYDATA", 0, ""),
+            corpusInput("YEAR", 0, &[_]u8{ 0x00, 0xff, 0xfe }),
+            corpusInput("YEAR", 0, "\n\r\t"),
+            corpusInput("YEAR", 0, "\xd0\xb3\xd1\x80\xd0\xbe\xd0\xba"),
+            corpusInput("NOTSPACE", 0, "a" ** 512),
+            corpusInput("SPACE", 0, " " ** 512),
+            corpusInput("GREEDYDATA", 0, "x" ** 1024),
+            corpusInput("YEAR", 0, "20\x0024"),
+            corpusInput("YEAR", 0, "2024\nnot-a-year\n2025"),
         },
     });
 }
