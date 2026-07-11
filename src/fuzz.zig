@@ -101,6 +101,7 @@ fn corpusInput(comptime macro_name: []const u8, comptime flags: u8, comptime sub
 /// std.testing.fuzz calls fuzzOne repeatedly in a single process, possibly
 /// from multiple threads, so the file-name counter is atomic.
 const FuzzCtx = struct {
+    tmp_dir: *std.testing.TmpDir,
     file_counter: std.atomic.Value(usize) = std.atomic.Value(usize).init(0),
     watchdog_spawned: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
     iteration_start_ns: std.atomic.Value(i64) = std.atomic.Value(i64).init(0),
@@ -166,14 +167,20 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     // ── 4. Write subject into a temp file ──────────────
     const id = g_ctx.file_counter.fetchAdd(1, .monotonic);
     const tid = std.Thread.getCurrentId();
-    const rel_path = try std.fmt.allocPrintSentinel(gpa, "fuzz_tmp_{d}_{d}.log", .{ tid, id }, 0);
-    defer gpa.free(rel_path);
-    defer std.Io.Dir.cwd().deleteFile(std.testing.io, rel_path) catch |err| {
-        std.debug.print("Failed to delete file '{s}': {s}\n", .{ rel_path, @errorName(err) });
-    };
+    const basename = try std.fmt.allocPrintSentinel(gpa, "fuzz_{d}_{d}.log", .{ tid, id }, 0);
+    defer gpa.free(basename);
+    defer ctx.tmp_dir.dir.deleteFile(std.testing.io, basename) catch {};
+
+    const file_path = try std.fmt.allocPrintSentinel(
+        gpa,
+        ".zig-cache/tmp/{s}/{s}",
+        .{ ctx.tmp_dir.sub_path[0..], basename },
+        0,
+    );
+    defer gpa.free(file_path);
 
     {
-        var file = try std.Io.Dir.cwd().createFile(std.testing.io, rel_path, .{});
+        var file = try ctx.tmp_dir.dir.createFile(std.testing.io, basename, .{});
         defer file.close(std.testing.io);
         var write_buf: [4096]u8 = undefined;
         var file_writer = file.writer(std.testing.io, &write_buf);
@@ -193,7 +200,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     if (flags_byte & 0b00100 != 0) try argv_list.append(gpa, "-v");
     if (flags_byte & 0b01000 != 0) try argv_list.append(gpa, "-c");
     if (flags_byte & 0b10000 != 0) try argv_list.append(gpa, "-n");
-    try argv_list.append(gpa, rel_path);
+    try argv_list.append(gpa, file_path);
 
     // ── 6. Writer ──────────────────────────────────────────────────────────
     var sink = std.Io.Writer.Allocating.init(gpa);
@@ -225,7 +232,10 @@ test "known macros exist in ./patterns/" {
 }
 
 test "fuzz file mode" {
-    var ctx = FuzzCtx{};
+    var tmp_dir = std.testing.tmpDir(.{});
+    defer tmp_dir.cleanup();
+
+    var ctx = FuzzCtx{ .tmp_dir = &tmp_dir };
 
     try std.testing.fuzz(&ctx, fuzzOne, .{
         .corpus = &.{
