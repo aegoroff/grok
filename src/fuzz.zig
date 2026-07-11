@@ -17,9 +17,8 @@
 ///   3. subject     — zero or more chunks until `smith.eos()` returns true:
 ///        eos=false, chunk_len (1..255), chunk bytes, …, eos=true
 ///
-/// Corpus entries for smoke tests (`zig build test` without `--fuzz`) must use
-/// Smith wire format: each integer is u64 little-endian, each eos is one byte
-/// (0 = more chunks, 1 = end). See `corpusInput` below.
+/// Corpus entries for smoke tests (`zig build test` without `--fuzz`) use Smith
+/// wire format and are generated at build time in `build.zig` (`fuzz_corpus.all`).
 ///
 /// Invariants (oracle):
 ///   - panic / abort are not allowed
@@ -30,74 +29,12 @@ const builtin = @import("builtin");
 const app = @import("main.zig");
 const frontend = @import("frontend.zig");
 const pattern_macros = @import("fuzz_macros");
+const fuzz_corpus = @import("fuzz_corpus");
 
 const known_macros = pattern_macros.names;
 
 const watchdog_timeout_ns: i128 = 5 * std.time.ns_per_s;
 const fuzz_active_root = ".zig-cache/tmp/.fuzz-active";
-
-const CorpusPart = union(enum) {
-    int: u64,
-    eos: bool,
-    bytes: []const u8,
-};
-
-fn macroIdx(comptime name: []const u8) u8 {
-    inline for (known_macros, 0..) |macro, i| {
-        if (comptime std.mem.eql(u8, macro, name)) return @intCast(i);
-    }
-    @compileError("unknown macro: " ++ name);
-}
-
-/// Builds a Smith-wire corpus entry for smoke tests and initial fuzz seeds.
-fn corpusInput(comptime macro_name: []const u8, comptime flags: u8, comptime subject: []const u8) []const u8 {
-    const result = comptime result: {
-        var parts: [512]CorpusPart = undefined;
-        var n: usize = 0;
-        parts[n] = .{ .int = macroIdx(macro_name) };
-        n += 1;
-        parts[n] = .{ .int = flags };
-        n += 1;
-        if (subject.len == 0) {
-            parts[n] = .{ .eos = true };
-            n += 1;
-        } else {
-            var offset: usize = 0;
-            while (offset < subject.len) {
-                const chunk_len = @min(subject.len - offset, 255);
-                parts[n] = .{ .eos = false };
-                n += 1;
-                parts[n] = .{ .int = chunk_len };
-                n += 1;
-                parts[n] = .{ .bytes = subject[offset .. offset + chunk_len] };
-                n += 1;
-                offset += chunk_len;
-            }
-            parts[n] = .{ .eos = true };
-            n += 1;
-        }
-
-        var total_len: usize = 0;
-        for (parts[0..n]) |part| {
-            total_len += switch (part) {
-                .int => 8,
-                .eos => 1,
-                .bytes => |b| b.len,
-            };
-        }
-        var buf: [total_len]u8 = undefined;
-        var writer: std.Io.Writer = .fixed(&buf);
-        for (parts[0..n]) |part| {
-            switch (part) {
-                .int => |v| writer.writeInt(u64, v, .little) catch unreachable,
-                .eos => |v| writer.writeByte(@intFromBool(v)) catch unreachable,
-                .bytes => |b| writer.writeAll(b) catch unreachable,
-            }
-        }
-        break :result buf;
-    };
-    return &result;
-}
 
 /// Fuzzer context: stores state shared across iterations within a process.
 /// std.testing.fuzz calls fuzzOne repeatedly in a single process, possibly
@@ -396,33 +333,6 @@ test "fuzz file mode" {
     var ctx = FuzzCtx{ .tmp_dir = &tmp_dir };
 
     try std.testing.fuzz(&ctx, fuzzOne, .{
-        .corpus = &.{
-            corpusInput("YEAR", 0, "2024"),
-            corpusInput("YEAR", 0b10, "2024"),
-            corpusInput("YEAR", 0b01, "2024"),
-            corpusInput("YEAR", 0, "not-a-year"),
-            corpusInput("YEAR", 0b100, "not-a-year"),
-            corpusInput("NUMBER", 0, "12345"),
-            corpusInput("NUMBER", 0, "-3.14"),
-            corpusInput("NUMBER", 0b01, "not-a-number"),
-            corpusInput("NUMBER", 0b100, "no-match"),
-            corpusInput("IP", 0, "192.168.1.1"),
-            corpusInput("IP", 0, "999.999.999.999"),
-            corpusInput("IP", 0b10, "10.0.0.1"),
-            corpusInput("EMAILADDRESS", 0b10, "user@example.com"),
-            corpusInput("NLOG", 0b01, "2016-08-13 01:46:09,637 INFO x"),
-            corpusInput("NLOG", 0b1000, "2016-08-13 01:46:09,637 INFO x\nplain line"),
-            corpusInput("NLOG", 0b10000, "2016-08-13 01:46:09,637 INFO x"),
-            corpusInput("YEAR", 0, ""),
-            corpusInput("GREEDYDATA", 0, ""),
-            corpusInput("YEAR", 0, &[_]u8{ 0x00, 0xff, 0xfe }),
-            corpusInput("YEAR", 0, "\n\r\t"),
-            corpusInput("YEAR", 0, "\xd0\xb3\xd1\x80\xd0\xbe\xd0\xba"),
-            corpusInput("NOTSPACE", 0, "a" ** 512),
-            corpusInput("SPACE", 0, " " ** 512),
-            corpusInput("GREEDYDATA", 0, "x" ** 1024),
-            corpusInput("YEAR", 0, "20\x0024"),
-            corpusInput("YEAR", 0, "2024\nnot-a-year\n2025"),
-        },
+        .corpus = &fuzz_corpus.all,
     });
 }
