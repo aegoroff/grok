@@ -1,6 +1,48 @@
 const std = @import("std");
 const encoding = @import("encoding.zig");
 
+/// How wide-encoded lines are trimmed and advanced after streamDelimiter finds `\n`.
+const WideLineOpts = struct {
+    unit_size: usize,
+    /// Trailing zero bytes before `\n` in big-endian encodings.
+    be_trim: usize,
+    /// After `\n`, skip the rest of the code unit (LE) instead of one byte.
+    le_toss: bool,
+};
+
+fn wideLineOpts(enc: encoding.Encoding) ?WideLineOpts {
+    return switch (enc) {
+        .utf16le => .{ .unit_size = 2, .be_trim = 0, .le_toss = true },
+        .utf16be => .{ .unit_size = 2, .be_trim = 1, .le_toss = false },
+        .utf32le => .{ .unit_size = 4, .be_trim = 0, .le_toss = true },
+        .utf32be => .{ .unit_size = 4, .be_trim = 3, .le_toss = false },
+        else => null,
+    };
+}
+
+fn trimWideLine(line: []const u8, opts: WideLineOpts) []const u8 {
+    if (opts.be_trim != 0 and line.len >= opts.unit_size) {
+        return line[0 .. line.len - opts.be_trim];
+    }
+    return line;
+}
+
+fn tossAfterDelimiter(reader: *std.Io.Reader, opts: WideLineOpts) void {
+    const skip = if (opts.le_toss)
+        @min(reader.end - reader.seek, opts.unit_size)
+    else
+        1;
+    reader.toss(skip);
+}
+
+fn decodeWideLine(gpa: std.mem.Allocator, line: []const u8, enc: encoding.Encoding) ![]const u8 {
+    return switch (enc) {
+        .utf16le, .utf16be => encoding.convertRawUtf16ToUtf8(gpa, line, enc),
+        .utf32le, .utf32be => encoding.convertRawUtf32ToUtf8(gpa, line, enc),
+        else => unreachable,
+    };
+}
+
 pub const LineReader = struct {
     reader: *std.Io.Reader,
     /// Fixed file encoding, or null for stdin (detect BOM per line).
@@ -52,54 +94,18 @@ pub const LineReader = struct {
         current_encoding: encoding.Encoding,
         not_eof: bool,
     ) ![]const u8 {
-        switch (current_encoding) {
-            .utf16le => {
-                const decoded = try encoding.convertRawUtf16ToUtf8(gpa, line, current_encoding);
-                if (not_eof) {
-                    const skip = @min(self.reader.end - self.reader.seek, 2);
-                    self.reader.toss(skip); // zero byte after delimiter so skip 2 bytes or rest
-                }
-                return decoded;
-            },
-            .utf16be => {
-                var decoded = line;
-                // if length is less then 2 - we read trash
-                if (line.len >= 2) {
-                    // trim 0x00 before 0x0A
-                    decoded = try encoding.convertRawUtf16ToUtf8(gpa, line[0 .. line.len - 1], current_encoding);
-                }
-                if (not_eof) {
-                    self.reader.toss(1); // zero byte before delimiter so skip 1 byte
-                }
-                return decoded;
-            },
-            .utf32le => {
-                const decoded = try encoding.convertRawUtf32ToUtf8(gpa, line, current_encoding);
-                if (not_eof) {
-                    const skip = @min(self.reader.end - self.reader.seek, 4);
-                    self.reader.toss(skip); // 3 zero bytes after delimiter so skip 4 bytes or rest
-                }
-                return decoded;
-            },
-            .utf32be => {
-                var decoded = line;
-                // if length is less then 4 - we read trash
-                if (line.len >= 4) {
-                    // trim 3 0x00 before 0x0A
-                    decoded = try encoding.convertRawUtf32ToUtf8(gpa, line[0 .. line.len - 3], current_encoding);
-                }
-                if (not_eof) {
-                    self.reader.toss(1); // 3 zero bytes before delimiter so skip 1 byte
-                }
-                return decoded;
-            },
-            else => {
-                if (not_eof) {
-                    self.reader.toss(1); // skip delimiter itself if not end of file
-                }
-                return line;
-            },
+        if (wideLineOpts(current_encoding)) |opts| {
+            const raw = trimWideLine(line, opts);
+            const decoded: []const u8 = if (opts.le_toss or raw.len >= opts.unit_size)
+                try decodeWideLine(gpa, raw, current_encoding)
+            else
+                line;
+            if (not_eof) tossAfterDelimiter(self.reader, opts);
+            return decoded;
         }
+
+        if (not_eof) self.reader.toss(1);
+        return line;
     }
 };
 
@@ -117,4 +123,24 @@ pub fn probeFileEncoding(reader: *std.Io.Reader, file_size: u64) !encoding.Detec
 pub fn encodingFromDetection(detection: encoding.DetectResult) encoding.Encoding {
     if (detection.encoding == .unknown) return .utf8;
     return detection.encoding;
+}
+
+test "trimWideLine utf16be drops trailing zero before newline" {
+    const line = &[_]u8{ 0x00, 0x48, 0x00, 0x69, 0x00 };
+    const trimmed = trimWideLine(line, wideLineOpts(.utf16be).?);
+    try std.testing.expectEqual(@as(usize, 4), trimmed.len);
+    try std.testing.expectEqual(@as(u8, 0x69), trimmed[3]);
+}
+
+test "trimWideLine utf32be drops three trailing zeros before newline" {
+    const line = &[_]u8{ 0x00, 0x00, 0x00, 0x68, 0x00, 0x00, 0x00 };
+    const trimmed = trimWideLine(line, wideLineOpts(.utf32be).?);
+    try std.testing.expectEqual(@as(usize, 4), trimmed.len);
+    try std.testing.expectEqual(@as(u8, 0x68), trimmed[3]);
+}
+
+test "trimWideLine leaves le encodings unchanged" {
+    const line = &[_]u8{ 0x48, 0x00, 0x65, 0x00 };
+    const trimmed = trimWideLine(line, wideLineOpts(.utf16le).?);
+    try std.testing.expectEqualSlices(u8, line, trimmed);
 }
