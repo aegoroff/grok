@@ -21,24 +21,25 @@ pub fn init(writer: *std.Io.Writer, macro: []const u8) Printer {
     };
 }
 
-/// Prints the match result for a single line
-pub fn printResult(self: *Printer, line_no: usize, result: regex.MatchResult, flags: OutputFlags) !void {
-    if (flags.count) {
-        return;
-    }
-    if (flags.json) {
-        try self.printJson(line_no, result);
-    } else if (flags.info) {
-        try self.printInfo(line_no, result);
-    } else {
-        if (result.matched) {
+/// Prints the match result for a single line. Returns whether the line counts as matched (after invert).
+pub fn printResult(self: *Printer, line_no: usize, result: regex.MatchResult, flags: OutputFlags) !bool {
+    const display = applyInvert(result, flags);
+
+    if (!flags.count) {
+        if (flags.json) {
+            try self.printJson(line_no, display);
+        } else if (flags.info) {
+            try self.printInfo(line_no, display);
+        } else if (display.matched) {
             if (flags.print_line_num) {
-                try self.writer.print("{d}: {s}\n", .{ line_no, result.original });
+                try self.writer.print("{d}: {s}\n", .{ line_no, display.original });
             } else {
-                try self.writer.print("{s}\n", .{result.original});
+                try self.writer.print("{s}\n", .{display.original});
             }
         }
     }
+
+    return display.matched;
 }
 
 /// Prints match count
@@ -100,4 +101,19 @@ fn printJson(self: *Printer, line_no: usize, result: regex.MatchResult) !void {
 
     try jw.endObject();
     try self.writer.writeByte('\n');
+}
+
+fn applyInvert(result: regex.MatchResult, flags: OutputFlags) regex.MatchResult {
+    if (!flags.invert_match) return result;
+    return .{
+        .matched = !result.matched,
+        .original = result.original,
+        .properties = null,
+    };
+}
+
+test "applyInvert selects non-matching lines" {
+    const result: regex.MatchResult = .{ .matched = true, .original = "x", .properties = null };
+    const inverted = applyInvert(result, .{ .invert_match = true });
+    try std.testing.expect(!inverted.matched);
 }

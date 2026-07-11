@@ -26,19 +26,7 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
     var result = self.prepared.match(self.allocator, str);
     defer if (result.properties) |*props| props.deinit();
-    if (flags.invert_match) {
-        result = invertResult(result);
-    }
-    try self.print.printResult(1, result, flags);
-}
-
-/// Inverts the match result - returns matched if original didn't match
-fn invertResult(result: regex.MatchResult) regex.MatchResult {
-    return regex.MatchResult{
-        .matched = !result.matched,
-        .original = result.original,
-        .properties = null,
-    };
+    _ = try self.print.printResult(1, result, flags);
 }
 
 pub fn showRegex(self: *const Matcher) !void {
@@ -71,14 +59,10 @@ pub fn matchStrings(
         defer _ = arena.reset(.retain_capacity);
 
         line_no += 1;
-        var result = self.prepared.match(loop_allocator, line);
-        if (flags.invert_match) {
-            result = invertResult(result);
-        }
-        if (result.matched) {
+        const result = self.prepared.match(loop_allocator, line);
+        if (try self.print.printResult(line_no, result, flags)) {
             match_counter += 1;
         }
-        try self.print.printResult(line_no, result, flags);
     }
 
     if (flags.count) {
