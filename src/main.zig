@@ -7,20 +7,20 @@ const encoding = @import("encoding.zig");
 const configuration = @import("configuration.zig");
 const yazap = @import("yazap");
 
+const utf8_console = if (builtin.os.tag == .windows)
+    @import("utf8_console.zig")
+else
+    struct {
+        pub fn setupConsole() void {}
+    };
+
 const Action = struct {
     name: []const u8,
     handler: *const fn (std.mem.Allocator, *std.Io.Writer, std.Io, yazap.ArgMatches) anyerror!void,
 };
 
-extern "kernel32" fn SetConsoleOutputCP(wCodePageID: u32) callconv(.winapi) i32;
-extern "kernel32" fn SetConsoleCP(wCodePageID: u32) callconv(.winapi) i32;
-
 pub fn main(init: std.process.Init) !void {
-    if (builtin.os.tag == .windows) {
-        // Windows-specific UTF-8 setup
-        _ = SetConsoleOutputCP(65001);
-        _ = SetConsoleCP(65001);
-    }
+    utf8_console.setupConsole();
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_writer = std.Io.File.stdout().writer(init.io, &stdout_buffer);
     var stdout = &stdout_writer.interface;
