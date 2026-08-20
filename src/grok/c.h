@@ -1,5 +1,4 @@
 #include <setjmp.h>
-#include "grok.h"
 #include "grok.tab.h"
 #include "grok.flex.h"
 
