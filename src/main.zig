@@ -103,7 +103,7 @@ fn matchFile(
     const reader = &file_reader.interface;
     const detection = try line_reader.probeFileEncoding(reader, stat.size);
     try file_reader.seekTo(detection.offset);
-    try matchReader(gpa, writer, macro, reader, flags, line_reader.encodingFromDetection(detection));
+    try matchReader(gpa, writer, macro, reader, flags, detection.encoding);
 }
 
 fn matchStdin(

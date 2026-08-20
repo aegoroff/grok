@@ -117,12 +117,9 @@ pub fn probeFileEncoding(reader: *std.Io.Reader, file_size: u64) !encoding.Detec
     }
     const min = @min(file_size, 4);
     const encoding_buffer = try reader.take(min);
-    return encoding.detectBomMemory(encoding_buffer);
-}
-
-pub fn encodingFromDetection(detection: encoding.DetectResult) encoding.Encoding {
-    if (detection.encoding == .unknown) return .utf8;
-    return detection.encoding;
+    var result = encoding.detectBomMemory(encoding_buffer);
+    if (result.encoding == .unknown) result.encoding = .utf8;
+    return result;
 }
 
 test "trimWideLine utf16be drops trailing zero before newline" {
