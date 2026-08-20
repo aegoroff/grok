@@ -1,7 +1,7 @@
 ver := "0.5.0-dev"
 target := "x86_64-linux-musl"
 cpu := "haswell"
-zig_ver := "0.16"
+zig_ver := "master"
 
 build optimize = "ReleaseFast":
   mise exec zig@{{zig_ver}} -- zig build  -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}

@@ -4,7 +4,7 @@ const builtin = @import("builtin");
 pub fn build(b: *std.Build) void {
     const target = resolveTarget(b);
     const optimize = b.standardOptimizeOption(.{});
-    const strip = optimize != .Debug;
+    const strip = optimize != .debug;
     const options = b.addOptions();
 
     const version_opt = b.option([]const u8, "version", "The version of the app") orelse "0.5.0-dev";
@@ -56,7 +56,6 @@ pub fn build(b: *std.Build) void {
     const yazap = b.dependency("yazap", .{});
     const fehler = b.dependency("fehler", .{});
 
-    const glob_dep = b.dependency("glob", .{ .target = target, .optimize = optimize });
     const pcre2_dep = b.dependency("pcre2", .{ .target = target, .optimize = optimize });
 
     const translate_c = b.addTranslateC(.{
@@ -95,7 +94,6 @@ pub fn build(b: *std.Build) void {
         .b = b,
         .yazap = yazap,
         .fehler = fehler,
-        .glob_dep = glob_dep,
         .pcre2_dep = pcre2_dep,
         .c_lib = c_lib,
         .options = options,
@@ -115,7 +113,7 @@ pub fn build(b: *std.Build) void {
     });
     deps.applyTo(exe.root_module);
 
-    if (optimize == .ReleaseFast and target.result.os.tag != .macos and target.result.os.tag != .windows) {
+    if (optimize == .fast and target.result.os.tag != .macos and target.result.os.tag != .windows) {
         exe.lto = .full;
         exe.link_gc_sections = true;
     }
@@ -166,59 +164,38 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_fuzzing.step);
 
-    // Packaging
+    // Packaging — install paths are LazyPath-only since Zig 0.17 (configure/make split).
     const tr = target.result;
-    const tar_file = std.fmt.allocPrint(b.allocator, "{s}/grok-{s}-{s}-{s}-{s}.tar", .{
-        b.install_prefix,
+    const gz_basename = b.fmt("grok-{s}-{s}-{s}-{s}.tar.gz", .{
         version_opt,
         @tagName(tr.cpu.arch),
         @tagName(tr.os.tag),
         @tagName(tr.abi),
-    }) catch "";
-
-    const binary_step = b.addSystemCommand(&.{
-        "tar",
-        "-cvf", // c - create, f - file
-        tar_file,
-        "-C",
-        b.exe_dir,
-        ".",
-    });
-    const license_step = b.addSystemCommand(&.{
-        "tar",
-        "-rvf", // r - append, f - file
-        tar_file,
-        "-C",
-        ".",
-        "LICENSE.txt",
-    });
-    const patterns_step = b.addSystemCommand(&.{
-        "tar",
-        "-rvf", // r - append, f - file
-        tar_file,
-        "-C",
-        "patterns/",
-        ".",
-    });
-    const gzip_step = b.addSystemCommand(&.{
-        "gzip",
-        tar_file,
     });
 
-    binary_step.step.dependOn(b.getInstallStep());
-    license_step.step.dependOn(&binary_step.step);
-    patterns_step.step.dependOn(&license_step.step);
-    gzip_step.step.dependOn(&patterns_step.step);
+    const pack = b.addSystemCommand(&.{ "tar", "-czvf" });
+    const gz_file = pack.addOutputFileArg(gz_basename);
+    pack.addArg("-C");
+    pack.addDirectoryArg2(.{ .relative = .{ .base = .install_bin } }, .{ .make_absolute = true });
+    pack.addArg(".");
+    pack.addArg("-C");
+    pack.addDirectoryArg2(b.path(""), .{ .make_absolute = true });
+    pack.addArg("LICENSE.txt");
+    pack.addArg("-C");
+    pack.addDirectoryArg2(b.path("patterns"), .{ .make_absolute = true });
+    pack.addArg(".");
+    pack.step.dependOn(b.getInstallStep());
 
+    // Keep the tarball off the default install step to avoid a cycle with getInstallStep().
+    const install_tarball = b.addInstallFile(gz_file, gz_basename);
     const archive_step = b.step("archive", "Create a tar.gz archive of the build");
-    archive_step.dependOn(&gzip_step.step);
+    archive_step.dependOn(&install_tarball.step);
 }
 
 const ModuleDeps = struct {
     b: *std.Build,
     yazap: *std.Build.Dependency,
     fehler: *std.Build.Dependency,
-    glob_dep: *std.Build.Dependency,
     pcre2_dep: *std.Build.Dependency,
     c_lib: *std.Build.Step.Compile,
     options: *std.Build.Step.Options,
@@ -226,7 +203,6 @@ const ModuleDeps = struct {
     translate_pcre: *std.Build.Step.TranslateC,
 
     fn applyTo(self: ModuleDeps, mod: *std.Build.Module) void {
-        mod.addImport("glob", self.glob_dep.module("glob"));
         mod.addImport("yazap", self.yazap.module("yazap"));
         mod.addImport("fehler", self.fehler.module("fehler"));
         mod.linkLibrary(self.c_lib);
@@ -238,14 +214,9 @@ const ModuleDeps = struct {
 };
 
 fn ensureDirExists(b: *std.Build, dir_path: []const u8) void {
-    const full_path = b.pathFromRoot(dir_path);
-    var dir = std.Io.Dir.cwd().openDir(b.graph.io, full_path, .{}) catch {
-        std.Io.Dir.cwd().createDir(b.graph.io, full_path, .default_dir) catch |err| {
-            std.debug.print("Failed to create directory '{s}': {s}\n", .{ full_path, @errorName(err) });
-        };
-        return;
+    b.root.createDirPath(b.graph.io, dir_path) catch |err| {
+        std.debug.print("Failed to create directory '{s}': {s}\n", .{ dir_path, @errorName(err) });
     };
-    dir.close(b.graph.io);
 }
 
 /// Scans `patterns/*.patterns` and returns Zig source for the `fuzz_macros` module.
@@ -277,11 +248,20 @@ fn generateFuzzMacros(b: *std.Build) []const u8 {
 
 /// Reads the first line of `test_assets/logUTF8.log` for the fuzz corpus NLOG seed.
 fn readNlogUtf8Line(b: *std.Build) []const u8 {
-    const log_path = b.pathFromRoot("test_assets/logUTF8.log");
-    const content = std.Io.Dir.cwd().readFileAlloc(b.graph.io, log_path, b.allocator, .unlimited) catch |err| {
+    const io = b.graph.io;
+    const file = b.root.openFile(io, "test_assets/logUTF8.log", .{}) catch |err| {
+        std.debug.panic("failed to open test_assets/logUTF8.log: {s}", .{@errorName(err)});
+    };
+    defer file.close(io);
+
+    var reader_buf: [4096]u8 = undefined;
+    var file_reader = file.reader(io, &reader_buf);
+    var out: std.Io.Writer.Allocating = .init(b.allocator);
+    defer out.deinit();
+    _ = file_reader.interface.streamRemaining(&out.writer) catch |err| {
         std.debug.panic("failed to read test_assets/logUTF8.log: {s}", .{@errorName(err)});
     };
-    defer b.allocator.free(content);
+    const content = out.written();
     const end = std.mem.indexOfScalar(u8, content, '\n') orelse content.len;
     return b.dupe(content[0..end]);
 }
@@ -425,20 +405,20 @@ fn appendSmithCorpusEntry(
 fn collectPatternMacroNames(b: *std.Build) std.ArrayList([]const u8) {
     var names: std.ArrayList([]const u8) = .empty;
 
-    const patterns_path = b.pathFromRoot("patterns");
-    var patterns_dir = std.Io.Dir.cwd().openDir(b.graph.io, patterns_path, .{ .iterate = true }) catch |err| {
+    const io = b.graph.io;
+    var patterns_dir = b.root.openDir(io, "patterns", .{ .iterate = true }) catch |err| {
         std.debug.panic("failed to open patterns/: {s}", .{@errorName(err)});
     };
-    defer patterns_dir.close(b.graph.io);
+    defer patterns_dir.close(io);
 
     var it = patterns_dir.iterate();
-    while (it.next(b.graph.io) catch |err| {
+    while (it.next(io) catch |err| {
         std.debug.panic("failed to iterate patterns/: {s}", .{@errorName(err)});
     }) |entry| {
         if (entry.kind != .file) continue;
         if (!std.mem.endsWith(u8, entry.name, ".patterns")) continue;
 
-        const content = patterns_dir.readFileAlloc(b.graph.io, entry.name, b.allocator, .unlimited) catch |err| {
+        const content = patterns_dir.readFileAlloc(io, entry.name, b.allocator, .unlimited) catch |err| {
             std.debug.panic("failed to read patterns/{s}: {s}", .{ entry.name, @errorName(err) });
         };
         defer b.allocator.free(content);
