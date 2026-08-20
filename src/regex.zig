@@ -1,6 +1,5 @@
 const std = @import("std");
 const front = @import("frontend.zig");
-const grok = @import("grok.zig");
 const re = @import("re");
 
 /// A pattern structure that holds a regex string and its associated properties.
@@ -184,7 +183,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
                         try composition.appendSlice(gpa, current_slice);
                     } else {
                         const gop = try expanding.getOrPut(current_slice);
-                        if (gop.found_existing) return grok.GrokError.CircularMacro;
+                        if (gop.found_existing) return error.CircularMacro;
 
                         const childs = try front.getPattern(current_slice);
 
@@ -260,7 +259,7 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         props.deinit(gpa);
         gpa.free(pattern.regex);
 
-        return grok.GrokError.InvalidRegex;
+        return error.InvalidRegex;
     };
     return .{
         .re = regex,
@@ -281,7 +280,7 @@ test "createPattern detects circular macros" {
     const paths: [][]const u8 = paths_buf[0..];
     try front.compileLib(gpa, std.testing.io, paths);
 
-    try std.testing.expectError(grok.GrokError.CircularMacro, createPattern(gpa, "CYCLEA"));
-    try std.testing.expectError(grok.GrokError.CircularMacro, createPattern(gpa, "CYCLEB"));
-    try std.testing.expectError(grok.GrokError.CircularMacro, createPattern(gpa, "SELFREF"));
+    try std.testing.expectError(error.CircularMacro, createPattern(gpa, "CYCLEA"));
+    try std.testing.expectError(error.CircularMacro, createPattern(gpa, "CYCLEB"));
+    try std.testing.expectError(error.CircularMacro, createPattern(gpa, "SELFREF"));
 }

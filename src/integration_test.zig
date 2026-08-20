@@ -1,5 +1,4 @@
 const std = @import("std");
-const grok = @import("grok.zig");
 const main = @import("main.zig");
 
 const nlog_matches =
@@ -98,7 +97,7 @@ const cases = [_]Case{
         .argv = &.{ "macro", "BAD", "-p", patterns },
         .expected = .{
             .failure = .{
-                .err = grok.GrokError.UnknownMacro,
+                .err = error.UnknownMacro,
                 .output = "Failed show macro: error.UnknownMacro\n",
             },
         },
@@ -108,7 +107,7 @@ const cases = [_]Case{
         .argv = &.{ "macro", "BADNESTED", "-p", "./test_assets/bad_nested.patterns" },
         .expected = .{
             .failure = .{
-                .err = grok.GrokError.UnknownMacro,
+                .err = error.UnknownMacro,
                 .output = "Failed show macro: error.UnknownMacro\n",
             },
         },
@@ -118,7 +117,7 @@ const cases = [_]Case{
         .argv = &.{ "macro", "CYCLEA", "-p", "./test_assets/circular.patterns" },
         .expected = .{
             .failure = .{
-                .err = grok.GrokError.CircularMacro,
+                .err = error.CircularMacro,
                 .output = "Failed show macro: error.CircularMacro\n",
             },
         },
@@ -128,7 +127,7 @@ const cases = [_]Case{
         .argv = &.{ "macro", "SELFREF", "-p", "./test_assets/circular.patterns" },
         .expected = .{
             .failure = .{
-                .err = grok.GrokError.CircularMacro,
+                .err = error.CircularMacro,
                 .output = "Failed show macro: error.CircularMacro\n",
             },
         },
@@ -208,7 +207,7 @@ const cases = [_]Case{
         .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "./test_assets/invalidUTF32LE.log" },
         .expected = .{
             .failure = .{
-                .err = grok.GrokError.InvalidUtf32LineLength,
+                .err = error.InvalidUtf32LineLength,
                 .output = "Failed file match: error.InvalidUtf32LineLength\n",
             },
         },
@@ -312,7 +311,7 @@ const cases = [_]Case{
         .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "./test_assets/crash2.log" },
         .expected = .{
             .failure = .{
-                .err = grok.GrokError.InvalidUtf16LineLength,
+                .err = error.InvalidUtf16LineLength,
                 .output = "Failed file match: error.InvalidUtf16LineLength\n",
             },
         },
@@ -332,7 +331,7 @@ const cases = [_]Case{
         .argv = &.{ "string", "-p", patterns, "-m", "UNKNOWN", "foo" },
         .expected = .{
             .failure = .{
-                .err = grok.GrokError.UnknownMacro,
+                .err = error.UnknownMacro,
                 .output = "Failed string match: error.UnknownMacro\n",
             },
         },

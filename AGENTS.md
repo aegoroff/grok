@@ -35,7 +35,6 @@ CLI entry: `main.zig` → `configuration.zig` (yazap) dispatches to `string`, `f
 | `printer.zig` | Formatted output (count, line numbers, invert) |
 | `encoding.zig` | BOM detection, UTF-8/16/32 decoding |
 | `line_reader.zig` | Line-by-line reading with encoding support |
-| `grok.zig` | Shared error types (`GrokError`) |
 | `integration_test.zig` | End-to-end CLI tests |
 | `fuzz.zig` | Fuzz tests for file mode |
 
@@ -121,7 +120,6 @@ mise exec zig@0.16.0 -- zig build test --fuzz -Doptimize=ReleaseSafe -Dtarget=x8
 - `src/printer.zig` - Output formatting
 - `src/encoding.zig` - Character encoding handling
 - `src/line_reader.zig` - Encoded line reading
-- `src/grok.zig` - Shared error types
 - `src/integration_test.zig` - End-to-end CLI tests
 - `src/fuzz.zig` - Fuzz tests
 - `src/grok/` - C lexer (flex) and parser (bison)

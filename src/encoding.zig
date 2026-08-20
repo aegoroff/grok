@@ -1,5 +1,4 @@
 const std = @import("std");
-const grok = @import("grok.zig");
 
 pub const Encoding = enum {
     unknown,
@@ -94,7 +93,7 @@ fn bytesToCodeUnits(
     encoding: Encoding,
     comptime Unit: type,
     comptime unit_size: usize,
-    comptime invalid_length: grok.GrokError,
+    comptime invalid_length: anyerror,
     comptime le_encoding: Encoding,
     comptime be_encoding: Encoding,
 ) ![]Unit {
@@ -113,7 +112,7 @@ fn bytesToCodeUnits(
         wide_buffer[i] = switch (encoding) {
             le_encoding => std.mem.readInt(Unit, &bytes, .little),
             be_encoding => std.mem.readInt(Unit, &bytes, .big),
-            else => return grok.GrokError.InvalidEncoding,
+            else => return error.InvalidEncoding,
         };
     }
 
@@ -128,7 +127,7 @@ fn utf32ToUtf8Alloc(gpa: std.mem.Allocator, utf32_input: []const u32) ![]u8 {
 
     for (utf32_input) |utf32_val| {
         if (utf32_val > 0x10FFFF or (utf32_val >= 0xD800 and utf32_val <= 0xDFFF)) {
-            return grok.GrokError.InvalidUtf32;
+            return error.InvalidUtf32;
         }
 
         const codepoint: u21 = @intCast(utf32_val);

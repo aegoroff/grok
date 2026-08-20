@@ -1,6 +1,5 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const grok = @import("grok.zig");
 const glob = @import("glob");
 const c = @import("c");
 
@@ -56,8 +55,8 @@ fn clearComposition() void {
     composition.clearRetainingCapacity();
 }
 
-pub fn getPattern(key: []const u8) grok.GrokError!std.ArrayList(Info) {
-    return definitions.get(key) orelse grok.GrokError.UnknownMacro;
+pub fn getPattern(key: []const u8) error{UnknownMacro}!std.ArrayList(Info) {
+    return definitions.get(key) orelse error.UnknownMacro;
 }
 
 pub fn getPatterns() std.StringHashMap(std.ArrayList(Info)) {
@@ -171,7 +170,7 @@ fn compileFile(path: []const u8) !void {
     var file_buffer: [64 * 1024]u8 = undefined;
     var file = std.Io.Dir.cwd().openFile(io, path, .{ .mode = .read_only }) catch {
         std.log.warn("Failed to open file: {s}", .{path});
-        return grok.GrokError.UnknownPatternFile;
+        return error.UnknownPatternFile;
     };
     defer file.close(io);
 
@@ -207,17 +206,17 @@ fn compileFile(path: []const u8) !void {
 
     if (c.setjmp(&oom_jmp[0]) != 0) {
         clearComposition();
-        return grok.GrokError.OutOfMemory;
+        return error.OutOfMemory;
     }
 
     const result = c.yyparse();
     if (c.fend_oom_flag != 0) {
         clearComposition();
-        return grok.GrokError.OutOfMemory;
+        return error.OutOfMemory;
     }
     if (result != 0) {
         std.log.warn("Failed to parse file: {s} at line {d}", .{ path, c.yylineno });
-        return grok.GrokError.InvalidPatternFile;
+        return error.InvalidPatternFile;
     }
 }
 
