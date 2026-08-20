@@ -135,23 +135,27 @@ pub fn deinit(self: *Config) void {
     self.allocator.free(self.app_descr);
 }
 
-pub fn run(
-    self: *Config,
-    command: []const u8,
-    writer: *std.Io.Writer,
-    handler: *const fn (std.mem.Allocator, *std.Io.Writer, std.Io, yazap.ArgMatches) anyerror!void,
-) !bool {
-    if (self.matches.subcommandMatches(command)) |cmd_matches| {
-        const patterns = cmd_matches.getMultiValues(patterns_name);
-        front.compileLib(self.allocator, self.io, patterns) catch |e| {
-            try writer.print("Failed to compile lib: {}\n", .{e});
-            return e;
-        };
+pub const Command = enum { string, file, stdin, macro };
 
-        try handler(self.allocator, writer, self.io, cmd_matches);
-        return true;
-    }
-    return false;
+pub const Selected = struct {
+    cmd: Command,
+    matches: yazap.ArgMatches,
+};
+
+pub fn selected(self: *const Config) ?Selected {
+    if (self.matches.subcommandMatches(string_command_name)) |m| return .{ .cmd = .string, .matches = m };
+    if (self.matches.subcommandMatches(file_command_name)) |m| return .{ .cmd = .file, .matches = m };
+    if (self.matches.subcommandMatches(stdin_command_name)) |m| return .{ .cmd = .stdin, .matches = m };
+    if (self.matches.subcommandMatches(macro_name)) |m| return .{ .cmd = .macro, .matches = m };
+    return null;
+}
+
+pub fn loadPatterns(self: *const Config, writer: *std.Io.Writer, cmd: yazap.ArgMatches) !void {
+    const patterns = cmd.getMultiValues(patterns_name);
+    front.compileLib(self.allocator, self.io, patterns) catch |e| {
+        try writer.print("Failed to compile lib: {}\n", .{e});
+        return e;
+    };
 }
 
 pub fn getMacroOpt(match: yazap.ArgMatches) ?[]const u8 {
@@ -209,9 +213,11 @@ test "correct string parsing and run integration test" {
     var config = try Config.init(arena.allocator(), std.testing.io, command_line);
     defer config.deinit();
 
+    const sel = config.selected() orelse return error.TestUnexpectedResult;
+    try std.testing.expectEqual(.string, sel.cmd);
+
     var writer = std.Io.Writer.Allocating.init(arena.allocator());
-    const run_result = try config.run("string", &writer.writer, &testStringAction);
-    try std.testing.expect(run_result);
+    try config.loadPatterns(&writer.writer, sel.matches);
 }
 
 test "incorrect string parsing no positional parameter" {
@@ -233,8 +239,3 @@ test "incorrect file parsing no positional parameter" {
     try std.testing.expectError(yazap.yazap_error.ParseError.PositionalArgumentNotProvided, err);
 }
 
-fn testStringAction(_: std.mem.Allocator, _: *std.Io.Writer, _: std.Io, _: yazap.ArgMatches) !void {
-    if (!builtin.is_test) {
-        @compileError("This function is only available in test builds");
-    }
-}

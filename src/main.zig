@@ -14,11 +14,6 @@ else
         pub fn setupConsole() void {}
     };
 
-const Action = struct {
-    name: []const u8,
-    handler: *const fn (std.mem.Allocator, *std.Io.Writer, std.Io, yazap.ArgMatches) anyerror!void,
-};
-
 pub fn main(init: std.process.Init) !void {
     utf8_console.setupConsole();
     var stdout_buffer: [1024]u8 = undefined;
@@ -40,17 +35,13 @@ pub fn run(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, argv: []c
     var config = try configuration.Config.init(gpa, io, argv);
     defer config.deinit();
 
-    const actions = &[_]Action{
-        .{ .name = configuration.string_command_name, .handler = &stringAction },
-        .{ .name = configuration.file_command_name, .handler = &fileAction },
-        .{ .name = configuration.stdin_command_name, .handler = &stdinAction },
-        .{ .name = configuration.macro_name, .handler = &macroAction },
-    };
-
-    for (actions) |action| {
-        if (try config.run(action.name, writer, action.handler)) {
-            return;
-        }
+    const sel = config.selected() orelse return;
+    try config.loadPatterns(writer, sel.matches);
+    switch (sel.cmd) {
+        .string => try stringAction(gpa, writer, io, sel.matches),
+        .file => try fileAction(gpa, writer, io, sel.matches),
+        .stdin => try stdinAction(gpa, writer, io, sel.matches),
+        .macro => try macroAction(gpa, writer, io, sel.matches),
     }
 }
 
