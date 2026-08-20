@@ -71,6 +71,37 @@ If the package is not found, update repository information:
 yay -Syyu grok-tool-bin
 ```
 
+**deb (Debian / Ubuntu)**:
+
+Download the `.deb` for your architecture (`amd64` or `arm64`) from the
+[releases page](https://github.com/aegoroff/grok/releases), then:
+
+```bash
+sudo apt install ./grok_*_amd64.deb
+# or: sudo apt install ./grok_*_arm64.deb
+```
+
+**rpm (Fedora / RHEL / Alma / Rocky)**:
+
+Download the `.rpm` for your architecture (`x86_64` or `aarch64`) from the
+[releases page](https://github.com/aegoroff/grok/releases), then:
+
+```bash
+sudo dnf install ./grok-*-1.x86_64.rpm
+# or: sudo dnf install ./grok-*-1.aarch64.rpm
+# openSUSE: sudo zypper install ./grok-*-1.x86_64.rpm
+```
+
+**apk (Alpine Linux)**:
+
+Download the `.apk` for your architecture (`x86_64` or `aarch64`) from the
+[releases page](https://github.com/aegoroff/grok/releases), then:
+
+```bash
+sudo apk add --allow-untrusted ./grok-*-r0.x86_64.apk
+# or: sudo apk add --allow-untrusted ./grok-*-r0.aarch64.apk
+```
+
 ### Manual Installation
 
 1. Download pre-compiled binaries from the [releases page](https://github.com/aegoroff/grok/releases)

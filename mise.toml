@@ -6,23 +6,47 @@ description = "Build project"
 shell = "bash -c"
 run = [
   """
-    set -e
-    [[ -n "${ABI}" ]] || ABI=musl
-    [[ -n "${OS}" ]] || OS=linux
-    [[ -n "${ARCH}" ]] || ARCH=x86_64
-    [[ -z "${VERSION}" || "${VERSION}" =~ ^[0-9]+/merge$ ]] && VERSION="0.4.0-dev"
+    set -euo pipefail
+    [[ -n "${ABI:-}" ]] || ABI=musl
+    [[ -n "${OS:-}" ]] || OS=linux
+    [[ -n "${ARCH:-}" ]] || ARCH=x86_64
+    [[ -z "${VERSION:-}" || "${VERSION}" =~ ^[0-9]+/merge$ ]] && VERSION="0.5.0-dev"
+    export VERSION
 
-  ZIG_PREFIX_DIR=bin-${ARCH}-${OS}-${ABI}
-  OPTIMIZE=ReleaseFast
+    TRIPLE="${ARCH}-${OS}-${ABI}"
+    OUT_DIR=zig-out
+    BIN_DIR=bin
+    OPTIMIZE=ReleaseFast
+    ZIG_PREFIX_DIR="bin-${ARCH}-${OS}-${ABI}"
 
-  DCPU=""
-  [[ -n "${CPU}" ]] && DCPU="-Dcpu=${CPU}"
+    mkdir -p "${BIN_DIR}"
+    rm -f "${OUT_DIR}/grok-${VERSION}-${ARCH}-${OS}-${ABI}.tar" \
+          "${OUT_DIR}/grok-${VERSION}-${ARCH}-${OS}-${ABI}.tar.gz"
 
-  if [[ "${ARCH}" = "x86_64" ]] && [[ "${OS}" = "linux" ]]; then
-    zig build test -Doptimize=Debug ${DCPU} -Dtarget="${ARCH}"-"${OS}"-"${ABI}" -Dversion="${VERSION}" --summary all
-    zig build test -Doptimize=${OPTIMIZE} ${DCPU} -Dtarget="${ARCH}"-"${OS}"-"${ABI}" -Dversion="${VERSION}" --summary all
-  fi
+    DCPU=()
+    [[ -n "${CPU:-}" ]] && DCPU=(-Dcpu="${CPU}")
 
-  zig build archive -Doptimize=${OPTIMIZE} ${DCPU} -Dtarget="${ARCH}"-"${OS}"-"${ABI}" -Dversion="${VERSION}" --summary all --prefix-exe-dir "${ZIG_PREFIX_DIR}"
+    if [[ "${OS}" = "linux" && "${ARCH}" = "x86_64" ]]; then
+      zig build test -Doptimize=Debug -Dtarget="${TRIPLE}" -Dversion="${VERSION}" "${DCPU[@]}" --summary all
+      zig build test -Doptimize="${OPTIMIZE}" -Dtarget="${TRIPLE}" -Dversion="${VERSION}" "${DCPU[@]}" --summary all
+    fi
+
+    zig build archive \
+      -Doptimize="${OPTIMIZE}" \
+      -Dtarget="${TRIPLE}" \
+      -Dversion="${VERSION}" \
+      "${DCPU[@]}" \
+      --summary all \
+      --prefix-exe-dir "${ZIG_PREFIX_DIR}"
+
+    TARBALL="${OUT_DIR}/grok-${VERSION}-${ARCH}-${OS}-${ABI}.tar.gz"
+    [[ -f "${TARBALL}" ]] || { echo "tarball not found: ${TARBALL}" >&2; exit 1; }
+
+    cp -v "${TARBALL}" "${BIN_DIR}/"
+
+    if [[ "${OS}" = "linux" && "${ABI}" = "musl" ]]; then
+      chmod +x ./scripts/package_linux.sh
+      ./scripts/package_linux.sh "${VERSION}" "${ARCH}" "${TARBALL}" "${BIN_DIR}" "deb,rpm,apk"
+    fi
   """
 ]

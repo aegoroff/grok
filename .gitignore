@@ -34,6 +34,7 @@ pcre-*/
 /out/
 /cmake-build-*/
 bin/
+pkg-staging/
 zig-cache/
 .zig-cache/
 zig-pkg/

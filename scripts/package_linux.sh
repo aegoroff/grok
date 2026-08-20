@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# Build linux packages from a release tarball using nfpm.
+#
+# Usage: scripts/package_linux.sh <version> <cpu_arch> <tarball> <outdir> <packagers>
+#   cpu_arch: x86_64 | aarch64
+#   packagers: comma-separated list — deb,rpm,apk (musl static binary)
+#
+# Requires network on first run unless `nfpm` is already on PATH.
+# Override NFPM_VER to pin the nfpm release (default 2.47.0).
+set -euo pipefail
+
+VERSION="${1:?version required}"
+CPU_ARCH="${2:?cpu arch required (x86_64|aarch64)}"
+TARBALL="${3:?tarball path required}"
+OUT_DIR="${4:?output directory required}"
+PACKAGERS="${5:?packagers required (comma-separated: deb,rpm,apk)}"
+NFPM_VER="${NFPM_VER:-2.47.0}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+CONFIG="${REPO_ROOT}/nfpm.yaml"
+
+case "${CPU_ARCH}" in
+  x86_64)
+    DEB_ARCH=amd64
+    RPM_ARCH=x86_64
+    APK_ARCH=x86_64
+    ;;
+  aarch64)
+    DEB_ARCH=arm64
+    RPM_ARCH=aarch64
+    APK_ARCH=aarch64
+    ;;
+  *)
+    echo "unsupported cpu arch: ${CPU_ARCH} (want x86_64 or aarch64)" >&2
+    exit 1
+    ;;
+esac
+
+if [[ ! -f "${TARBALL}" ]]; then
+  echo "tarball not found: ${TARBALL}" >&2
+  exit 1
+fi
+if [[ ! -f "${CONFIG}" ]]; then
+  echo "nfpm config not found: ${CONFIG}" >&2
+  exit 1
+fi
+
+resolve_nfpm() {
+  if command -v nfpm >/dev/null 2>&1; then
+    command -v nfpm
+    return
+  fi
+  local host_arch
+  host_arch="$(uname -m)"
+  case "${host_arch}" in
+    x86_64 | amd64) host_arch=x86_64 ;;
+    aarch64 | arm64) host_arch=arm64 ;;
+    *)
+      echo "cannot download nfpm for host arch ${host_arch}" >&2
+      exit 1
+      ;;
+  esac
+  local cache_dir="${REPO_ROOT}/.zig-cache/nfpm-${NFPM_VER}-${host_arch}"
+  local bin="${cache_dir}/nfpm"
+  if [[ ! -x "${bin}" ]]; then
+    mkdir -p "${cache_dir}"
+    local url="https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VER}/nfpm_${NFPM_VER}_Linux_${host_arch}.tar.gz"
+    echo "==> downloading nfpm ${NFPM_VER} (${host_arch})" >&2
+    curl -fsSL "${url}" | tar --no-same-owner -xz -C "${cache_dir}" nfpm
+    chmod +x "${bin}"
+  fi
+  printf '%s\n' "${bin}"
+}
+
+NFPM_BIN="$(resolve_nfpm)"
+
+STAGE="${REPO_ROOT}/pkg-staging"
+EXTRACT="$(mktemp -d)"
+rm -rf "${STAGE}"
+mkdir -p "${STAGE}" "${OUT_DIR}"
+trap 'rm -rf "${STAGE}" "${EXTRACT}"' EXIT
+
+# Layout from `zig build archive`: grok, LICENSE.txt, *.patterns at tarball root.
+tar --no-same-owner -xzf "${TARBALL}" -C "${EXTRACT}"
+
+GROK_BIN="${EXTRACT}/grok"
+LICENSE="${EXTRACT}/LICENSE.txt"
+if [[ ! -f "${GROK_BIN}" || ! -f "${LICENSE}" ]]; then
+  echo "tarball missing grok or LICENSE.txt: ${TARBALL}" >&2
+  find "${EXTRACT}" -type f >&2
+  exit 1
+fi
+
+shopt -s nullglob
+PATTERN_FILES=("${EXTRACT}"/*.patterns)
+if [[ ${#PATTERN_FILES[@]} -eq 0 ]]; then
+  echo "tarball missing *.patterns: ${TARBALL}" >&2
+  find "${EXTRACT}" -type f >&2
+  exit 1
+fi
+
+cp -f "${GROK_BIN}" "${STAGE}/grok"
+cp -f "${LICENSE}" "${STAGE}/LICENSE.txt"
+chmod 755 "${STAGE}/grok"
+
+mkdir -p "${STAGE}/patterns"
+cp -f "${PATTERN_FILES[@]}" "${STAGE}/patterns/"
+
+package_one() {
+  local packager="$1"
+  local arch="$2"
+  local target="$3"
+  echo "==> nfpm package ${target}"
+  (
+    cd "${REPO_ROOT}"
+    export VERSION ARCH="${arch}"
+    "${NFPM_BIN}" package --config "${CONFIG}" --packager "${packager}" --target "${target}"
+  )
+  echo "Package: ${target}"
+}
+
+IFS=',' read -r -a PACKAGER_LIST <<< "${PACKAGERS}"
+for packager in "${PACKAGER_LIST[@]}"; do
+  case "${packager}" in
+    deb)
+      package_one deb "${DEB_ARCH}" "${OUT_DIR}/grok_${VERSION}_${DEB_ARCH}.deb"
+      ;;
+    rpm)
+      package_one rpm "${RPM_ARCH}" "${OUT_DIR}/grok-${VERSION}-1.${RPM_ARCH}.rpm"
+      ;;
+    apk)
+      package_one apk "${APK_ARCH}" "${OUT_DIR}/grok-${VERSION}-r0.${APK_ARCH}.apk"
+      ;;
+    *)
+      echo "unsupported packager: ${packager} (want deb, rpm, or apk)" >&2
+      exit 1
+      ;;
+  esac
+done

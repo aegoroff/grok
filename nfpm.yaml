@@ -1,0 +1,46 @@
+# Binary .deb / .rpm / .apk from musl release artefacts.
+# Env expanded by nfpm: VERSION, ARCH
+#   deb: amd64|arm64; rpm: x86_64|aarch64; apk: x86_64|aarch64
+# Staging dir is prepared by scripts/package_linux.sh relative to the repo root.
+name: grok
+arch: ${ARCH}
+platform: linux
+version: ${VERSION}
+section: utils
+priority: optional
+maintainer: Alexander Egorov <egoroff@gmail.com>
+description: |-
+  GROK is a command-line tool like UNIX grep on steroids. It uses grok patterns
+  (named regular expression macros) to simplify complex pattern matching tasks.
+homepage: https://github.com/aegoroff/grok
+license: MIT
+contents:
+  - src: ./pkg-staging/grok
+    dst: /usr/bin/grok
+    file_info:
+      mode: 0755
+  - src: ./pkg-staging/patterns
+    dst: /usr/share/grok/patterns
+    type: tree
+  - src: ./pkg-staging/LICENSE.txt
+    dst: /usr/share/doc/grok/copyright
+    packager: deb
+    file_info:
+      mode: 0644
+  - src: ./pkg-staging/LICENSE.txt
+    dst: /usr/share/licenses/grok/LICENSE
+    packager: rpm
+    file_info:
+      mode: 0644
+  - src: ./pkg-staging/LICENSE.txt
+    dst: /usr/share/licenses/grok/LICENSE
+    packager: apk
+    file_info:
+      mode: 0644
+overrides:
+  deb:
+    depends: []
+  rpm:
+    depends: []
+  apk:
+    depends: []

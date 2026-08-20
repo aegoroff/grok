@@ -82,7 +82,17 @@ jobs:
       - name: Create artifact directory
         run: mkdir ${{ env.RELEASE_DIR }}
       - name: Packaging
-        run: cp -v ./zig-out/*.gz ./${{ env.RELEASE_DIR }}/
+        run: |
+          cp -v ./bin/*.gz ./${{ env.RELEASE_DIR }}/
+          if compgen -G "./bin/*.deb" > /dev/null; then
+            cp -v ./bin/*.deb ./${{ env.RELEASE_DIR }}/
+          fi
+          if compgen -G "./bin/*.rpm" > /dev/null; then
+            cp -v ./bin/*.rpm ./${{ env.RELEASE_DIR }}/
+          fi
+          if compgen -G "./bin/*.apk" > /dev/null; then
+            cp -v ./bin/*.apk ./${{ env.RELEASE_DIR }}/
+          fi
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os }}_${{ matrix.abi }}_${{ matrix.arch }}
@@ -174,7 +184,7 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
           files: |
-            ./release/**/*.tar.gz
+            ./release/**/*.{tar.gz,deb,rpm,apk}
 
       - name: Publish grok-tool-bin
         uses: zokugun/github-actions-aur-releaser@v1

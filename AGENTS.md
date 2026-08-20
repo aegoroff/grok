@@ -107,6 +107,9 @@ mise exec zig@0.16.0 -- zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-m
 # Create tarball archive
 mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=1.0.0
 
+# Linux release archive + distro packages (.deb/.rpm/.apk, musl static binary)
+mise run build:zig
+
 # Run fuzzing
 mise exec zig@0.16.0 -- zig build test --fuzz -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-musl
 ```
