@@ -48,6 +48,13 @@ fn freeMacro(macro: *c.macro_t) void {
     allocator.destroy(macro);
 }
 
+fn freeMacroDefinition(list: *std.ArrayList(Info)) void {
+    for (list.items) |info| {
+        freeInfo(info);
+    }
+    list.deinit(allocator);
+}
+
 fn clearComposition() void {
     for (composition.items) |info| {
         freeInfo(info);
@@ -103,10 +110,7 @@ fn deinitLibUnlocked() void {
 
     var it = definitions.iterator();
     while (it.next()) |entry| {
-        for (entry.value_ptr.items) |info| {
-            freeInfo(info);
-        }
-        entry.value_ptr.deinit(allocator);
+        freeMacroDefinition(entry.value_ptr);
 
         const key = entry.key_ptr.*;
         allocator.free(key.ptr[0 .. key.len + 1]); // +1: compensate sentinel byte, lost under `slice[0..len]` in fend_on_definition_end
@@ -237,7 +241,17 @@ pub export fn fend_on_definition() void {
 pub export fn fend_on_definition_end(str: [*c]const u8) void {
     const slice = std.mem.span(str);
     const len = slice.len;
-    definitions.put(slice[0..len], composition) catch {
+    const key = slice[0..len];
+
+    if (definitions.getPtr(key)) |old| {
+        freeMacroDefinition(old);
+        old.* = composition;
+        composition = .empty;
+        allocator.free(slice.ptr[0 .. len + 1]);
+        return;
+    }
+
+    definitions.put(key, composition) catch {
         noteOom();
     };
 }
@@ -336,6 +350,24 @@ test "compileLib/deinitLib loop has no GPA leak" {
         var arena = std.heap.ArenaAllocator.init(gpa);
         defer arena.deinit();
         try compileLib(arena.allocator(), std.testing.io, paths);
+        deinitLib();
+    }
+
+    try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
+}
+
+test "duplicate macro definition has no GPA leak" {
+    var gpa_state = std.heap.DebugAllocator(.{}){};
+    const gpa = gpa_state.allocator();
+    var paths_buf = [_][]const u8{"./test_assets/duplicate_macro.patterns"};
+    const paths: [][]const u8 = paths_buf[0..];
+
+    for (0..500) |_| {
+        var arena = std.heap.ArenaAllocator.init(gpa);
+        defer arena.deinit();
+        try compileLib(arena.allocator(), std.testing.io, paths);
+        const pattern = try getPattern("DUP");
+        try std.testing.expectEqualStrings("literal-only", std.mem.span(pattern.items[0].data));
         deinitLib();
     }
 
