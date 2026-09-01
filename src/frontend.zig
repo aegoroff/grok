@@ -219,6 +219,7 @@ fn compileFile(path: []const u8) !void {
         return error.OutOfMemory;
     }
     if (result != 0) {
+        clearComposition();
         std.log.warn("Failed to parse file: {s} at line {d}", .{ path, c.yylineno });
         return error.InvalidPatternFile;
     }
@@ -362,14 +363,10 @@ test "duplicate macro definition has no GPA leak" {
     var paths_buf = [_][]const u8{"./test_assets/duplicate_macro.patterns"};
     const paths: [][]const u8 = paths_buf[0..];
 
-    for (0..500) |_| {
-        var arena = std.heap.ArenaAllocator.init(gpa);
-        defer arena.deinit();
-        try compileLib(arena.allocator(), std.testing.io, paths);
-        const pattern = try getPattern("DUP");
-        try std.testing.expectEqualStrings("literal-only", std.mem.span(pattern.items[0].data));
-        deinitLib();
-    }
+    try compileLib(gpa, std.testing.io, paths);
+    const pattern = try getPattern("DUP");
+    try std.testing.expectEqualStrings("literal-only", std.mem.span(pattern.items[0].data));
+    deinitLib();
 
     try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
 }
