@@ -27,6 +27,7 @@ pub fn main(init: std.process.Init) !void {
 
     const args = try init.minimal.args.toSlice(gpa);
     run(gpa, stdout, init.io, args[1..]) catch { // skip exe itself
+        stdout.flush() catch {};
         std.process.exit(1);
     };
 }
@@ -51,19 +52,19 @@ fn reportFailure(writer: *std.Io.Writer, comptime context: []const u8, err: anye
 }
 
 fn stringAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: yazap.ArgMatches) !void {
-    const macro = configuration.getMacroOpt(cmd) orelse return;
+    const macro = configuration.getMacro(cmd) catch |e| return reportFailure(writer, "string match", e);
     const str = configuration.getStringArgValue(cmd) orelse return;
     matchString(gpa, writer, macro, str, configuration.outputFlags(cmd, false)) catch |e| return reportFailure(writer, "string match", e);
 }
 
 fn fileAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) !void {
-    const macro = configuration.getMacroOpt(cmd) orelse return;
+    const macro = configuration.getMacro(cmd) catch |e| return reportFailure(writer, "file match", e);
     const path = configuration.getPathArgValue(cmd) orelse return;
     matchFile(gpa, writer, io, macro, path, configuration.outputFlags(cmd, true)) catch |e| return reportFailure(writer, "file match", e);
 }
 
 fn stdinAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, io: std.Io, cmd: yazap.ArgMatches) !void {
-    const macro = configuration.getMacroOpt(cmd) orelse return;
+    const macro = configuration.getMacro(cmd) catch |e| return reportFailure(writer, "stdin match", e);
     matchStdin(gpa, writer, io, macro, configuration.outputFlags(cmd, true)) catch |e| return reportFailure(writer, "stdin match", e);
 }
 
