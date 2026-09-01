@@ -158,8 +158,8 @@ pub fn loadPatterns(self: *const Config, writer: *std.Io.Writer, cmd: yazap.ArgM
     };
 }
 
-pub fn getMacroOpt(match: yazap.ArgMatches) ?[]const u8 {
-    return match.getSingleValue(macro_name);
+pub fn getMacro(match: yazap.ArgMatches) error{MacroNotProvided}![]const u8 {
+    return match.getSingleValue(macro_name) orelse return error.MacroNotProvided;
 }
 
 pub fn getStringArgValue(match: yazap.ArgMatches) ?[]const u8 {
@@ -237,5 +237,17 @@ test "incorrect file parsing no positional parameter" {
 
     const err = Config.init(arena.allocator(), std.testing.io, command_line);
     try std.testing.expectError(yazap.yazap_error.ParseError.PositionalArgumentNotProvided, err);
+}
+
+test "missing macro option" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const command_line: []const [:0]const u8 = &[_][:0]const u8{ "file", "-p", "./patterns/", "log.txt" };
+    var config = try Config.init(arena.allocator(), std.testing.io, command_line);
+    defer config.deinit();
+
+    const sel = config.selected() orelse return error.TestUnexpectedResult;
+    try std.testing.expectError(error.MacroNotProvided, getMacro(sel.matches));
 }
 

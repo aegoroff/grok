@@ -341,6 +341,36 @@ const cases = [_]Case{
         .argv = &.{ "file", "-p", patterns, "-m", "NLOG", nlog_file_utf8_bom },
         .expected = .{ .success = nlog_matches },
     },
+    .{
+        .name = "file without macro",
+        .argv = &.{ "file", "-p", patterns, nlog_file_utf8 },
+        .expected = .{
+            .failure = .{
+                .err = error.MacroNotProvided,
+                .output = "Failed file match: error.MacroNotProvided\n",
+            },
+        },
+    },
+    .{
+        .name = "string without macro",
+        .argv = &.{ "string", "-p", patterns, "2010" },
+        .expected = .{
+            .failure = .{
+                .err = error.MacroNotProvided,
+                .output = "Failed string match: error.MacroNotProvided\n",
+            },
+        },
+    },
+    .{
+        .name = "stdin without macro",
+        .argv = &.{ "stdin", "-p", patterns },
+        .expected = .{
+            .failure = .{
+                .err = error.MacroNotProvided,
+                .output = "Failed stdin match: error.MacroNotProvided\n",
+            },
+        },
+    },
 };
 
 fn runCase(tc: Case) !void {
