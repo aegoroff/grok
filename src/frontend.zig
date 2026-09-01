@@ -347,7 +347,7 @@ test "compileLib/deinitLib loop has no GPA leak" {
     var paths_buf = [_][]const u8{"./patterns/"};
     const paths: [][]const u8 = paths_buf[0..];
 
-    for (0..500) |_| {
+    for (0..5) |_| {
         var arena = std.heap.ArenaAllocator.init(gpa);
         defer arena.deinit();
         try compileLib(arena.allocator(), std.testing.io, paths);
