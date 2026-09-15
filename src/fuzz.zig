@@ -224,7 +224,11 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
 
     if (ctx.watchdog_spawned.cmpxchgStrong(false, true, .acquire, .monotonic) == null) {
         g_ctx = ctx;
-        _ = std.Thread.spawn(.{}, watchdogLoop, .{}) catch {};
+        // Losing the watchdog means a hung iteration just hangs, which is the very
+        // thing it exists to turn into an abort, so say so instead of going quiet.
+        if (std.Thread.spawn(.{}, watchdogLoop, .{})) |_| {} else |e| {
+            std.debug.print("WATCHDOG: spawn failed ({t}), hang detection is off for this run\n", .{e});
+        }
     }
     const now = std.Io.Clock.real.now(std.testing.io);
     ctx.iteration_start_ns.store(@intCast(now.nanoseconds), .release);
