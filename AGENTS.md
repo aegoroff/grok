@@ -60,9 +60,12 @@ CLI entry: `main.zig` → `configuration.zig` (yazap) dispatches to `string`, `f
 
 ## Code Style Guidelines
 - Follow Zig standard library conventions
-- Use snake_case for functions and variables
-- Use PascalCase for types and structs
+- Use camelCase for functions and methods
+- Use snake_case for variables, parameters, and struct fields
 - Use SCREAMING_SNAKE_CASE for constants
+- Use PascalCase for types, structs, enums, and type-valued constants
+- Exception: C boundary symbols keep their C names (`fend_*` callbacks from
+  `frontend.h`, `pcre_alloc` / `pcre_free`)
 - Prefer explicit error handling with `!` return types
 - Keep functions small and focused on single responsibility
 - Add doc comments (`///`) for public APIs
