@@ -166,6 +166,19 @@ Run `grok <command> -h` or `grok <command> --help` for detailed help on any comm
 
 Not every command accepts all of these: `-i`, `-j` and `-v` work with `string`, `file` and `stdin`; `-c` and `-n` with `file` and `stdin` only; `macro` takes just `-p` and `-h`.
 
+### Exit Status
+
+- `0` - the command ran to completion
+- `1` - the command failed: unknown macro, unreadable file, malformed pattern file, missing `-m`, or output that could not be written
+
+**Matching nothing is not a failure.** Unlike `grep`, `grok` does not report the match result through the exit status: `grok file -m YEAR log.txt` exits `0` whether every line matched or none did, so `grok ... || echo "no match"` never fires. Test the count instead:
+
+```bash
+[ "$(grok file -m YEAR -c log.txt)" -gt 0 ] || echo "no match"
+```
+
+Running `grok` with no command prints usage to stderr and also exits `0`.
+
 ### Command Details
 
 #### `string` - Single String Matching
