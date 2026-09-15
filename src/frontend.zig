@@ -293,8 +293,9 @@ pub export fn fend_on_grok(m: ?*c.macro_t) void {
         .reference = macro.property,
         .part = .reference,
     }) catch {
-        freeMacro(macro);
-        noteOom();
+        freeMacro(macro); // frees name, property and the macro itself
+        noteOom(); // returns here when no OOM jump buffer is armed
+        return;
     };
     allocator.destroy(macro);
 }
@@ -368,5 +369,26 @@ test "duplicate macro definition has no GPA leak" {
     try std.testing.expectEqualStrings("literal-only", std.mem.span(pattern.items[0].data));
     deinitLib();
 
+    try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
+}
+
+test "fend_on_grok frees the macro once when composition append fails" {
+    var gpa_state = std.heap.DebugAllocator(.{}){};
+    const gpa = gpa_state.allocator();
+
+    allocator = gpa;
+    composition = .empty;
+    c.fend_oom_flag = 0;
+    oom_jmp_buf = null; // force noteOom to return instead of longjmp
+
+    const name = fend_strdup("NAME");
+    const macro = fend_on_macro(@constCast(name), null).?;
+
+    var failing = std.testing.FailingAllocator.init(gpa, .{ .fail_index = 0 });
+    allocator = failing.allocator();
+    fend_on_grok(macro);
+    allocator = gpa;
+
+    try std.testing.expect(c.fend_oom_flag != 0);
     try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
 }
