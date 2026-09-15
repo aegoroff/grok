@@ -12,10 +12,10 @@
 /// Input is decoded through `std.testing.Smith` (same in fuzz and smoke-test modes):
 ///   1. macro index — `smith.valueRangeAtMost(u8, 0, len(KNOWN_MACROS) - 1)`
 ///      (`KNOWN_MACROS` is generated from `patterns/*.patterns` in build.zig)
-///   2. flags byte  — `smith.value(u8)`; bits0-4=CLI flags (bit0=info, bit1=json,
-///                    bit2=invert, bit3=count, bit4=line-number); bits5-7=file
-///                    encoding (0=raw, 1=UTF-8 BOM, 2=UTF-16LE, 3=UTF-16BE,
-///                    4=UTF-32LE, 5=UTF-32BE, 6-7=raw)
+///   2. flags byte  — `smith.value(u8)`; bits0-4 pick CLI options and bits5-7 the
+///                    file encoding. The layout lives in `fuzz_encoding.zig`
+///                    (`CliFlags`, `FileEncoding`, `flagsByte`), which `build.zig`
+///                    shares when it emits the corpus.
 ///   3. subject     — zero or more chunks until `smith.eos()` returns true:
 ///        eos=false, chunk_len (1..255), chunk bytes, …, eos=true
 ///
@@ -246,7 +246,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
 
     // ── 2. Select flags and file encoding ──────────────────────────────────
     const flags_byte = smith.value(u8);
-    const cli_flags = flags_byte & 0x1F;
+    const cli_flags = fuzz_encoding.CliFlags.fromFlagsByte(flags_byte);
     const file_encoding = fuzz_encoding.FileEncoding.fromFlagsByte(flags_byte);
 
     // ── 3. Subject ─────────────────────────────────────────────────────────
@@ -294,11 +294,11 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     var argv_list: std.ArrayList([:0]const u8) = .empty;
     defer argv_list.deinit(gpa);
     try argv_list.appendSlice(gpa, &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", macro_z });
-    if (cli_flags & 0b00001 != 0) try argv_list.append(gpa, "-i");
-    if (cli_flags & 0b00010 != 0) try argv_list.append(gpa, "-j");
-    if (cli_flags & 0b00100 != 0) try argv_list.append(gpa, "-v");
-    if (cli_flags & 0b01000 != 0) try argv_list.append(gpa, "-c");
-    if (cli_flags & 0b10000 != 0) try argv_list.append(gpa, "-n");
+    if (cli_flags.info) try argv_list.append(gpa, "-i");
+    if (cli_flags.json) try argv_list.append(gpa, "-j");
+    if (cli_flags.invert) try argv_list.append(gpa, "-v");
+    if (cli_flags.count) try argv_list.append(gpa, "-c");
+    if (cli_flags.line_number) try argv_list.append(gpa, "-n");
     try argv_list.append(gpa, file_path);
 
     // ── 6. Writer ──────────────────────────────────────────────────────────

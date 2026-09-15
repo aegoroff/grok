@@ -1,6 +1,26 @@
 const std = @import("std");
 const encoding = @import("encoding.zig");
 
+/// CLI options selected by bits 0–4 of the fuzz flags byte.
+/// Field order is the wire order: bit 0 is `info`, bit 4 is `line_number`.
+pub const CliFlags = packed struct(u5) {
+    info: bool = false,
+    json: bool = false,
+    invert: bool = false,
+    count: bool = false,
+    line_number: bool = false,
+
+    pub fn fromFlagsByte(flags_byte: u8) CliFlags {
+        return @bitCast(@as(u5, @truncate(flags_byte)));
+    }
+};
+
+/// Packs both halves of the flags byte. The single place that defines the layout,
+/// used by `src/fuzz.zig` to decode and by `build.zig` to emit corpus entries.
+pub fn flagsByte(cli: CliFlags, file_encoding: FileEncoding) u8 {
+    return @as(u8, @as(u5, @bitCast(cli))) | (@as(u8, @intFromEnum(file_encoding)) << 5);
+}
+
 /// File encoding selected by bits 5–7 of the fuzz flags byte.
 pub const FileEncoding = enum(u3) {
     raw = 0,
@@ -170,4 +190,29 @@ test "encodeSubjectForFile utf32be multiline newlines" {
     try std.testing.expectEqual(@as(u8, 0x00), payload[5]);
     try std.testing.expectEqual(@as(u8, 0x00), payload[6]);
     try std.testing.expectEqual(@as(u8, 0x0A), payload[7]);
+}
+
+test "flagsByte round-trips and keeps the historic corpus encoding" {
+    try std.testing.expectEqual(@as(u8, 0), flagsByte(.{}, .raw));
+    try std.testing.expectEqual(@as(u8, 5 << 5), flagsByte(.{}, .utf32be));
+    try std.testing.expectEqual(@as(u8, 2 << 5), flagsByte(.{}, .utf16le));
+    try std.testing.expectEqual(
+        @as(u8, (2 << 5) | 0b11000),
+        flagsByte(.{ .count = true, .line_number = true }, .utf16le),
+    );
+
+    const byte = flagsByte(.{ .info = true, .invert = true }, .utf16be);
+    try std.testing.expectEqual(FileEncoding.utf16be, FileEncoding.fromFlagsByte(byte));
+    try std.testing.expectEqual(
+        CliFlags{ .info = true, .invert = true },
+        CliFlags.fromFlagsByte(byte),
+    );
+}
+
+test "CliFlags bit positions match the argv order fuzz.zig builds" {
+    try std.testing.expectEqual(CliFlags{ .info = true }, CliFlags.fromFlagsByte(0b00001));
+    try std.testing.expectEqual(CliFlags{ .json = true }, CliFlags.fromFlagsByte(0b00010));
+    try std.testing.expectEqual(CliFlags{ .invert = true }, CliFlags.fromFlagsByte(0b00100));
+    try std.testing.expectEqual(CliFlags{ .count = true }, CliFlags.fromFlagsByte(0b01000));
+    try std.testing.expectEqual(CliFlags{ .line_number = true }, CliFlags.fromFlagsByte(0b10000));
 }

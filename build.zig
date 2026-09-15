@@ -1,4 +1,5 @@
 const std = @import("std");
+const fuzz_wire = @import("src/fuzz_encoding.zig");
 const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) void {
@@ -352,29 +353,29 @@ fn generateFuzzCorpus(b: *std.Build) []const u8 {
         .{ .name = "NLOG", .flags = 2 << 5, .subject = nlog_line },
         .{ .name = "NLOG", .flags = 3 << 5, .subject = nlog_line },
         .{ .name = "NLOG", .flags = 4 << 5, .subject = nlog_line },
-        .{ .name = "NLOG", .flags = 5 << 5, .subject = nlog_line },
-        .{ .name = "NLOG", .flags = (2 << 5) | 0b11000, .subject = nlog_multiline },
-        .{ .name = "YEAR", .flags = 2 << 5, .subject = "2024" },
-        .{ .name = "YEAR", .flags = 2 << 5, .subject = "" },
-        .{ .name = "YEAR", .flags = 2 << 5, .subject = "\n\r\t" },
-        .{ .name = "YEAR", .flags = 0, .subject = "" },
-        .{ .name = "GREEDYDATA", .flags = 0, .subject = "" },
-        .{ .name = "YEAR", .flags = 0, .subject = "\n\r\t" },
-        .{ .name = "YEAR", .flags = 0, .subject = "\xd0\xb3\xd1\x80\xd0\xbe\xd0\xba" },
-        .{ .name = "NOTSPACE", .flags = 0, .subject = notspace_512 },
-        .{ .name = "SPACE", .flags = 0, .subject = space_512 },
-        .{ .name = "GREEDYDATA", .flags = 0, .subject = greedy_1024 },
-        .{ .name = "YEAR", .flags = 0, .subject = "20\x0024" },
-        .{ .name = "YEAR", .flags = 0, .subject = "2024\nnot-a-year\n2025" },
+        .{ .name = "NLOG", .flags = fuzz_wire.flagsByte(.{}, .utf32be), .subject = nlog_line },
+        .{ .name = "NLOG", .flags = fuzz_wire.flagsByte(.{ .count = true, .line_number = true }, .utf16le), .subject = nlog_multiline },
+        .{ .name = "YEAR", .flags = fuzz_wire.flagsByte(.{}, .utf16le), .subject = "2024" },
+        .{ .name = "YEAR", .flags = fuzz_wire.flagsByte(.{}, .utf16le), .subject = "" },
+        .{ .name = "YEAR", .flags = fuzz_wire.flagsByte(.{}, .utf16le), .subject = "\n\r\t" },
+        .{ .name = "YEAR", .flags = fuzz_wire.flagsByte(.{}, .raw), .subject = "" },
+        .{ .name = "GREEDYDATA", .flags = fuzz_wire.flagsByte(.{}, .raw), .subject = "" },
+        .{ .name = "YEAR", .flags = fuzz_wire.flagsByte(.{}, .raw), .subject = "\n\r\t" },
+        .{ .name = "YEAR", .flags = fuzz_wire.flagsByte(.{}, .raw), .subject = "\xd0\xb3\xd1\x80\xd0\xbe\xd0\xba" },
+        .{ .name = "NOTSPACE", .flags = fuzz_wire.flagsByte(.{}, .raw), .subject = notspace_512 },
+        .{ .name = "SPACE", .flags = fuzz_wire.flagsByte(.{}, .raw), .subject = space_512 },
+        .{ .name = "GREEDYDATA", .flags = fuzz_wire.flagsByte(.{}, .raw), .subject = greedy_1024 },
+        .{ .name = "YEAR", .flags = fuzz_wire.flagsByte(.{}, .raw), .subject = "20\x0024" },
+        .{ .name = "YEAR", .flags = fuzz_wire.flagsByte(.{}, .raw), .subject = "2024\nnot-a-year\n2025" },
     };
     for (focused) |entry| {
         appendSmithCorpusEntry(&out, b, macroNameIndex(names.items, entry.name), entry.flags, entry.subject);
     }
     const binary_subject = [_]u8{ 0x00, 0xff, 0xfe };
-    appendSmithCorpusEntry(&out, b, macroNameIndex(names.items, "YEAR"), 0, &binary_subject);
+    appendSmithCorpusEntry(&out, b, macroNameIndex(names.items, "YEAR"), fuzz_wire.flagsByte(.{}, .raw), &binary_subject);
 
     for (names.items, 0..) |_, i| {
-        appendSmithCorpusEntry(&out, b, @intCast(i), 0, "x");
+        appendSmithCorpusEntry(&out, b, @intCast(i), fuzz_wire.flagsByte(.{}, .raw), "x");
     }
 
     out.appendSlice(b.allocator, "};\n") catch @panic("OOM");
