@@ -52,15 +52,15 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
     const patterns_opt = yazap.Arg.multiValuesOption(
         PATTERNS_NAME,
         'p',
-        "One or more pattern files. If not set, current directory used to search all *.patterns files",
+        "One or more pattern files or directories. If not set, /usr/share/grok/patterns on Linux, the executable directory elsewhere",
         1,
     );
 
     var macro_opt = yazap.Arg.singleValueOption(MACRO_NAME, 'm', "Pattern macros to build regexp");
     macro_opt.setValuePlaceholder("STRING");
     macro_opt.setProperty(.takes_value);
-    const info_opt = yazap.Arg.booleanOption(INFO_NAME, 'i', "Dont work like grep i.e. output matched string with additional info");
-    const json_opt = yazap.Arg.booleanOption(JSON_NAME, 'j', "Output matched strings in JSONL (Newline delimited JSON) format");
+    const info_opt = yazap.Arg.booleanOption(INFO_NAME, 'i', "Report every line with its number, match status, macro name and captured groups. Not a filter, and the line text is not printed");
+    const json_opt = yazap.Arg.booleanOption(JSON_NAME, 'j', "One JSON object per input line in JSONL format, non-matching lines included. Wins over -i");
     const count_opt = yazap.Arg.booleanOption(COUNT_NAME, 'c', "Print only matched strings count");
     const line_num_opt = yazap.Arg.booleanOption(LINE_NAME, 'n', "Print line number along with output lines");
     const invert_opt = yazap.Arg.booleanOption(INVERT_NAME, 'v', "Select non-matching lines");

@@ -157,12 +157,14 @@ Run `grok <command> -h` or `grok <command> --help` for detailed help on any comm
 
 ### Common Options
 
-- `-p, --patterns=<patterns>...` - One or more pattern files. If not set, current directory is used to search for all `*.patterns` files
+- `-p, --patterns=<patterns>...` - One or more pattern files or directories. If not set, `/usr/share/grok/patterns` is searched on Linux, and the directory holding the `grok` executable on other platforms
 - `-m, --macro=<STRING>` - Pattern macro to build regexp (required for `string`, `file`, and `stdin` commands)
-- `-i, --info` - Output matched string with additional information (captured groups, etc.)
-- `-j, --jsonl` - Output matched strings in JSONL (Newline delimited JSON) format
+- `-i, --info` - Print a record per input line: line number, whether it matched, the macro name and any captured groups. Unlike the default mode this is not a filter - non-matching lines are reported as well, and the line text itself is not printed
+- `-j, --jsonl` - Print one JSON object per input line in JSONL (newline delimited JSON) format, non-matching lines included as `"matched": false`. Takes precedence over `-i` when both are given
 - `-v, --invert-match` - Select non-matching lines (invert match)
 - `-h, --help` - Print help and exit
+
+Not every command accepts all of these: `-i`, `-j` and `-v` work with `string`, `file` and `stdin`; `-c` and `-n` with `file` and `stdin` only; `macro` takes just `-p` and `-h`.
 
 ### Command Details
 
@@ -264,7 +266,7 @@ grok macro UNIXPATH
 
 **Output:**
 ```
-(?>/(?>[\w_%!$@:.,-]+|\\.)*)+
+(/([\w_%!$@:.,+~-]+|\\.)*)+
 ```
 
 ### Match a String
@@ -320,7 +322,13 @@ grok file -p /path/to/custom.patterns -m MYCUSTOMPATTERN /path/to/file.log
 Multiple pattern files:
 
 ```bash
-grok file -p patterns/custom.patterns -p patterns/webservers.patterns -m APACHELOG access.log
+grok file -p patterns/grok.patterns -p patterns/webservers.patterns -m COMBINEDAPACHELOG_LEVELED access.log
+```
+
+`webservers.patterns` builds on macros defined in `grok.patterns` (`IPORHOST`, `HTTPDATE`, `NUMBER` and others), so both files have to be listed. Passing the directory loads everything at once:
+
+```bash
+grok file -p patterns/ -m COMBINEDAPACHELOG_LEVELED access.log
 ```
 
 ### Invert Match
@@ -449,6 +457,8 @@ MACRONAME regexp
 ```
 
 Macros can reference other macros using `%{MACRONAME}` syntax. Named capture groups use `%{MACRONAME:fieldname}`.
+
+A type may follow the field name - `%{MACRONAME:fieldname:Type}`, where `Type` is one of `int`, `Int32`, `Int64`, `long`, `String`, `DateTime` or `LogLevel` - as may value mappings such as `%{NUMBER:response:'20'->LogLevel.Info,'50'->LogLevel.Fatal}`. Both forms are used by the bundled `custom.patterns` and `webservers.patterns`. The type is currently parsed and then discarded: every captured value is reported as a string.
 
 You can also create your own pattern files and specify them with the `-p` option.
 
