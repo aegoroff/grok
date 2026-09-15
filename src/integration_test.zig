@@ -1,19 +1,19 @@
 const std = @import("std");
 const main = @import("main.zig");
 
-const nlog_matches =
+const NLOG_MATCHES =
     \\2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.
     \\2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному
     \\
 ;
 
-const nlog_line_numbers =
+const NLOG_LINE_NUMBERS =
     \\1: 2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.
     \\2: 2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному
     \\
 ;
 
-const nlog_info =
+const NLOG_INFO =
     \\line: 1 match: true | pattern: NLOG
     \\
     \\  Meta properties found:
@@ -31,13 +31,13 @@ const nlog_info =
     \\
 ;
 
-const nlog_json =
+const NLOG_JSON =
     \\{"line":1,"matched":true,"pattern":"NLOG","text":"2016-08-13 01:46:09,637 INFO logviewer Value cannot be null.","properties":{"Occured":"2016-08-13 01:46:09,637","Level":"INFO"}}
     \\{"line":2,"matched":true,"pattern":"NLOG","text":"2016-08-13 10:21:58,814 INFO logviewer Минимальный уровень должен быть меньше или равен максимальному","properties":{"Occured":"2016-08-13 10:21:58,814","Level":"INFO"}}
     \\
 ;
 
-const nlog_string_info =
+const NLOG_STRING_INFO =
     \\line: 1 match: true | pattern: NLOG
     \\
     \\  Meta properties found:
@@ -48,13 +48,13 @@ const nlog_string_info =
     \\
 ;
 
-const patterns = "./patterns/";
-const nlog_file_utf8 = "./test_assets/logUTF8.log";
-const nlog_file_utf8_bom = "./test_assets/logUTF8BOM.log";
-const nlog_file_utf16le = "./test_assets/logUTF16LE.log";
-const nlog_file_utf16be = "./test_assets/logUTF16BE.log";
-const nlog_file_utf32le = "./test_assets/logUTF32LE.log";
-const nlog_file_utf32be = "./test_assets/logUTF32BE.log";
+const PATTERNS = "./patterns/";
+const NLOG_FILE_UTF8 = "./test_assets/logUTF8.log";
+const NLOG_FILE_UTF8_BOM = "./test_assets/logUTF8BOM.log";
+const NLOG_FILE_UTF16LE = "./test_assets/logUTF16LE.log";
+const NLOG_FILE_UTF16BE = "./test_assets/logUTF16BE.log";
+const NLOG_FILE_UTF32LE = "./test_assets/logUTF32LE.log";
+const NLOG_FILE_UTF32BE = "./test_assets/logUTF32BE.log";
 
 const Expected = union(enum) {
     success: []const u8,
@@ -71,30 +71,30 @@ const Case = struct {
     expected: Expected,
 };
 
-const cases = [_]Case{
+const CASES = [_]Case{
     .{
         .name = "match plain string",
-        .argv = &.{ "string", "-p", patterns, "-m", "YEAR", "2010" },
+        .argv = &.{ "string", "-p", PATTERNS, "-m", "YEAR", "2010" },
         .expected = .{ .success = "2010\n" },
     },
     .{
         .name = "invert match plain string",
-        .argv = &.{ "string", "-p", patterns, "-v", "-m", "YEAR", "2010" },
+        .argv = &.{ "string", "-p", PATTERNS, "-v", "-m", "YEAR", "2010" },
         .expected = .{ .success = "" },
     },
     .{
         .name = "macro view",
-        .argv = &.{ "macro", "YEAR", "-p", patterns },
+        .argv = &.{ "macro", "YEAR", "-p", PATTERNS },
         .expected = .{ .success = "(?>\\d\\d){1,2}\n" },
     },
     .{
         .name = "macro view complex pattern",
-        .argv = &.{ "macro", "NUMBER", "-p", patterns },
+        .argv = &.{ "macro", "NUMBER", "-p", PATTERNS },
         .expected = .{ .success = "(?:(?<![0-9.+-])(?>[+-]?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+))))\n" },
     },
     .{
         .name = "macro view bad (not exist) pattern",
-        .argv = &.{ "macro", "BAD", "-p", patterns },
+        .argv = &.{ "macro", "BAD", "-p", PATTERNS },
         .expected = .{
             .failure = .{
                 .err = error.UnknownMacro,
@@ -134,77 +134,77 @@ const cases = [_]Case{
     },
     .{
         .name = "match file UTF-8 without flags",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", nlog_file_utf8 },
-        .expected = .{ .success = nlog_matches },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", NLOG_FILE_UTF8 },
+        .expected = .{ .success = NLOG_MATCHES },
     },
     .{
         .name = "match file UTF-8 no match",
-        .argv = &.{ "file", "-p", patterns, "-m", "NGINXPROXYACCESS", nlog_file_utf8 },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NGINXPROXYACCESS", NLOG_FILE_UTF8 },
         .expected = .{ .success = "" },
     },
     .{
         .name = "match file UTF-8 count",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-c", nlog_file_utf8 },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-c", NLOG_FILE_UTF8 },
         .expected = .{ .success = "2\n" },
     },
     .{
         .name = "match file UTF-8 count no matches",
-        .argv = &.{ "file", "-p", patterns, "-m", "NGINXPROXYACCESS", "-c", nlog_file_utf8 },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NGINXPROXYACCESS", "-c", NLOG_FILE_UTF8 },
         .expected = .{ .success = "0\n" },
     },
     .{
         .name = "match file UTF-8 invert match - no results",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-v", nlog_file_utf8 },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-v", NLOG_FILE_UTF8 },
         .expected = .{ .success = "" },
     },
     .{
         .name = "match file UTF-8 info",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-i", nlog_file_utf8 },
-        .expected = .{ .success = nlog_info },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-i", NLOG_FILE_UTF8 },
+        .expected = .{ .success = NLOG_INFO },
     },
     .{
         .name = "match file UTF-8 json",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-j", nlog_file_utf8 },
-        .expected = .{ .success = nlog_json },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-j", NLOG_FILE_UTF8 },
+        .expected = .{ .success = NLOG_JSON },
     },
     .{
         .name = "match file UTF-16LE count",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-c", nlog_file_utf16le },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-c", NLOG_FILE_UTF16LE },
         .expected = .{ .success = "2\n" },
     },
     .{
         .name = "match file UTF-16LE",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", nlog_file_utf16le },
-        .expected = .{ .success = nlog_matches },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", NLOG_FILE_UTF16LE },
+        .expected = .{ .success = NLOG_MATCHES },
     },
     .{
         .name = "match file UTF-16BE count",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-c", nlog_file_utf16be },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-c", NLOG_FILE_UTF16BE },
         .expected = .{ .success = "2\n" },
     },
     .{
         .name = "match file UTF-16BE",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", nlog_file_utf16be },
-        .expected = .{ .success = nlog_matches },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", NLOG_FILE_UTF16BE },
+        .expected = .{ .success = NLOG_MATCHES },
     },
     .{
         .name = "match empty file UTF-16BE",
-        .argv = &.{ "file", "-p", patterns, "-m", "DATA", "./test_assets/emptyUTF16BE.log" },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "DATA", "./test_assets/emptyUTF16BE.log" },
         .expected = .{ .success = "" },
     },
     .{
         .name = "match file UTF-32LE count",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-c", nlog_file_utf32le },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-c", NLOG_FILE_UTF32LE },
         .expected = .{ .success = "2\n" },
     },
     .{
         .name = "match file UTF-32LE",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", nlog_file_utf32le },
-        .expected = .{ .success = nlog_matches },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", NLOG_FILE_UTF32LE },
+        .expected = .{ .success = NLOG_MATCHES },
     },
     .{
         .name = "match invalid file UTF-32LE",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "./test_assets/invalidUTF32LE.log" },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "./test_assets/invalidUTF32LE.log" },
         .expected = .{
             .failure = .{
                 .err = error.InvalidUtf32LineLength,
@@ -214,92 +214,92 @@ const cases = [_]Case{
     },
     .{
         .name = "match file UTF-32BE count",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-c", nlog_file_utf32be },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-c", NLOG_FILE_UTF32BE },
         .expected = .{ .success = "2\n" },
     },
     .{
         .name = "match file UTF-32BE",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", nlog_file_utf32be },
-        .expected = .{ .success = nlog_matches },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", NLOG_FILE_UTF32BE },
+        .expected = .{ .success = NLOG_MATCHES },
     },
     .{
         .name = "match empty file UTF-32BE",
-        .argv = &.{ "file", "-p", patterns, "-m", "DATA", "./test_assets/emptyUTF32BE.log" },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "DATA", "./test_assets/emptyUTF32BE.log" },
         .expected = .{ .success = "" },
     },
     .{
         .name = "match invalid file UTF-32BE",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "./test_assets/invalidUTF32BE.log" },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "./test_assets/invalidUTF32BE.log" },
         .expected = .{ .success = "" },
     },
     .{
         .name = "list all macros",
-        .argv = &.{ "macro", "-p", patterns },
+        .argv = &.{ "macro", "-p", PATTERNS },
         .expected = .{ .contains = &.{ "NLOG", "NGINXPROXYACCESS", "NGINXPROXYDEFAULTACCESS" } },
     },
     .{
         .name = "match string with NUMBER pattern",
-        .argv = &.{ "string", "-p", patterns, "-m", "NUMBER", "12345" },
+        .argv = &.{ "string", "-p", PATTERNS, "-m", "NUMBER", "12345" },
         .expected = .{ .success = "12345\n" },
     },
     .{
         .name = "match string with NUMBER pattern no match",
-        .argv = &.{ "string", "-p", patterns, "-m", "NUMBER", "abc" },
+        .argv = &.{ "string", "-p", PATTERNS, "-m", "NUMBER", "abc" },
         .expected = .{ .success = "" },
     },
     .{
         .name = "match string invert with NUMBER pattern",
-        .argv = &.{ "string", "-p", patterns, "-m", "NUMBER", "-v", "abc" },
+        .argv = &.{ "string", "-p", PATTERNS, "-m", "NUMBER", "-v", "abc" },
         .expected = .{ .success = "abc\n" },
     },
     .{
         .name = "match string with IP pattern",
-        .argv = &.{ "string", "-p", patterns, "-m", "IP", "192.168.1.1" },
+        .argv = &.{ "string", "-p", PATTERNS, "-m", "IP", "192.168.1.1" },
         .expected = .{ .success = "192.168.1.1\n" },
     },
     .{
         .name = "match string with IP pattern invalid",
-        .argv = &.{ "string", "-p", patterns, "-m", "IP", "999.999.999.999" },
+        .argv = &.{ "string", "-p", PATTERNS, "-m", "IP", "999.999.999.999" },
         .expected = .{ .success = "" },
     },
     .{
         .name = "match string with TIMESTAMP_ISO8601 pattern",
-        .argv = &.{ "string", "-p", patterns, "-m", "TIMESTAMP_ISO8601", "2016-08-13 01:46:09,637" },
+        .argv = &.{ "string", "-p", PATTERNS, "-m", "TIMESTAMP_ISO8601", "2016-08-13 01:46:09,637" },
         .expected = .{ .success = "2016-08-13 01:46:09,637\n" },
     },
     .{
         .name = "match file UTF-8 with line numbers",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-n", nlog_file_utf8 },
-        .expected = .{ .success = nlog_line_numbers },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-n", NLOG_FILE_UTF8 },
+        .expected = .{ .success = NLOG_LINE_NUMBERS },
     },
     .{
         .name = "match file UTF-16LE with line numbers",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-n", nlog_file_utf16le },
-        .expected = .{ .success = nlog_line_numbers },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-n", NLOG_FILE_UTF16LE },
+        .expected = .{ .success = NLOG_LINE_NUMBERS },
     },
     .{
         .name = "match file UTF-32LE with line numbers",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-n", nlog_file_utf32le },
-        .expected = .{ .success = nlog_line_numbers },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-n", NLOG_FILE_UTF32LE },
+        .expected = .{ .success = NLOG_LINE_NUMBERS },
     },
     .{
         .name = "match file UTF-32BE with line numbers",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-n", nlog_file_utf32be },
-        .expected = .{ .success = nlog_line_numbers },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-n", NLOG_FILE_UTF32BE },
+        .expected = .{ .success = NLOG_LINE_NUMBERS },
     },
     .{
         .name = "match file UTF-16BE with line numbers",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "-n", nlog_file_utf16be },
-        .expected = .{ .success = nlog_line_numbers },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "-n", NLOG_FILE_UTF16BE },
+        .expected = .{ .success = NLOG_LINE_NUMBERS },
     },
     .{
         .name = "match file UTF-16LE crash",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "./test_assets/crash.log" },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "./test_assets/crash.log" },
         .expected = .{ .success = "" },
     },
     .{
         .name = "match file UTF-16BE crash1",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "./test_assets/crash1.log" },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "./test_assets/crash1.log" },
         .expected = .{
             .failure = .{
                 .output = "Failed file match: error.UnexpectedSecondSurrogateHalf\n",
@@ -308,7 +308,7 @@ const cases = [_]Case{
     },
     .{
         .name = "match file UTF-16BE crash2",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", "./test_assets/crash2.log" },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", "./test_assets/crash2.log" },
         .expected = .{
             .failure = .{
                 .err = error.InvalidUtf16LineLength,
@@ -318,17 +318,17 @@ const cases = [_]Case{
     },
     .{
         .name = "match string info with NLOG captures",
-        .argv = &.{ "string", "-p", patterns, "-m", "NLOG", "-i", "2016-08-13 01:46:09,637 INFO logviewer Value cannot be null." },
-        .expected = .{ .success = nlog_string_info },
+        .argv = &.{ "string", "-p", PATTERNS, "-m", "NLOG", "-i", "2016-08-13 01:46:09,637 INFO logviewer Value cannot be null." },
+        .expected = .{ .success = NLOG_STRING_INFO },
     },
     .{
         .name = "match file invert NGINXPROXYACCESS",
-        .argv = &.{ "file", "-p", patterns, "-m", "NGINXPROXYACCESS", "-v", nlog_file_utf8 },
-        .expected = .{ .success = nlog_matches },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NGINXPROXYACCESS", "-v", NLOG_FILE_UTF8 },
+        .expected = .{ .success = NLOG_MATCHES },
     },
     .{
         .name = "match string unknown macro",
-        .argv = &.{ "string", "-p", patterns, "-m", "UNKNOWN", "foo" },
+        .argv = &.{ "string", "-p", PATTERNS, "-m", "UNKNOWN", "foo" },
         .expected = .{
             .failure = .{
                 .err = error.UnknownMacro,
@@ -338,12 +338,12 @@ const cases = [_]Case{
     },
     .{
         .name = "match file UTF-8 BOM",
-        .argv = &.{ "file", "-p", patterns, "-m", "NLOG", nlog_file_utf8_bom },
-        .expected = .{ .success = nlog_matches },
+        .argv = &.{ "file", "-p", PATTERNS, "-m", "NLOG", NLOG_FILE_UTF8_BOM },
+        .expected = .{ .success = NLOG_MATCHES },
     },
     .{
         .name = "file without macro",
-        .argv = &.{ "file", "-p", patterns, nlog_file_utf8 },
+        .argv = &.{ "file", "-p", PATTERNS, NLOG_FILE_UTF8 },
         .expected = .{
             .failure = .{
                 .err = error.MacroNotProvided,
@@ -353,7 +353,7 @@ const cases = [_]Case{
     },
     .{
         .name = "string without macro",
-        .argv = &.{ "string", "-p", patterns, "2010" },
+        .argv = &.{ "string", "-p", PATTERNS, "2010" },
         .expected = .{
             .failure = .{
                 .err = error.MacroNotProvided,
@@ -363,7 +363,7 @@ const cases = [_]Case{
     },
     .{
         .name = "stdin without macro",
-        .argv = &.{ "stdin", "-p", patterns },
+        .argv = &.{ "stdin", "-p", PATTERNS },
         .expected = .{
             .failure = .{
                 .err = error.MacroNotProvided,
@@ -419,7 +419,7 @@ fn integrationTest(comptime tc: Case) type {
 }
 
 comptime {
-    for (cases) |tc| {
+    for (CASES) |tc| {
         _ = integrationTest(tc);
     }
 }

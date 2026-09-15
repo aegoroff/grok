@@ -23,11 +23,11 @@ pub const FileEncoding = enum(u3) {
     }
 };
 
-const bom_utf8 = [_]u8{ 0xEF, 0xBB, 0xBF };
-const bom_utf16le = [_]u8{ 0xFF, 0xFE };
-const bom_utf16be = [_]u8{ 0xFE, 0xFF };
-const bom_utf32le = [_]u8{ 0xFF, 0xFE, 0x00, 0x00 };
-const bom_utf32be = [_]u8{ 0x00, 0x00, 0xFE, 0xFF };
+const BOM_UTF8 = [_]u8{ 0xEF, 0xBB, 0xBF };
+const BOM_UTF16LE = [_]u8{ 0xFF, 0xFE };
+const BOM_UTF16BE = [_]u8{ 0xFE, 0xFF };
+const BOM_UTF32LE = [_]u8{ 0xFF, 0xFE, 0x00, 0x00 };
+const BOM_UTF32BE = [_]u8{ 0x00, 0x00, 0xFE, 0xFF };
 
 const LenientUtf8 = struct {
     bytes: []const u8,
@@ -65,11 +65,11 @@ const LenientUtf8 = struct {
 pub fn encodeSubjectForFile(gpa: std.mem.Allocator, subject: []const u8, file_encoding: FileEncoding) ![]u8 {
     return switch (file_encoding) {
         .raw => try gpa.dupe(u8, subject),
-        .utf8_bom => try prependBom(gpa, subject, &bom_utf8),
-        .utf16le => try encodeUtf16(gpa, subject, .little, &bom_utf16le),
-        .utf16be => try encodeUtf16(gpa, subject, .big, &bom_utf16be),
-        .utf32le => try encodeUtf32(gpa, subject, .little, &bom_utf32le),
-        .utf32be => try encodeUtf32(gpa, subject, .big, &bom_utf32be),
+        .utf8_bom => try prependBom(gpa, subject, &BOM_UTF8),
+        .utf16le => try encodeUtf16(gpa, subject, .little, &BOM_UTF16LE),
+        .utf16be => try encodeUtf16(gpa, subject, .big, &BOM_UTF16BE),
+        .utf32le => try encodeUtf32(gpa, subject, .little, &BOM_UTF32LE),
+        .utf32be => try encodeUtf32(gpa, subject, .big, &BOM_UTF32BE),
     };
 }
 
