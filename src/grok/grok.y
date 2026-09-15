@@ -7,10 +7,6 @@
 	void yyerror(char *s, ...);
 	void lyyerror(YYLTYPE t, char *s, va_list ap);
 	int yylex();
-	int definitions = 0;
-
-	/* Initialize location tracking */
-	YYLTYPE yylloc_default = {1, 1, 1, 1};
 %}
 
 %code requires
