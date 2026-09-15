@@ -102,7 +102,7 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
 
     var macro_cmd = app.createCommand(
         MACRO_NAME,
-        "Macro information mode where a macro real regexp can be displayed or to get all supported macroses",
+        "Macro information mode where a macro real regexp can be displayed or to get all supported macros",
     );
     const macro_name_opt = yazap.Arg.positional(
         MACRO_ARG_NAME,

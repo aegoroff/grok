@@ -74,7 +74,7 @@ fn macroAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: y
     if (configuration.getMacroArgValue(cmd)) |macro| {
         showMacroRegex(gpa, writer, macro) catch |e| return reportFailure(writer, "show macro", e);
     } else {
-        listAllMacroses(gpa, writer) catch |e| return reportFailure(writer, "to list macroses", e);
+        listAllMacros(gpa, writer) catch |e| return reportFailure(writer, "list macros", e);
     }
 }
 
@@ -144,17 +144,17 @@ fn showMacroRegex(
     try match.showRegex();
 }
 
-fn listAllMacroses(
+fn listAllMacros(
     gpa: std.mem.Allocator,
     writer: *std.Io.Writer,
 ) !void {
     var it = front.getPatterns().keyIterator();
-    var macroses: std.ArrayList([]const u8) = try .initCapacity(gpa, it.len);
+    var macros: std.ArrayList([]const u8) = try .initCapacity(gpa, it.len);
     while (it.next()) |item| {
-        try macroses.append(gpa, item.*);
+        try macros.append(gpa, item.*);
     }
-    std.mem.sort([]const u8, macroses.items, {}, stringLessThan);
-    for (macroses.items) |item| {
+    std.mem.sort([]const u8, macros.items, {}, stringLessThan);
+    for (macros.items) |item| {
         try writer.print("{s}\n", .{item});
     }
 }
