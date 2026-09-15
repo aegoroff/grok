@@ -12,19 +12,19 @@ pub fn build(b: *std.Build) void {
     options.addOption([]const u8, "version", version_opt);
 
     const c_code_path = "src/grok";
-    const generated_path = std.fmt.allocPrint(b.allocator, "{s}/generated", .{c_code_path}) catch "";
+    const generated_path = b.fmt("{s}/generated", .{c_code_path});
 
     ensureDirExists(b, generated_path);
 
-    const flex_input = std.fmt.allocPrint(b.allocator, "{s}/grok.lex", .{c_code_path}) catch "";
-    const flex_src = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.c", .{generated_path}) catch "";
-    const flex_hdr = std.fmt.allocPrint(b.allocator, "{s}/grok.flex.h", .{generated_path}) catch "";
-    const flex_opt = std.fmt.allocPrint(b.allocator, "--outfile={s}", .{flex_src}) catch "";
-    const flex_hdr_opt = std.fmt.allocPrint(b.allocator, "--header-file={s}", .{flex_hdr}) catch "";
+    const flex_input = b.fmt("{s}/grok.lex", .{c_code_path});
+    const flex_src = b.fmt("{s}/grok.flex.c", .{generated_path});
+    const flex_hdr = b.fmt("{s}/grok.flex.h", .{generated_path});
+    const flex_opt = b.fmt("--outfile={s}", .{flex_src});
+    const flex_hdr_opt = b.fmt("--header-file={s}", .{flex_hdr});
 
-    const bison_input = std.fmt.allocPrint(b.allocator, "{s}/grok.y", .{c_code_path}) catch "";
-    const bison_src = std.fmt.allocPrint(b.allocator, "{s}/grok.tab.c", .{generated_path}) catch "";
-    const bison_opt = std.fmt.allocPrint(b.allocator, "--output={s}", .{bison_src}) catch "";
+    const bison_input = b.fmt("{s}/grok.y", .{c_code_path});
+    const bison_src = b.fmt("{s}/grok.tab.c", .{generated_path});
+    const bison_opt = b.fmt("--output={s}", .{bison_src});
 
     const c_sources = [_][]const u8{
         flex_src,
@@ -169,13 +169,13 @@ pub fn build(b: *std.Build) void {
 
     // Packaging
     const tr = target.result;
-    const tar_file = std.fmt.allocPrint(b.allocator, "{s}/grok-{s}-{s}-{s}-{s}.tar", .{
+    const tar_file = b.fmt("{s}/grok-{s}-{s}-{s}-{s}.tar", .{
         b.install_prefix,
         version_opt,
         @tagName(tr.cpu.arch),
         @tagName(tr.os.tag),
         @tagName(tr.abi),
-    }) catch "";
+    });
 
     const binary_step = b.addSystemCommand(&.{
         "tar",

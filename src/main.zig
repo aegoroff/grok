@@ -19,15 +19,17 @@ pub fn main(init: std.process.Init) !void {
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_writer = std.Io.File.stdout().writer(init.io, &stdout_buffer);
     var stdout = &stdout_writer.interface;
-    defer {
-        stdout.flush() catch {};
-    }
 
     const gpa = init.arena.allocator();
 
     const args = try init.minimal.args.toSlice(gpa);
     run(gpa, stdout, init.io, args[1..]) catch { // skip exe itself
-        stdout.flush() catch {};
+        stdout.flush() catch {}; // the exit code already reports the failure
+        std.process.exit(1);
+    };
+    stdout.flush() catch |e| {
+        // A failed flush means output was lost, so it must not exit successfully.
+        std.log.err("Failed to write output: {}", .{e});
         std.process.exit(1);
     };
 }
