@@ -5,7 +5,7 @@
 	extern char *yytext;
 
 	void yyerror(char *s, ...);
-	void lyyerror(YYLTYPE t, char *s, ...);
+	void lyyerror(YYLTYPE t, char *s, va_list ap);
 	int yylex();
 	int definitions = 0;
 
@@ -153,11 +153,8 @@ void yyerror(char *format, ...) {
 	va_end(ap);
 }
 
-void lyyerror(YYLTYPE t, char *format, ...) {
+void lyyerror(YYLTYPE t, char *format, va_list params) {
     if (fend_oom_flag) return;
-
-    va_list params;
-    va_start(params, format);
 
     char buf[4096];
     int result;
@@ -167,7 +164,6 @@ void lyyerror(YYLTYPE t, char *format, ...) {
 #else
     result = vsnprintf(buf, sizeof(buf), format, params);
 #endif
-	va_end(params);
 
 	if (result >= 0) {
 		fend_print_error(t.first_line, t.first_column, t.last_line, t.last_column, buf);
