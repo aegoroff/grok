@@ -96,6 +96,13 @@ CLI entry: `main.zig` → `configuration.zig` (yazap) dispatches to `string`, `f
 - Never commit or hand-edit generated files
 - After changing `grok.lex` or `grok.y`, rebuild to regenerate C sources
 
+### Version Control
+1. Never create a commit without explicit confirmation from the user
+2. The same applies to anything that publishes work: push, tag, release
+3. A request to write, fix, refactor or optimize something is not a request to
+   commit it. Finish the change, report what was modified, and wait to be asked
+4. Being asked to commit one change does not authorize committing anything else
+
 ## Build & Test Commands
 ```bash
 # Build
