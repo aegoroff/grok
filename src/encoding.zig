@@ -43,31 +43,13 @@ pub const DetectResult = struct {
 };
 
 pub fn convertRawUtf16ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encoding: Encoding) ![]u8 {
-    const wide = try bytesToCodeUnits(
-        gpa,
-        rawBytes,
-        encoding,
-        u16,
-        2,
-        error.InvalidUtf16LineLength,
-        .utf16le,
-        .utf16be,
-    );
+    const wide = try bytesToCodeUnits(gpa, rawBytes, encoding, u16);
     defer gpa.free(wide);
     return std.unicode.utf16LeToUtf8Alloc(gpa, wide);
 }
 
 pub fn convertRawUtf32ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encoding: Encoding) ![]u8 {
-    const wide = try bytesToCodeUnits(
-        gpa,
-        rawBytes,
-        encoding,
-        u32,
-        4,
-        error.InvalidUtf32LineLength,
-        .utf32le,
-        .utf32be,
-    );
+    const wide = try bytesToCodeUnits(gpa, rawBytes, encoding, u32);
     defer gpa.free(wide);
     return utf32ToUtf8Alloc(gpa, wide);
 }
@@ -92,14 +74,15 @@ fn bytesToCodeUnits(
     buffer: []const u8,
     encoding: Encoding,
     comptime Unit: type,
-    comptime unit_size: usize,
-    comptime invalid_length: anyerror,
-    comptime le_encoding: Encoding,
-    comptime be_encoding: Encoding,
 ) ![]Unit {
-    comptime std.debug.assert(@sizeOf(Unit) == unit_size);
+    comptime std.debug.assert(Unit == u16 or Unit == u32);
+    const unit_size = @sizeOf(Unit);
+    const le_encoding: Encoding = comptime if (Unit == u16) .utf16le else .utf32le;
+    const be_encoding: Encoding = comptime if (Unit == u16) .utf16be else .utf32be;
 
-    if (buffer.len % unit_size != 0) return invalid_length;
+    if (buffer.len % unit_size != 0) {
+        return if (Unit == u16) error.InvalidUtf16LineLength else error.InvalidUtf32LineLength;
+    }
     const len = buffer.len / unit_size;
 
     var wide_buffer = try gpa.alloc(Unit, len);
