@@ -58,7 +58,11 @@ pub fn build(b: *std.Build) void {
     const fehler = b.dependency("fehler", .{});
 
     const glob_dep = b.dependency("glob", .{ .target = target, .optimize = optimize });
-    const pcre2_dep = b.dependency("pcre2", .{ .target = target, .optimize = optimize });
+    const pcre2_dep = b.dependency("pcre2", .{
+        .target = target,
+        .optimize = optimize,
+        .support_jit = true,
+    });
 
     const translate_c = b.addTranslateC(.{
         .root_source_file = b.path("src/grok/c.h"),

@@ -12,9 +12,10 @@ print: printer.Printer,
 
 pub const OutputFlags = printer.OutputFlags;
 
-pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !Matcher {
+/// `jit` should be set when many subjects will be matched; see `regex.prepare`.
+pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8, jit: bool) !Matcher {
     const pattern = try regex.createPattern(gpa, macro);
-    const prepared = try regex.prepare(gpa, pattern);
+    const prepared = try regex.prepare(gpa, pattern, jit);
     return .{
         .allocator = gpa,
         .prepared = prepared,
@@ -24,8 +25,7 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8) !
 
 /// Matches single string specified in `str` argument
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
-    var result = self.prepared.match(self.allocator, str);
-    defer if (result.properties) |*props| props.deinit();
+    const result = self.prepared.match(self.allocator, str, printer.needsProperties(flags));
     _ = try self.print.printResult(1, result, flags);
 }
 
@@ -51,6 +51,7 @@ pub fn matchStrings(
     var match_counter: u64 = 0;
 
     const loop_allocator = arena.allocator();
+    const want_properties = printer.needsProperties(flags);
     var liner = line_reader.LineReader.init(reader, file_encoding);
 
     while (try liner.readLine(loop_allocator)) |line| {
@@ -59,7 +60,7 @@ pub fn matchStrings(
         defer _ = arena.reset(.retain_capacity);
 
         line_no += 1;
-        const result = self.prepared.match(loop_allocator, line);
+        const result = self.prepared.match(loop_allocator, line, want_properties);
         if (try self.print.printResult(line_no, result, flags)) {
             match_counter += 1;
         }

@@ -23,9 +23,18 @@ pub const Prepared = struct {
     allocator: std.mem.Allocator,
     boxed_allocator: *std.mem.Allocator, // heap-owned
     general_context: *re.pcre2_general_context_8,
+    /// Backing stack for the JIT-compiled code, null when running interpreted
+    jit_stack: ?*re.pcre2_jit_stack_8,
+    /// Capture group number per entry of `properties`, resolved once at prepare time
+    capture_indices: []u32,
+    /// Scratch for the last match, reused across subjects. Parallel to `properties`.
+    capture_values: []?[]const u8,
 
     /// Match a prepared pattern against a subject string.
-    pub fn match(self: *const Prepared, gpa: std.mem.Allocator, subject: []const u8) MatchResult {
+    ///
+    /// `want_properties` skips capture extraction entirely when the caller will
+    /// not read it, which is the case for every output mode but `-i` and `-j`.
+    pub fn match(self: *Prepared, gpa: std.mem.Allocator, subject: []const u8, want_properties: bool) MatchResult {
         var call_allocator = gpa;
         const general_ctx = createGeneralContext(&call_allocator).?;
         defer freeGeneralContext(general_ctx);
@@ -34,23 +43,25 @@ pub const Prepared = struct {
         defer re.pcre2_match_data_free_8(match_data);
         const match_ctx = re.pcre2_match_context_create_8(general_ctx);
         defer re.pcre2_match_context_free_8(match_ctx);
+        if (self.jit_stack) |stack| {
+            re.pcre2_jit_stack_assign_8(match_ctx, null, stack);
+        }
 
-        const rc: c_int = re.pcre2_match_8(self.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
+        var rc: c_int = re.pcre2_match_8(self.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY, match_data, match_ctx);
+        if (rc == re.PCRE2_ERROR_JIT_STACKLIMIT) {
+            // Backtracking outgrew the JIT stack; the interpreter has no such ceiling.
+            rc = re.pcre2_match_8(self.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY | re.PCRE2_NO_JIT, match_data, match_ctx);
+        }
         const matched = rc > 0;
 
-        var properties: ?std.StringHashMap([]const u8) = null;
-        if (matched and self.properties.items.len > 0) {
-            properties = std.StringHashMap([]const u8).init(gpa);
-            for (self.properties.items) |value| {
-                var buffer: [*c]re.PCRE2_UCHAR8 = undefined;
-                var buffer_size_in_chars: re.PCRE2_SIZE = undefined;
-                const get_string_result = re.pcre2_substring_get_byname_8(match_data, value.ptr, &buffer, &buffer_size_in_chars);
-                if (get_string_result == 0) {
-                    properties.?.put(value, std.mem.span(buffer)) catch {
-                        continue;
-                    };
-                }
+        var properties: ?Properties = null;
+        if (want_properties and matched and self.properties.items.len > 0) {
+            const ovector = re.pcre2_get_ovector_pointer_8(match_data);
+            const ovector_count = re.pcre2_get_ovector_count_8(match_data);
+            for (self.capture_indices, 0..) |group, i| {
+                self.capture_values[i] = captureSlice(subject, ovector, ovector_count, group);
             }
+            properties = .{ .names = self.properties.items, .values = self.capture_values };
         }
         return .{
             .matched = matched,
@@ -65,7 +76,10 @@ pub const Prepared = struct {
             self.allocator.free(prop);
         }
         self.properties.deinit(self.allocator);
+        self.allocator.free(self.capture_indices);
+        self.allocator.free(self.capture_values);
         self.allocator.free(self.regex);
+        if (self.jit_stack) |stack| re.pcre2_jit_stack_free_8(stack);
         freeGeneralContext(self.general_context);
         self.allocator.destroy(self.boxed_allocator);
     }
@@ -74,18 +88,67 @@ pub const Prepared = struct {
 /// Result of a regex match operation.
 /// Contains information about whether the match was successful and any captured properties.
 ///
-/// Captured property values point into memory allocated by the `gpa` passed to
-/// `Prepared.match`. The caller should use an arena (or otherwise reclaim that
-/// allocator in bulk). `StringHashMap.deinit` on `properties` frees only the map
-/// nodes, not the captured value slices.
+/// Nothing here owns memory. `original` is the subject the caller passed in, and
+/// captured values are slices into it held by scratch storage inside `Prepared`.
+/// Both stay valid only until the next call to `Prepared.match`.
 pub const MatchResult = struct {
     /// Whether the pattern matched the subject text
     matched: bool,
     /// The original subject text that was matched against
     original: []const u8,
-    /// Optional map of captured property names to their values
-    properties: ?std.StringHashMap([]const u8),
+    /// Captured property names and values, or null when the caller did not ask for them
+    properties: ?Properties,
 };
+
+/// Captured property names paired with their values, in the order the macro
+/// declares them. A null value means the group did not participate in the match.
+pub const Properties = struct {
+    names: []const [:0]const u8,
+    values: []const ?[]const u8,
+
+    pub const Entry = struct {
+        name: [:0]const u8,
+        value: []const u8,
+    };
+
+    /// Iterates the groups that actually captured something, skipping the rest.
+    pub fn iterator(self: Properties) Iterator {
+        return .{ .properties = self };
+    }
+
+    pub const Iterator = struct {
+        properties: Properties,
+        index: usize = 0,
+
+        pub fn next(self: *Iterator) ?Entry {
+            while (self.index < self.properties.names.len) {
+                const current = self.index;
+                self.index += 1;
+                if (self.properties.values[current]) |value| {
+                    return .{ .name = self.properties.names[current], .value = value };
+                }
+            }
+            return null;
+        }
+    };
+};
+
+/// `PCRE2_UNSET` is `~(PCRE2_SIZE)0`, which translate-c cannot render.
+const PCRE2_UNSET: usize = std.math.maxInt(usize);
+
+/// Marks a property whose capture group PCRE2 could not resolve by name.
+const CAPTURE_UNAVAILABLE: u32 = std.math.maxInt(u32);
+
+/// Slice `subject` down to what capture group `group` matched, or null if it did
+/// not participate.
+fn captureSlice(subject: []const u8, ovector: [*c]usize, ovector_count: u32, group: u32) ?[]const u8 {
+    if (group == CAPTURE_UNAVAILABLE or group >= ovector_count) return null;
+    const start = ovector[2 * group];
+    const end = ovector[2 * group + 1];
+    if (start == PCRE2_UNSET or end == PCRE2_UNSET) return null;
+    if (start > end or end > subject.len) return null;
+    return subject[start..end];
+}
 
 const AllocationHeader = extern struct {
     original_ptr: [*]u8,
@@ -227,14 +290,23 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     return result;
 }
 
+/// Starting size of the JIT stack. PCRE2 grows it on demand up to JIT_STACK_MAX_SIZE.
+const JIT_STACK_START_SIZE: usize = 32 * 1024;
+/// Ceiling for the JIT stack. Beyond it matching falls back to the interpreter.
+const JIT_STACK_MAX_SIZE: usize = 1024 * 1024;
+
 /// Prepare a pattern for matching by compiling it with PCRE2.
 /// This function takes a Pattern and compiles it into a PCRE2 regex object
 /// that can be used for matching operations.
 ///
 /// `gpa` The allocator to use for memory allocations
 /// `pattern` The Pattern to compile
+/// `jit` Whether to additionally JIT-compile the pattern. Worth roughly 10x per
+/// match but costs about a millisecond up front, so it only pays off when many
+/// subjects are matched. A failed JIT compilation is not fatal: PCRE2 keeps
+/// matching with the interpreter.
 /// @return A Prepared struct containing the compiled regex and properties, or an error
-pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
+pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
     const boxed_allocator = try gpa.create(std.mem.Allocator);
     boxed_allocator.* = gpa;
     errdefer gpa.destroy(boxed_allocator);
@@ -261,6 +333,18 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
 
         return error.InvalidRegex;
     };
+    errdefer re.pcre2_code_free_8(regex);
+
+    const capture_indices = try gpa.alloc(u32, pattern.properties.items.len);
+    errdefer gpa.free(capture_indices);
+    const capture_values = try gpa.alloc(?[]const u8, pattern.properties.items.len);
+    errdefer gpa.free(capture_values);
+    for (pattern.properties.items, 0..) |name, i| {
+        const number = re.pcre2_substring_number_from_name_8(regex, name.ptr);
+        capture_indices[i] = if (number > 0) @intCast(number) else CAPTURE_UNAVAILABLE;
+        capture_values[i] = null;
+    }
+
     return .{
         .re = regex,
         .properties = pattern.properties,
@@ -268,7 +352,23 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern) !Prepared {
         .allocator = gpa,
         .boxed_allocator = boxed_allocator,
         .general_context = general_ctx,
+        .jit_stack = if (jit) jitCompile(regex, general_ctx) else null,
+        .capture_indices = capture_indices,
+        .capture_values = capture_values,
     };
+}
+
+/// JIT-compile `regex` and return a stack for it, or null if the JIT is
+/// unavailable. PCRE2 silently keeps using the interpreter in that case.
+fn jitCompile(regex: *re.pcre2_code_8, general_ctx: *re.pcre2_general_context_8) ?*re.pcre2_jit_stack_8 {
+    const rc = re.pcre2_jit_compile_8(regex, re.PCRE2_JIT_COMPLETE);
+    if (rc != 0) {
+        var buffer: [256]u8 = undefined;
+        _ = re.pcre2_get_error_message_8(rc, &buffer, buffer.len);
+        std.log.warn("PCRE2 JIT compilation failed, falling back to the interpreter: {s}", .{buffer});
+        return null;
+    }
+    return re.pcre2_jit_stack_create_8(JIT_STACK_START_SIZE, JIT_STACK_MAX_SIZE, general_ctx);
 }
 
 test "createPattern detects circular macros" {

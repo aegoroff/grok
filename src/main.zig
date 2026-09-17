@@ -85,7 +85,7 @@ fn matchString(
     subject: []const u8,
     flags: matcher.OutputFlags,
 ) !void {
-    var match = try matcher.Matcher.init(gpa, writer, macro);
+    var match = try matcher.Matcher.init(gpa, writer, macro, false);
     defer match.deinit();
     try match.matchString(subject, flags);
 }
@@ -129,7 +129,7 @@ fn matchReader(
     flags: matcher.OutputFlags,
     file_encoding: ?encoding.Encoding,
 ) !void {
-    var match = try matcher.Matcher.init(gpa, writer, macro);
+    var match = try matcher.Matcher.init(gpa, writer, macro, true);
     defer match.deinit();
     try match.matchStrings(reader, flags, file_encoding);
 }
@@ -139,7 +139,7 @@ fn showMacroRegex(
     writer: *std.Io.Writer,
     macro: []const u8,
 ) !void {
-    var match = try matcher.Matcher.init(gpa, writer, macro);
+    var match = try matcher.Matcher.init(gpa, writer, macro, false);
     defer match.deinit();
     try match.showRegex();
 }
