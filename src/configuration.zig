@@ -7,20 +7,20 @@ const build_options = @import("build_options");
 const front = @import("frontend.zig");
 const printer = @import("printer.zig");
 
-const patterns_name: []const u8 = "patterns";
-const count_name: []const u8 = "count";
-const line_name: []const u8 = "line-number";
-const info_name: []const u8 = "info";
-const json_name: []const u8 = "jsonl";
-const invert_name: []const u8 = "invert-match";
-const path_name: []const u8 = "PATH";
-const string_name: []const u8 = "STRING";
-const macro_arg_name: []const u8 = "MACRO";
+const PATTERNS_NAME: []const u8 = "patterns";
+const COUNT_NAME: []const u8 = "count";
+const LINE_NAME: []const u8 = "line-number";
+const INFO_NAME: []const u8 = "info";
+const JSON_NAME: []const u8 = "jsonl";
+const INVERT_NAME: []const u8 = "invert-match";
+const PATH_NAME: []const u8 = "PATH";
+const STRING_NAME: []const u8 = "STRING";
+const MACRO_ARG_NAME: []const u8 = "MACRO";
 
-pub const macro_name: []const u8 = "macro";
-pub const string_command_name: []const u8 = "string";
-pub const file_command_name: []const u8 = "file";
-pub const stdin_command_name: []const u8 = "stdin";
+pub const MACRO_NAME: []const u8 = "macro";
+pub const STRING_COMMAND_NAME: []const u8 = "string";
+pub const FILE_COMMAND_NAME: []const u8 = "file";
+pub const STDIN_COMMAND_NAME: []const u8 = "stdin";
 
 matches: yazap.ArgMatches,
 allocator: std.mem.Allocator,
@@ -50,25 +50,25 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
     root_cmd.setProperty(.subcommand_required);
 
     const patterns_opt = yazap.Arg.multiValuesOption(
-        patterns_name,
+        PATTERNS_NAME,
         'p',
-        "One or more pattern files. If not set, current directory used to search all *.patterns files",
+        "One or more pattern files or directories. If not set, /usr/share/grok/patterns on Linux, the executable directory elsewhere",
         1,
     );
 
-    var macro_opt = yazap.Arg.singleValueOption(macro_name, 'm', "Pattern macros to build regexp");
+    var macro_opt = yazap.Arg.singleValueOption(MACRO_NAME, 'm', "Pattern macros to build regexp");
     macro_opt.setValuePlaceholder("STRING");
     macro_opt.setProperty(.takes_value);
-    const info_opt = yazap.Arg.booleanOption(info_name, 'i', "Dont work like grep i.e. output matched string with additional info");
-    const json_opt = yazap.Arg.booleanOption(json_name, 'j', "Output matched strings in JSONL (Newline delimited JSON) format");
-    const count_opt = yazap.Arg.booleanOption(count_name, 'c', "Print only matched strings count");
-    const line_num_opt = yazap.Arg.booleanOption(line_name, 'n', "Print line number along with output lines");
-    const invert_opt = yazap.Arg.booleanOption(invert_name, 'v', "Select non-matching lines");
+    const info_opt = yazap.Arg.booleanOption(INFO_NAME, 'i', "Report every line with its number, match status, macro name and captured groups. Not a filter, and the line text is not printed");
+    const json_opt = yazap.Arg.booleanOption(JSON_NAME, 'j', "One JSON object per input line in JSONL format, non-matching lines included. Wins over -i");
+    const count_opt = yazap.Arg.booleanOption(COUNT_NAME, 'c', "Print only matched strings count");
+    const line_num_opt = yazap.Arg.booleanOption(LINE_NAME, 'n', "Print line number along with output lines");
+    const invert_opt = yazap.Arg.booleanOption(INVERT_NAME, 'v', "Select non-matching lines");
 
-    var str_cmd = app.createCommand(string_command_name, "Single string matching mode");
+    var str_cmd = app.createCommand(STRING_COMMAND_NAME, "Single string matching mode");
     str_cmd.setProperty(.help_on_empty_args);
     str_cmd.setProperty(.positional_arg_required);
-    const string_arg = yazap.Arg.positional(string_name, "String to match", null);
+    const string_arg = yazap.Arg.positional(STRING_NAME, "String to match", null);
     try str_cmd.addArg(patterns_opt);
     try str_cmd.addArg(macro_opt);
     try str_cmd.addArg(info_opt);
@@ -76,10 +76,10 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
     try str_cmd.addArg(invert_opt);
     try str_cmd.addArg(string_arg);
 
-    var file_cmd = app.createCommand(file_command_name, "File matching mode");
+    var file_cmd = app.createCommand(FILE_COMMAND_NAME, "File matching mode");
     file_cmd.setProperty(.help_on_empty_args);
     file_cmd.setProperty(.positional_arg_required);
-    const file_arg = yazap.Arg.positional(path_name, "Full path to file to read data from", null);
+    const file_arg = yazap.Arg.positional(PATH_NAME, "Full path to file to read data from", null);
 
     try file_cmd.addArg(patterns_opt);
     try file_cmd.addArg(macro_opt);
@@ -90,7 +90,7 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
     try file_cmd.addArg(invert_opt);
     try file_cmd.addArg(file_arg);
 
-    var stdin_cmd = app.createCommand(stdin_command_name, "Standard input (stdin) matching mode");
+    var stdin_cmd = app.createCommand(STDIN_COMMAND_NAME, "Standard input (stdin) matching mode");
     stdin_cmd.setProperty(.help_on_empty_args);
     try stdin_cmd.addArg(patterns_opt);
     try stdin_cmd.addArg(macro_opt);
@@ -101,11 +101,11 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
     try stdin_cmd.addArg(invert_opt);
 
     var macro_cmd = app.createCommand(
-        macro_name,
-        "Macro information mode where a macro real regexp can be displayed or to get all supported macroses",
+        MACRO_NAME,
+        "Macro information mode where a macro real regexp can be displayed or to get all supported macros",
     );
     const macro_name_opt = yazap.Arg.positional(
-        macro_arg_name,
+        MACRO_ARG_NAME,
         "Macro name to expand real regular expression",
         null,
     );
@@ -143,15 +143,15 @@ pub const Selected = struct {
 };
 
 pub fn selected(self: *const Config) ?Selected {
-    if (self.matches.subcommandMatches(string_command_name)) |m| return .{ .cmd = .string, .matches = m };
-    if (self.matches.subcommandMatches(file_command_name)) |m| return .{ .cmd = .file, .matches = m };
-    if (self.matches.subcommandMatches(stdin_command_name)) |m| return .{ .cmd = .stdin, .matches = m };
-    if (self.matches.subcommandMatches(macro_name)) |m| return .{ .cmd = .macro, .matches = m };
+    if (self.matches.subcommandMatches(STRING_COMMAND_NAME)) |m| return .{ .cmd = .string, .matches = m };
+    if (self.matches.subcommandMatches(FILE_COMMAND_NAME)) |m| return .{ .cmd = .file, .matches = m };
+    if (self.matches.subcommandMatches(STDIN_COMMAND_NAME)) |m| return .{ .cmd = .stdin, .matches = m };
+    if (self.matches.subcommandMatches(MACRO_NAME)) |m| return .{ .cmd = .macro, .matches = m };
     return null;
 }
 
 pub fn loadPatterns(self: *const Config, writer: *std.Io.Writer, cmd: yazap.ArgMatches) !void {
-    const patterns = cmd.getMultiValues(patterns_name);
+    const patterns = cmd.getMultiValues(PATTERNS_NAME);
     front.compileLib(self.allocator, self.io, patterns) catch |e| {
         try writer.print("Failed to compile lib: {}\n", .{e});
         return e;
@@ -159,39 +159,39 @@ pub fn loadPatterns(self: *const Config, writer: *std.Io.Writer, cmd: yazap.ArgM
 }
 
 pub fn getMacro(match: yazap.ArgMatches) error{MacroNotProvided}![]const u8 {
-    return match.getSingleValue(macro_name) orelse return error.MacroNotProvided;
+    return match.getSingleValue(MACRO_NAME) orelse return error.MacroNotProvided;
 }
 
 pub fn getStringArgValue(match: yazap.ArgMatches) ?[]const u8 {
-    return match.getSingleValue(string_name);
+    return match.getSingleValue(STRING_NAME);
 }
 
 pub fn getPathArgValue(match: yazap.ArgMatches) ?[]const u8 {
-    return match.getSingleValue(path_name);
+    return match.getSingleValue(PATH_NAME);
 }
 
 pub fn getMacroArgValue(match: yazap.ArgMatches) ?[]const u8 {
-    return match.getSingleValue(macro_arg_name);
+    return match.getSingleValue(MACRO_ARG_NAME);
 }
 
 pub fn isInfoMode(match: yazap.ArgMatches) bool {
-    return match.containsArg(info_name);
+    return match.containsArg(INFO_NAME);
 }
 
 pub fn isJsonMode(match: yazap.ArgMatches) bool {
-    return match.containsArg(json_name);
+    return match.containsArg(JSON_NAME);
 }
 
 pub fn isCountMode(match: yazap.ArgMatches) bool {
-    return match.containsArg(count_name);
+    return match.containsArg(COUNT_NAME);
 }
 
 pub fn printLineNumber(match: yazap.ArgMatches) bool {
-    return match.containsArg(line_name);
+    return match.containsArg(LINE_NAME);
 }
 
 pub fn isInvertMatch(match: yazap.ArgMatches) bool {
-    return match.containsArg(invert_name);
+    return match.containsArg(INVERT_NAME);
 }
 
 /// Builds output flags from parsed CLI args. Stream commands (file, stdin) expose count and line-number options.
@@ -250,4 +250,3 @@ test "missing macro option" {
     const sel = config.selected() orelse return error.TestUnexpectedResult;
     try std.testing.expectError(error.MacroNotProvided, getMacro(sel.matches));
 }
-

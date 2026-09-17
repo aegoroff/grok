@@ -19,15 +19,17 @@ pub fn main(init: std.process.Init) !void {
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_writer = std.Io.File.stdout().writer(init.io, &stdout_buffer);
     var stdout = &stdout_writer.interface;
-    defer {
-        stdout.flush() catch {};
-    }
 
     const gpa = init.arena.allocator();
 
     const args = try init.minimal.args.toSlice(gpa);
     run(gpa, stdout, init.io, args[1..]) catch { // skip exe itself
-        stdout.flush() catch {};
+        stdout.flush() catch {}; // the exit code already reports the failure
+        std.process.exit(1);
+    };
+    stdout.flush() catch |e| {
+        // A failed flush means output was lost, so it must not exit successfully.
+        std.log.err("Failed to write output: {}", .{e});
         std.process.exit(1);
     };
 }
@@ -72,7 +74,7 @@ fn macroAction(gpa: std.mem.Allocator, writer: *std.Io.Writer, _: std.Io, cmd: y
     if (configuration.getMacroArgValue(cmd)) |macro| {
         showMacroRegex(gpa, writer, macro) catch |e| return reportFailure(writer, "show macro", e);
     } else {
-        listAllMacroses(gpa, writer) catch |e| return reportFailure(writer, "to list macroses", e);
+        listAllMacros(gpa, writer) catch |e| return reportFailure(writer, "list macros", e);
     }
 }
 
@@ -83,7 +85,7 @@ fn matchString(
     subject: []const u8,
     flags: matcher.OutputFlags,
 ) !void {
-    var match = try matcher.Matcher.init(gpa, writer, macro);
+    var match = try matcher.Matcher.init(gpa, writer, macro, false);
     defer match.deinit();
     try match.matchString(subject, flags);
 }
@@ -127,7 +129,7 @@ fn matchReader(
     flags: matcher.OutputFlags,
     file_encoding: ?encoding.Encoding,
 ) !void {
-    var match = try matcher.Matcher.init(gpa, writer, macro);
+    var match = try matcher.Matcher.init(gpa, writer, macro, true);
     defer match.deinit();
     try match.matchStrings(reader, flags, file_encoding);
 }
@@ -137,22 +139,22 @@ fn showMacroRegex(
     writer: *std.Io.Writer,
     macro: []const u8,
 ) !void {
-    var match = try matcher.Matcher.init(gpa, writer, macro);
+    var match = try matcher.Matcher.init(gpa, writer, macro, false);
     defer match.deinit();
     try match.showRegex();
 }
 
-fn listAllMacroses(
+fn listAllMacros(
     gpa: std.mem.Allocator,
     writer: *std.Io.Writer,
 ) !void {
     var it = front.getPatterns().keyIterator();
-    var macroses: std.ArrayList([]const u8) = try .initCapacity(gpa, it.len);
+    var macros: std.ArrayList([]const u8) = try .initCapacity(gpa, it.len);
     while (it.next()) |item| {
-        try macroses.append(gpa, item.*);
+        try macros.append(gpa, item.*);
     }
-    std.mem.sort([]const u8, macroses.items, {}, stringLessThan);
-    for (macroses.items) |item| {
+    std.mem.sort([]const u8, macros.items, {}, stringLessThan);
+    for (macros.items) |item| {
         try writer.print("{s}\n", .{item});
     }
 }

@@ -14,6 +14,12 @@ pub const OutputFlags = packed struct {
 writer: *std.Io.Writer,
 macro: []const u8,
 
+/// Whether the captured properties will actually be printed. Only `-i` and `-j`
+/// render them, `-c` prints nothing per line and `-v` discards them in `applyInvert`.
+pub fn needsProperties(flags: OutputFlags) bool {
+    return !flags.count and !flags.invert_match and (flags.json or flags.info);
+}
+
 pub fn init(writer: *std.Io.Writer, macro: []const u8) Printer {
     return .{
         .writer = writer,
@@ -59,9 +65,7 @@ fn printInfo(self: *Printer, line_no: usize, result: regex.MatchResult) !void {
         try self.writer.print("\n  Meta properties found:\n", .{});
         var it = properties.iterator();
         while (it.next()) |entry| {
-            const key = entry.key_ptr.*;
-            const val = entry.value_ptr.*;
-            try self.writer.print("    {s}: {s}\n", .{ key, val });
+            try self.writer.print("    {s}: {s}\n", .{ entry.name, entry.value });
         }
         try self.writer.print("\n\n", .{});
     }
@@ -93,8 +97,8 @@ fn printJson(self: *Printer, line_no: usize, result: regex.MatchResult) !void {
     if (result.properties) |properties| {
         var it = properties.iterator();
         while (it.next()) |entry| {
-            try jw.objectField(entry.key_ptr.*);
-            try jw.write(entry.value_ptr.*);
+            try jw.objectField(entry.name);
+            try jw.write(entry.value);
         }
     }
     try jw.endObject();

@@ -10,12 +10,12 @@
 /// the same coverage for a fraction of the complexity.
 ///
 /// Input is decoded through `std.testing.Smith` (same in fuzz and smoke-test modes):
-///   1. macro index — `smith.valueRangeAtMost(u8, 0, len(known_macros) - 1)`
-///      (`known_macros` is generated from `patterns/*.patterns` in build.zig)
-///   2. flags byte  — `smith.value(u8)`; bits0-4=CLI flags (bit0=info, bit1=json,
-///                    bit2=invert, bit3=count, bit4=line-number); bits5-7=file
-///                    encoding (0=raw, 1=UTF-8 BOM, 2=UTF-16LE, 3=UTF-16BE,
-///                    4=UTF-32LE, 5=UTF-32BE, 6-7=raw)
+///   1. macro index — `smith.valueRangeAtMost(u8, 0, len(KNOWN_MACROS) - 1)`
+///      (`KNOWN_MACROS` is generated from `patterns/*.patterns` in build.zig)
+///   2. flags byte  — `smith.value(u8)`; bits0-4 pick CLI options and bits5-7 the
+///                    file encoding. The layout lives in `fuzz_encoding.zig`
+///                    (`CliFlags`, `FileEncoding`, `flagsByte`), which `build.zig`
+///                    shares when it emits the corpus.
 ///   3. subject     — zero or more chunks until `smith.eos()` returns true:
 ///        eos=false, chunk_len (1..255), chunk bytes, …, eos=true
 ///
@@ -34,10 +34,10 @@ const pattern_macros = @import("fuzz_macros");
 const fuzz_corpus = @import("fuzz_corpus");
 const fuzz_encoding = @import("fuzz_encoding.zig");
 
-const known_macros = pattern_macros.names;
+const KNOWN_MACROS = pattern_macros.names;
 
-const watchdog_timeout_ns: i128 = 5 * std.time.ns_per_s;
-const fuzz_active_root = ".zig-cache/tmp/.fuzz-active";
+const WATCHDOG_TIMEOUT_NS: i128 = 5 * std.time.ns_per_s;
+const FUZZ_ACTIVE_ROOT = ".zig-cache/tmp/.fuzz-active";
 
 /// Fuzzer context: stores state shared across iterations within a process.
 const FuzzCtx = struct {
@@ -68,7 +68,7 @@ var active_tmp_dir: ?*std.testing.TmpDir = null;
 var active_registry_path: [128]u8 = undefined;
 var active_registry_path_len: usize = 0;
 
-const sigint_cleanup_supported = @hasDecl(std.posix, "sigaction") and @hasDecl(std.posix.SIG, "INT");
+const SIGINT_CLEANUP_SUPPORTED = @hasDecl(std.posix, "sigaction") and @hasDecl(std.posix.SIG, "INT");
 
 fn processId() std.posix.pid_t {
     return switch (builtin.os.tag) {
@@ -121,7 +121,7 @@ fn registerActiveFuzzTmpDir(tmp_dir: *std.testing.TmpDir) void {
     const pid = processId();
     const written = std.fmt.bufPrint(
         &active_registry_path,
-        fuzz_active_root ++ "/{d}",
+        FUZZ_ACTIVE_ROOT ++ "/{d}",
         .{pid},
     ) catch return;
     active_registry_path_len = written.len;
@@ -164,7 +164,7 @@ fn finishAfterInterrupt() noreturn {
     std.process.exit(130);
 }
 
-const SigintCleanup = if (sigint_cleanup_supported) struct {
+const SigintCleanup = if (SIGINT_CLEANUP_SUPPORTED) struct {
     var prev_int: std.posix.Sigaction = undefined;
     var prev_term: std.posix.Sigaction = undefined;
     var installed = false;
@@ -211,7 +211,7 @@ fn watchdogLoop() void {
         const start = g_ctx.iteration_start_ns.load(.acquire);
         if (start == 0) continue; // no iteration in flight right now
         const now = std.Io.Clock.real.now(std.testing.io);
-        if (now.nanoseconds - start > watchdog_timeout_ns) {
+        if (now.nanoseconds - start > WATCHDOG_TIMEOUT_NS) {
             std.debug.print("WATCHDOG: iteration exceeded timeout, see last 'fuzz input:' line above for the offending bytes\n", .{});
             std.process.abort(); // SIGABRT -> hard crash instead of silent hang
         }
@@ -224,15 +224,19 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
 
     if (ctx.watchdog_spawned.cmpxchgStrong(false, true, .acquire, .monotonic) == null) {
         g_ctx = ctx;
-        _ = std.Thread.spawn(.{}, watchdogLoop, .{}) catch {};
+        // Losing the watchdog means a hung iteration just hangs, which is the very
+        // thing it exists to turn into an abort, so say so instead of going quiet.
+        if (std.Thread.spawn(.{}, watchdogLoop, .{})) |_| {} else |e| {
+            std.debug.print("WATCHDOG: spawn failed ({t}), hang detection is off for this run\n", .{e});
+        }
     }
     const now = std.Io.Clock.real.now(std.testing.io);
     ctx.iteration_start_ns.store(@intCast(now.nanoseconds), .release);
     defer ctx.iteration_start_ns.store(0, .release);
 
     // ── 1. Select pattern ──────────────────────────────────────────────────
-    const macro_idx = smith.valueRangeAtMost(u8, 0, known_macros.len - 1);
-    const macro = known_macros[macro_idx];
+    const macro_idx = smith.valueRangeAtMost(u8, 0, KNOWN_MACROS.len - 1);
+    const macro = KNOWN_MACROS[macro_idx];
 
     // var gpa_alloc = std.heap.DebugAllocator(.{
     //     .stack_trace_frames = 10,
@@ -246,7 +250,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
 
     // ── 2. Select flags and file encoding ──────────────────────────────────
     const flags_byte = smith.value(u8);
-    const cli_flags = flags_byte & 0x1F;
+    const cli_flags = fuzz_encoding.CliFlags.fromFlagsByte(flags_byte);
     const file_encoding = fuzz_encoding.FileEncoding.fromFlagsByte(flags_byte);
 
     // ── 3. Subject ─────────────────────────────────────────────────────────
@@ -294,11 +298,11 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     var argv_list: std.ArrayList([:0]const u8) = .empty;
     defer argv_list.deinit(gpa);
     try argv_list.appendSlice(gpa, &[_][:0]const u8{ "file", "-p", "./patterns/", "-m", macro_z });
-    if (cli_flags & 0b00001 != 0) try argv_list.append(gpa, "-i");
-    if (cli_flags & 0b00010 != 0) try argv_list.append(gpa, "-j");
-    if (cli_flags & 0b00100 != 0) try argv_list.append(gpa, "-v");
-    if (cli_flags & 0b01000 != 0) try argv_list.append(gpa, "-c");
-    if (cli_flags & 0b10000 != 0) try argv_list.append(gpa, "-n");
+    if (cli_flags.info) try argv_list.append(gpa, "-i");
+    if (cli_flags.json) try argv_list.append(gpa, "-j");
+    if (cli_flags.invert) try argv_list.append(gpa, "-v");
+    if (cli_flags.count) try argv_list.append(gpa, "-c");
+    if (cli_flags.line_number) try argv_list.append(gpa, "-n");
     try argv_list.append(gpa, file_path);
 
     // ── 6. Writer ──────────────────────────────────────────────────────────
@@ -317,7 +321,7 @@ test "known macros exist in ./patterns/" {
     try frontend.compileLib(arena.allocator(), std.testing.io, paths);
     defer frontend.deinitLib();
 
-    inline for (known_macros) |name| {
+    inline for (KNOWN_MACROS) |name| {
         _ = try frontend.getPattern(name);
     }
 
@@ -327,7 +331,7 @@ test "known macros exist in ./patterns/" {
         _ = key.*;
         loaded += 1;
     }
-    try std.testing.expectEqual(known_macros.len, loaded);
+    try std.testing.expectEqual(KNOWN_MACROS.len, loaded);
 }
 
 test "fuzz file mode" {

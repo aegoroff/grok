@@ -60,9 +60,12 @@ CLI entry: `main.zig` → `configuration.zig` (yazap) dispatches to `string`, `f
 
 ## Code Style Guidelines
 - Follow Zig standard library conventions
-- Use snake_case for functions and variables
-- Use PascalCase for types and structs
+- Use camelCase for functions and methods
+- Use snake_case for variables, parameters, and struct fields
 - Use SCREAMING_SNAKE_CASE for constants
+- Use PascalCase for types, structs, enums, and type-valued constants
+- Exception: C boundary symbols keep their C names (`fend_*` callbacks from
+  `frontend.h`, `pcre_alloc` / `pcre_free`)
 - Prefer explicit error handling with `!` return types
 - Keep functions small and focused on single responsibility
 - Add doc comments (`///`) for public APIs
@@ -92,6 +95,13 @@ CLI entry: `main.zig` → `configuration.zig` (yazap) dispatches to `string`, `f
 - Zig callbacks in `frontend.zig` implement `frontend.h` interface
 - Never commit or hand-edit generated files
 - After changing `grok.lex` or `grok.y`, rebuild to regenerate C sources
+
+### Version Control
+1. Never create a commit without explicit confirmation from the user
+2. The same applies to anything that publishes work: push, tag, release
+3. A request to write, fix, refactor or optimize something is not a request to
+   commit it. Finish the change, report what was modified, and wait to be asked
+4. Being asked to commit one change does not authorize committing anything else
 
 ## Build & Test Commands
 ```bash

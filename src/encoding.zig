@@ -14,7 +14,7 @@ const Bom = struct {
     signature: []const u8,
 };
 
-const signatures: []const Bom = &[_]Bom{
+const SIGNATURES: []const Bom = &[_]Bom{
     Bom{
         .encoding = .utf32be,
         .signature = &[_]u8{ 0x00, 0x00, 0xFE, 0xFF },
@@ -73,7 +73,7 @@ pub fn convertRawUtf32ToUtf8(gpa: std.mem.Allocator, rawBytes: []const u8, encod
 }
 
 pub fn detectBomMemory(buffer: []const u8) DetectResult {
-    for (signatures) |bom| {
+    for (SIGNATURES) |bom| {
         if (buffer.len >= bom.signature.len and
             std.mem.startsWith(u8, buffer, bom.signature))
         {
