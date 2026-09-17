@@ -47,3 +47,4 @@ external_lib/
 .cache/
 .zed/
 zig-pkg/
+.codegraph/
