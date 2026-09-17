@@ -1,6 +1,5 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const glob = @import("glob");
 const c = @import("c");
 
 const ErrorReporter = @import("fehler").ErrorReporter;
@@ -153,8 +152,7 @@ fn compileDir(lib_path: []const u8) !void {
         };
         switch (entry.kind) {
             std.Io.File.Kind.file => {
-                const matches = glob.match("*.patterns", entry.basename);
-                if (matches) {
+                if (std.mem.endsWith(u8, entry.basename, ".patterns")) {
                     const p = try entry.dir.realPathFileAlloc(io, entry.basename, allocator);
                     defer allocator.free(p);
                     const pz = try allocator.dupeSentinel(u8, p, 0);

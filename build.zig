@@ -57,7 +57,6 @@ pub fn build(b: *std.Build) void {
     const yazap = b.dependency("yazap", .{});
     const fehler = b.dependency("fehler", .{});
 
-    const glob_dep = b.dependency("glob", .{ .target = target, .optimize = optimize });
     const pcre2_dep = b.dependency("pcre2", .{
         .target = target,
         .optimize = optimize,
@@ -100,7 +99,6 @@ pub fn build(b: *std.Build) void {
         .b = b,
         .yazap = yazap,
         .fehler = fehler,
-        .glob_dep = glob_dep,
         .pcre2_dep = pcre2_dep,
         .c_lib = c_lib,
         .options = options,
@@ -223,7 +221,6 @@ const ModuleDeps = struct {
     b: *std.Build,
     yazap: *std.Build.Dependency,
     fehler: *std.Build.Dependency,
-    glob_dep: *std.Build.Dependency,
     pcre2_dep: *std.Build.Dependency,
     c_lib: *std.Build.Step.Compile,
     options: *std.Build.Step.Options,
@@ -231,7 +228,6 @@ const ModuleDeps = struct {
     translate_pcre: *std.Build.Step.TranslateC,
 
     fn applyTo(self: ModuleDeps, mod: *std.Build.Module) void {
-        mod.addImport("glob", self.glob_dep.module("glob"));
         mod.addImport("yazap", self.yazap.module("yazap"));
         mod.addImport("fehler", self.fehler.module("fehler"));
         mod.linkLibrary(self.c_lib);

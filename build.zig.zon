@@ -8,10 +8,6 @@
             .url = "git+https://github.com/PCRE2Project/pcre2?ref=pcre2-10.48#7978954dbd2efc6f2196869290553cf1871b4ce6",
             .hash = "pcre2-10.48.0-IZ6r6xbVXgDEFDNJ-plJuG66pvQJIDeYdflXi2zQHoET",
         },
-        .glob = .{
-            .url = "https://github.com/xcaeser/glob.zig/archive/v0.1.0.tar.gz",
-            .hash = "glob-0.1.0-AymqdJQ4AABqoaLWCtZyfQh4_bEh7c8bhffcZNp7HWsL",
-        },
         .yazap = .{
             .url = "https://github.com/prajwalch/yazap/archive/refs/tags/0.7.0.tar.gz",
             .hash = "yazap-0.7.0-Z1t-EjH4AQBTpC18eKV-K4K8b8Sl9KGrygK6iNqXDb4M",
