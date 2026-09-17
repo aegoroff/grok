@@ -432,7 +432,7 @@ just fuzz
 
 6. Create a release archive:
 ```bash
-mise exec zig@0.16.0 -- zig build archive -Dversion=0.4.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dversion=0.6.0-dev
 ```
 
 ### Cross-Platform Building
@@ -440,17 +440,17 @@ mise exec zig@0.16.0 -- zig build archive -Dversion=0.4.0-dev
 The project supports cross-compilation. Use just to build for all platforms:
 
 ```bash
-just build_all 0.4.0-dev
+just build_all 0.6.0-dev
 ```
 
 Or build manually for specific targets:
 ```bash
-mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=0.4.0-dev
-mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-linux-musl -Dversion=0.4.0-dev
-mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-macos-none -Dversion=0.4.0-dev
-mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-macos-none -Dversion=0.4.0-dev
-mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-windows-gnu -Dversion=0.4.0-dev
-mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-windows-gnu -Dversion=0.4.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=0.6.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-linux-musl -Dversion=0.6.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-macos-none -Dversion=0.6.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-macos-none -Dversion=0.6.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-windows-gnu -Dversion=0.6.0-dev
+mise exec zig@0.16.0 -- zig build archive -Dtarget=aarch64-windows-gnu -Dversion=0.6.0-dev
 ```
 
 Archives are created in `zig-out/` as `grok-<version>-<arch>-<os>-<abi>.tar.gz` and include the binary, `LICENSE.txt`, and pattern files.
