@@ -210,6 +210,35 @@ const StackItem = union(enum) {
     expansion_end: []const u8,
 };
 
+/// Pick a capture group name that no group in the expansion uses yet.
+///
+/// The bare reference comes first, then `MACRO_reference` when the same name is
+/// referenced twice, then the same with a numeric suffix. A name has to be unique
+/// across the whole expansion: PCRE2 rejects a pattern holding two groups of the
+/// same name unless PCRE2_DUPNAMES is set.
+///
+/// The returned name is owned by the caller.
+fn uniqueReference(
+    gpa: std.mem.Allocator,
+    used_properties: *const std.StringHashMap(bool),
+    macro: []const u8,
+    reference: []const u8,
+) ![:0]const u8 {
+    if (!used_properties.contains(reference)) return gpa.dupeSentinel(u8, reference, 0);
+
+    var name: std.ArrayList(u8) = .empty;
+    errdefer name.deinit(gpa);
+    try name.print(gpa, "{s}_{s}", .{ macro, reference });
+
+    const base_len = name.items.len;
+    var suffix: usize = 1;
+    while (used_properties.contains(name.items)) : (suffix += 1) {
+        name.shrinkRetainingCapacity(base_len);
+        try name.print(gpa, "_{d}", .{suffix});
+    }
+    return name.toOwnedSliceSentinel(gpa, 0);
+}
+
 /// Create a pattern from a macro string by processing nested patterns and references.
 /// This function expands macros and creates a regex pattern with named capture groups.
 ///
@@ -252,25 +281,21 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
 
                         if (current.reference) |current_reference| {
                             // leading (?<name> immediately into composition
-                            var reference = std.mem.span(current_reference);
-                            var concat: std.ArrayList(u8) = .empty;
-                            defer concat.deinit(gpa);
-
-                            if (used_properties.contains(reference)) {
-                                try concat.appendSlice(gpa, current_slice);
-                                try concat.appendSlice(gpa, "_");
-                                try concat.appendSlice(gpa, reference);
-                                try concat.append(gpa, 0);
-                                reference = concat.items[0 .. concat.items.len - 1 :0];
-                            }
+                            try result.properties.ensureUnusedCapacity(gpa, 1);
+                            const reference = try uniqueReference(
+                                gpa,
+                                &used_properties,
+                                current_slice,
+                                std.mem.span(current_reference),
+                            );
+                            // `used_properties` borrows the name, so the owner has to be
+                            // recorded first: it outlives the map either way.
+                            result.properties.appendAssumeCapacity(reference);
                             try used_properties.put(reference, true);
 
                             try composition.appendSlice(gpa, "(?<");
                             try composition.appendSlice(gpa, reference);
                             try composition.appendSlice(gpa, ">");
-
-                            const owned = try gpa.dupeSentinel(u8, reference, 0);
-                            try result.properties.append(gpa, owned);
 
                             // trailing ) into stack bottom
                             const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
@@ -288,6 +313,15 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     }
     result.regex = try composition.toOwnedSlice(gpa);
     return result;
+}
+
+/// Render a PCRE2 error code into `buffer` and return just the written part.
+/// `pcre2_get_error_message_8` reports the length but leaves the rest of the
+/// buffer untouched, so the whole array must never be printed.
+fn errorMessage(errornumber: c_int, buffer: []u8) []const u8 {
+    const len = re.pcre2_get_error_message_8(errornumber, buffer.ptr, buffer.len);
+    if (len < 0) return "unknown error";
+    return buffer[0..@intCast(len)];
 }
 
 /// Starting size of the JIT stack. PCRE2 grows it on demand up to JIT_STACK_MAX_SIZE.
@@ -321,8 +355,8 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
 
     const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
         var buffer: [256]u8 = undefined;
-        _ = re.pcre2_get_error_message_8(errornumber, &buffer, buffer.len);
-        std.log.warn("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, buffer, pattern.regex });
+        const message = errorMessage(errornumber, &buffer);
+        std.log.warn("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, message, pattern.regex });
 
         var props = pattern.properties;
         for (props.items) |prop| {
@@ -364,8 +398,7 @@ fn jitCompile(regex: *re.pcre2_code_8, general_ctx: *re.pcre2_general_context_8)
     const rc = re.pcre2_jit_compile_8(regex, re.PCRE2_JIT_COMPLETE);
     if (rc != 0) {
         var buffer: [256]u8 = undefined;
-        _ = re.pcre2_get_error_message_8(rc, &buffer, buffer.len);
-        std.log.warn("PCRE2 JIT compilation failed, falling back to the interpreter: {s}", .{buffer});
+        std.log.warn("PCRE2 JIT compilation failed, falling back to the interpreter: {s}", .{errorMessage(rc, &buffer)});
         return null;
     }
     return re.pcre2_jit_stack_create_8(JIT_STACK_START_SIZE, JIT_STACK_MAX_SIZE, general_ctx);
@@ -383,4 +416,34 @@ test "createPattern detects circular macros" {
     try std.testing.expectError(error.CircularMacro, createPattern(gpa, "CYCLEA"));
     try std.testing.expectError(error.CircularMacro, createPattern(gpa, "CYCLEB"));
     try std.testing.expectError(error.CircularMacro, createPattern(gpa, "SELFREF"));
+}
+
+test "createPattern gives every repeated reference a unique name" {
+    const gpa = std.testing.allocator;
+    front.deinitLib();
+    defer front.deinitLib();
+
+    var paths_buf = [_][]const u8{"./test_assets/duplicate_reference.patterns"};
+    const paths: [][]const u8 = paths_buf[0..];
+    try front.compileLib(gpa, std.testing.io, paths);
+
+    const cases = [_]struct { macro: []const u8, names: []const []const u8 }{
+        .{ .macro = "DUPTWO", .names = &.{ "x", "WORDY_x" } },
+        .{ .macro = "DUPTHREE", .names = &.{ "x", "WORDY_x", "WORDY_x_1" } },
+        .{ .macro = "DUPCLASH", .names = &.{ "x", "WORDY_x", "WORDY_WORDY_x" } },
+    };
+
+    for (cases) |case| {
+        const pattern = try createPattern(gpa, case.macro);
+        // prepare() takes ownership of the pattern and would reject duplicate
+        // group names with error.InvalidRegex.
+        var prepared = try prepare(gpa, pattern, false);
+        defer prepared.deinit();
+
+        try std.testing.expectEqual(case.names.len, prepared.properties.items.len);
+        for (case.names, prepared.properties.items, prepared.capture_indices) |expected, actual, group| {
+            try std.testing.expectEqualStrings(expected, actual);
+            try std.testing.expect(group != CAPTURE_UNAVAILABLE);
+        }
+    }
 }
