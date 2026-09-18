@@ -31,7 +31,7 @@ pub const Prepared = struct {
     regex: []const u8,
     /// Allocator used to prepare this pattern - stored for proper deallocation
     allocator: std.mem.Allocator,
-    boxed_allocator: *std.mem.Allocator, // heap-owned
+    boxed_context: *AllocatorContext, // heap-owned
     general_context: *re.pcre2_general_context_8,
     /// Backing stack for the JIT-compiled code, null when running interpreted
     jit_stack: ?*re.pcre2_jit_stack_8,
@@ -44,14 +44,14 @@ pub const Prepared = struct {
     ///
     /// `want_properties` skips capture extraction entirely when the caller will
     /// not read it, which is the case for every output mode but `-i` and `-j`.
-    pub fn match(self: *Prepared, gpa: std.mem.Allocator, subject: []const u8, want_properties: bool) MatchResult {
-        var call_allocator = gpa;
-        const general_ctx = createGeneralContext(&call_allocator).?;
+    pub fn match(self: *Prepared, gpa: std.mem.Allocator, subject: []const u8, want_properties: bool) !MatchResult {
+        var context: AllocatorContext = .{ .gpa = gpa };
+        const general_ctx = createGeneralContext(&context) orelse return error.OutOfMemory;
         defer freeGeneralContext(general_ctx);
 
-        const match_data = re.pcre2_match_data_create_from_pattern_8(self.re, general_ctx);
+        const match_data = re.pcre2_match_data_create_from_pattern_8(self.re, general_ctx) orelse return error.OutOfMemory;
         defer re.pcre2_match_data_free_8(match_data);
-        const match_ctx = re.pcre2_match_context_create_8(general_ctx);
+        const match_ctx = re.pcre2_match_context_create_8(general_ctx) orelse return error.OutOfMemory;
         defer re.pcre2_match_context_free_8(match_ctx);
         if (self.jit_stack) |stack| {
             re.pcre2_jit_stack_assign_8(match_ctx, null, stack);
@@ -62,6 +62,9 @@ pub const Prepared = struct {
             // Backtracking outgrew the JIT stack; the interpreter has no such ceiling.
             rc = re.pcre2_match_8(self.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY | re.PCRE2_NO_JIT, match_data, match_ctx);
         }
+        // A failed allocation inside PCRE2 comes back as a negative code that
+        // is easy to mistake for "did not match".
+        if (context.oom) return error.OutOfMemory;
         const matched = rc > 0;
 
         var properties: ?Properties = null;
@@ -91,7 +94,7 @@ pub const Prepared = struct {
         self.allocator.free(self.regex);
         if (self.jit_stack) |stack| re.pcre2_jit_stack_free_8(stack);
         freeGeneralContext(self.general_context);
-        self.allocator.destroy(self.boxed_allocator);
+        self.allocator.destroy(self.boxed_context);
     }
 };
 
@@ -165,13 +168,27 @@ const AllocationHeader = extern struct {
     size: usize,
 };
 
+/// What PCRE2 carries around as opaque user data: the allocator to serve its
+/// requests from, plus a note of whether one of them ever came back empty.
+///
+/// PCRE2 turns a failed allocation into an ordinary error code - compile error
+/// 21, or a null context - which is indistinguishable from a malformed pattern,
+/// so the callback has to record it here for the caller to tell the two apart.
+const AllocatorContext = struct {
+    gpa: std.mem.Allocator,
+    oom: bool = false,
+};
+
 /// Custom allocator function for PCRE2 that ensures proper alignment.
 fn pcre_alloc(size: usize, user_data: ?*anyopaque) callconv(.c) ?*anyopaque {
-    const allocator: *std.mem.Allocator = @ptrCast(@alignCast(user_data.?));
+    const context: *AllocatorContext = @ptrCast(@alignCast(user_data.?));
     const header_size = @sizeOf(AllocationHeader);
     const total_size = header_size + size + 7;
 
-    const raw_mem = allocator.alloc(u8, total_size) catch return null;
+    const raw_mem = context.gpa.alloc(u8, total_size) catch {
+        context.oom = true;
+        return null;
+    };
 
     const data_start_ptr = raw_mem.ptr + header_size;
     const data_start_addr = @intFromPtr(data_start_ptr);
@@ -191,7 +208,7 @@ fn pcre_alloc(size: usize, user_data: ?*anyopaque) callconv(.c) ?*anyopaque {
 /// Custom deallocator function for PCRE2 that frees memory allocated by pcre_alloc.
 fn pcre_free(ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.c) void {
     if (ptr) |p| {
-        const allocator: *std.mem.Allocator = @ptrCast(@alignCast(user_data.?));
+        const context: *AllocatorContext = @ptrCast(@alignCast(user_data.?));
         const data_ptr = @as([*]u8, @ptrCast(p));
         const data_addr = @intFromPtr(data_ptr);
 
@@ -199,15 +216,16 @@ fn pcre_free(ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.c) void {
         const header = @as(*const AllocationHeader, @ptrFromInt(header_addr));
 
         const slice = header.original_ptr[0..header.size];
-        allocator.free(slice);
+        context.gpa.free(slice);
     }
 }
 
-/// Create a PCRE2 general context bound to the given allocator.
-/// `allocator` must remain stable (same address) for the lifetime of the
+/// Create a PCRE2 general context bound to the given allocator context.
+/// `context` must remain stable (same address) for the lifetime of the
 /// returned context, since PCRE2 stores the pointer as opaque user data.
-fn createGeneralContext(allocator: *std.mem.Allocator) ?*re.pcre2_general_context_8 {
-    return re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, allocator);
+/// Null means the context itself could not be allocated.
+fn createGeneralContext(context: *AllocatorContext) ?*re.pcre2_general_context_8 {
+    return re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, context);
 }
 
 /// Free a context created by `createGeneralContext`.
@@ -351,11 +369,11 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
     var owned = pattern;
     errdefer owned.deinit(gpa);
 
-    const boxed_allocator = try gpa.create(std.mem.Allocator);
-    boxed_allocator.* = gpa;
-    errdefer gpa.destroy(boxed_allocator);
+    const boxed_context = try gpa.create(AllocatorContext);
+    boxed_context.* = .{ .gpa = gpa };
+    errdefer gpa.destroy(boxed_context);
 
-    const general_ctx = createGeneralContext(boxed_allocator).?;
+    const general_ctx = createGeneralContext(boxed_context) orelse return error.OutOfMemory;
     errdefer freeGeneralContext(general_ctx);
 
     var errornumber: c_int = undefined;
@@ -364,6 +382,10 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
     defer re.pcre2_compile_context_free_8(compile_ctx);
 
     const regex = re.pcre2_compile_8(owned.regex.ptr, owned.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
+        // PCRE2 reports a failed allocation as compile error 21, which reads
+        // exactly like a malformed pattern. Only the callback knows better.
+        if (boxed_context.oom) return error.OutOfMemory;
+
         var buffer: [256]u8 = undefined;
         const message = errorMessage(errornumber, &buffer);
         std.log.warn("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, message, owned.regex });
@@ -386,7 +408,7 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
         .properties = owned.properties,
         .regex = owned.regex,
         .allocator = gpa,
-        .boxed_allocator = boxed_allocator,
+        .boxed_context = boxed_context,
         .general_context = general_ctx,
         .jit_stack = if (jit) jitCompile(regex, general_ctx) else null,
         .capture_indices = capture_indices,
@@ -448,4 +470,26 @@ test "createPattern gives every repeated reference a unique name" {
             try std.testing.expect(group != CAPTURE_UNAVAILABLE);
         }
     }
+}
+
+/// One full pattern lifecycle, for `checkAllAllocationFailures` to replay with
+/// every allocation in it failing in turn.
+fn preparedRoundTrip(gpa: std.mem.Allocator, macro: []const u8) !void {
+    const pattern = try createPattern(gpa, macro);
+    var prepared = try prepare(gpa, pattern, false);
+    defer prepared.deinit();
+
+    _ = try prepared.match(gpa, "a b c", true);
+}
+
+test "no allocation failure leaks or panics" {
+    const gpa = std.testing.allocator;
+    front.deinitLib();
+    defer front.deinitLib();
+
+    var paths_buf = [_][]const u8{"./test_assets/duplicate_reference.patterns"};
+    const paths: [][]const u8 = paths_buf[0..];
+    try front.compileLib(gpa, std.testing.io, paths);
+
+    try std.testing.checkAllAllocationFailures(gpa, preparedRoundTrip, .{"DUPTHREE"});
 }

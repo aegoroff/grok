@@ -25,7 +25,7 @@ pub fn init(gpa: std.mem.Allocator, writer: *std.Io.Writer, macro: []const u8, j
 
 /// Matches single string specified in `str` argument
 pub fn matchString(self: *Matcher, str: []const u8, flags: OutputFlags) !void {
-    const result = self.prepared.match(self.allocator, str, printer.needsProperties(flags));
+    const result = try self.prepared.match(self.allocator, str, printer.needsProperties(flags));
     _ = try self.print.printResult(1, result, flags);
 }
 
@@ -60,7 +60,7 @@ pub fn matchStrings(
         defer _ = arena.reset(.retain_capacity);
 
         line_no += 1;
-        const result = self.prepared.match(loop_allocator, line, want_properties);
+        const result = try self.prepared.match(loop_allocator, line, want_properties);
         if (try self.print.printResult(line_no, result, flags)) {
             match_counter += 1;
         }
