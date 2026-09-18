@@ -9,6 +9,16 @@ pub const Pattern = struct {
     regex: []const u8,
     /// List of property names that this pattern captures
     properties: std.ArrayList([:0]const u8),
+
+    /// Release everything the pattern owns. `gpa` must be the allocator
+    /// `createPattern` was given.
+    pub fn deinit(self: *Pattern, gpa: std.mem.Allocator) void {
+        for (self.properties.items) |prop| {
+            gpa.free(prop);
+        }
+        self.properties.deinit(gpa);
+        gpa.free(self.regex);
+    }
 };
 
 /// A prepared pattern that has been compiled and is ready for matching.
@@ -256,12 +266,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     var used_properties = std.StringHashMap(bool).init(gpa);
     defer used_properties.deinit();
     var result = Pattern{ .properties = .empty, .regex = "" };
-    errdefer {
-        for (result.properties.items) |prop| {
-            gpa.free(prop);
-        }
-        result.properties.deinit(gpa);
-    }
+    errdefer result.deinit(gpa);
     for (m.items) |value| {
         try stack.append(gpa, .{ .info = value });
         while (stack.pop()) |item| {
@@ -334,13 +339,18 @@ const JIT_STACK_MAX_SIZE: usize = 1024 * 1024;
 /// that can be used for matching operations.
 ///
 /// `gpa` The allocator to use for memory allocations
-/// `pattern` The Pattern to compile
+/// `pattern` The Pattern to compile. `prepare` takes ownership of it on every
+/// path: what it does not hand over to the returned `Prepared` it releases,
+/// including when it fails, so the caller must never free it itself.
 /// `jit` Whether to additionally JIT-compile the pattern. Worth roughly 10x per
 /// match but costs about a millisecond up front, so it only pays off when many
 /// subjects are matched. A failed JIT compilation is not fatal: PCRE2 keeps
 /// matching with the interpreter.
 /// @return A Prepared struct containing the compiled regex and properties, or an error
 pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
+    var owned = pattern;
+    errdefer owned.deinit(gpa);
+
     const boxed_allocator = try gpa.create(std.mem.Allocator);
     boxed_allocator.* = gpa;
     errdefer gpa.destroy(boxed_allocator);
@@ -353,27 +363,19 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
     const compile_ctx = re.pcre2_compile_context_create_8(general_ctx);
     defer re.pcre2_compile_context_free_8(compile_ctx);
 
-    const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
+    const regex = re.pcre2_compile_8(owned.regex.ptr, owned.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
         var buffer: [256]u8 = undefined;
         const message = errorMessage(errornumber, &buffer);
-        std.log.warn("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, message, pattern.regex });
-
-        var props = pattern.properties;
-        for (props.items) |prop| {
-            gpa.free(prop);
-        }
-        props.deinit(gpa);
-        gpa.free(pattern.regex);
-
+        std.log.warn("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, message, owned.regex });
         return error.InvalidRegex;
     };
     errdefer re.pcre2_code_free_8(regex);
 
-    const capture_indices = try gpa.alloc(u32, pattern.properties.items.len);
+    const capture_indices = try gpa.alloc(u32, owned.properties.items.len);
     errdefer gpa.free(capture_indices);
-    const capture_values = try gpa.alloc(?[]const u8, pattern.properties.items.len);
+    const capture_values = try gpa.alloc(?[]const u8, owned.properties.items.len);
     errdefer gpa.free(capture_values);
-    for (pattern.properties.items, 0..) |name, i| {
+    for (owned.properties.items, 0..) |name, i| {
         const number = re.pcre2_substring_number_from_name_8(regex, name.ptr);
         capture_indices[i] = if (number > 0) @intCast(number) else CAPTURE_UNAVAILABLE;
         capture_values[i] = null;
@@ -381,8 +383,8 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
 
     return .{
         .re = regex,
-        .properties = pattern.properties,
-        .regex = pattern.regex,
+        .properties = owned.properties,
+        .regex = owned.regex,
         .allocator = gpa,
         .boxed_allocator = boxed_allocator,
         .general_context = general_ctx,
