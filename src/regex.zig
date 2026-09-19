@@ -378,7 +378,7 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
 
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
-    const compile_ctx = re.pcre2_compile_context_create_8(general_ctx);
+    const compile_ctx = re.pcre2_compile_context_create_8(general_ctx) orelse return error.OutOfMemory;
     defer re.pcre2_compile_context_free_8(compile_ctx);
 
     const regex = re.pcre2_compile_8(owned.regex.ptr, owned.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
