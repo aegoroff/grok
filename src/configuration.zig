@@ -34,8 +34,7 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io, argv: []const [:0]const u8) !Con
         \\Copyright (C) 2018-2026 Alexander Egorov. All rights reserved.
     ;
     const query = std.Target.Query.fromTarget(&builtin.target);
-    const app_descr = try std.fmt.allocPrint(
-        gpa,
+    const app_descr = try gpa.print(
         app_descr_template,
         .{ build_options.version, @tagName(query.cpu_arch.?) },
     );

@@ -45,6 +45,7 @@ CLI entry: `main.zig` → `configuration.zig` (yazap) dispatches to `string`, `f
 | `pcre2` | `regex.zig` | Regex engine |
 | `yazap` | `configuration.zig` | CLI parsing |
 | `fehler` | `frontend.zig` | Parser error diagnostics |
+| `translate_c` | `build.zig` | Translate `c.h` and `pcre2.h` into Zig modules |
 
 ### Where to Change What
 
@@ -142,7 +143,7 @@ mise exec -- zig build test --fuzz -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-
   - `generated/` - Generated C sources (do not edit)
 - `patterns/` - Built-in pattern definitions (`*.patterns`)
 - `test_assets/` - Test logs and invalid pattern fixtures
-- `build.zig` - Build configuration (flex, bison, pcre2, yazap, fehler)
+- `build.zig` - Build configuration (flex, bison, pcre2, yazap, fehler, translate-c)
 
 ## Important Notes
 - Always verify build passes before completing tasks

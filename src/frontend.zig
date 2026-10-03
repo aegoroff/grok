@@ -121,7 +121,7 @@ fn deinitLibUnlocked() void {
 }
 
 fn compileDefault() !void {
-    if (builtin.os.tag == .linux) {
+    if (builtin.target.os.tag == .linux) {
         try compileDir("/usr/share/grok/patterns");
         return;
     }
@@ -134,7 +134,7 @@ fn compileDefault() !void {
 fn compileDir(lib_path: []const u8) !void {
     var dir: std.Io.Dir = undefined;
     const options: std.Io.Dir.OpenOptions = .{ .iterate = true };
-    if (std.fs.path.isAbsolute(lib_path)) {
+    if (std.Io.Dir.path.isAbsolute(lib_path)) {
         dir = try std.Io.Dir.openDirAbsolute(io, lib_path, options);
     } else {
         dir = try std.Io.Dir.cwd().openDir(io, lib_path, options);
@@ -347,7 +347,7 @@ test "fend_signal_oom sets parser flag" {
 }
 
 test "compileLib/deinitLib loop has no GPA leak" {
-    var gpa_state = std.heap.DebugAllocator(.{}){};
+    var gpa_state: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{});
     const gpa = gpa_state.allocator();
     var paths_buf = [_][]const u8{"./patterns/"};
     const paths: [][]const u8 = paths_buf[0..];
@@ -359,11 +359,11 @@ test "compileLib/deinitLib loop has no GPA leak" {
         deinitLib();
     }
 
-    try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
+    try std.testing.expectEqual(@as(usize, 0), gpa_state.deinit());
 }
 
 test "duplicate macro definition has no GPA leak" {
-    var gpa_state = std.heap.DebugAllocator(.{}){};
+    var gpa_state: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{});
     const gpa = gpa_state.allocator();
     var paths_buf = [_][]const u8{"./test_assets/duplicate_macro.patterns"};
     const paths: [][]const u8 = paths_buf[0..];
@@ -373,11 +373,11 @@ test "duplicate macro definition has no GPA leak" {
     try std.testing.expectEqualStrings("literal-only", std.mem.span(pattern.items[0].data));
     deinitLib();
 
-    try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
+    try std.testing.expectEqual(@as(usize, 0), gpa_state.deinit());
 }
 
 test "fend_on_grok frees the macro once when composition append fails" {
-    var gpa_state = std.heap.DebugAllocator(.{}){};
+    var gpa_state: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{});
     const gpa = gpa_state.allocator();
 
     allocator = gpa;
@@ -394,11 +394,11 @@ test "fend_on_grok frees the macro once when composition append fails" {
     allocator = gpa;
 
     try std.testing.expect(c.fend_oom_flag != 0);
-    try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
+    try std.testing.expectEqual(@as(usize, 0), gpa_state.deinit());
 }
 
 test "fend_on_literal frees the literal when composition append fails" {
-    var gpa_state = std.heap.DebugAllocator(.{}){};
+    var gpa_state: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{});
     const gpa = gpa_state.allocator();
 
     allocator = gpa;
@@ -414,11 +414,11 @@ test "fend_on_literal frees the literal when composition append fails" {
     allocator = gpa;
 
     try std.testing.expect(c.fend_oom_flag != 0);
-    try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
+    try std.testing.expectEqual(@as(usize, 0), gpa_state.deinit());
 }
 
 test "fend_on_definition_end frees key and composition when put fails" {
-    var gpa_state = std.heap.DebugAllocator(.{}){};
+    var gpa_state: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{});
     const gpa = gpa_state.allocator();
 
     allocator = gpa;
@@ -441,5 +441,5 @@ test "fend_on_definition_end frees key and composition when put fails" {
 
     try std.testing.expect(c.fend_oom_flag != 0);
     try std.testing.expectEqual(@as(usize, 0), composition.items.len);
-    try std.testing.expectEqual(std.heap.Check.ok, gpa_state.deinit());
+    try std.testing.expectEqual(@as(usize, 0), gpa_state.deinit());
 }

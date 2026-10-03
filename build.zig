@@ -1,6 +1,7 @@
 const std = @import("std");
 const fuzz_wire = @import("src/fuzz_encoding.zig");
 const builtin = @import("builtin");
+const Translator = @import("translate_c").Translator;
 
 pub fn build(b: *std.Build) void {
     const target = resolveTarget(b);
@@ -34,7 +35,7 @@ pub fn build(b: *std.Build) void {
     var flex_args: []const []const u8 = undefined;
     var bison_args: []const []const u8 = undefined;
 
-    switch (builtin.os.tag) {
+    switch (builtin.target.os.tag) {
         .linux => {
             flex_args = &[_][]const u8{ "flex", "--fast", flex_opt, flex_hdr_opt, flex_input };
             bison_args = &[_][]const u8{ "bison", bison_opt, "-dy", "-Wno-yacc", "-Wno-other", bison_input };
@@ -47,7 +48,7 @@ pub fn build(b: *std.Build) void {
             flex_args = &[_][]const u8{ "/usr/local/opt/flex/bin/flex", "--fast", flex_opt, flex_hdr_opt, flex_input };
             bison_args = &[_][]const u8{ "/usr/local/opt/bison/bin/bison", bison_opt, "-dy", "-Wno-yacc", "-Wno-other", bison_input };
         },
-        else => @compileError("Unsupported OS: " ++ @tagName(builtin.os.tag)),
+        else => @compileError("Unsupported OS: " ++ @tagName(builtin.target.os.tag)),
     }
 
     const flex = b.addSystemCommand(flex_args);
@@ -63,22 +64,26 @@ pub fn build(b: *std.Build) void {
         .support_jit = true,
     });
 
-    const translate_c = b.addTranslateC(.{
-        .root_source_file = b.path("src/grok/c.h"),
+    const translate_c_dep = b.dependency("translate_c", .{});
+
+    const translate_c: Translator = .init(translate_c_dep, .{
+        .name = "c",
+        .c_source_file = b.path("src/grok/c.h"),
         .target = target,
         .optimize = optimize,
     });
     translate_c.addIncludePath(b.path(c_code_path));
     translate_c.addIncludePath(b.path(generated_path));
-    translate_c.step.dependOn(&bison.step);
+    translate_c.run.step.dependOn(&bison.step);
 
-    const translate_pcre = b.addTranslateC(.{
-        .root_source_file = pcre2_dep.namedLazyPath("pcre2.h"),
+    const translate_pcre: Translator = .init(translate_c_dep, .{
+        .name = "pcre2",
+        .c_source_file = pcre2_dep.namedLazyPath("pcre2.h"),
         .target = target,
         .optimize = optimize,
     });
     translate_pcre.defineCMacro("PCRE2_CODE_UNIT_WIDTH", "8");
-    translate_pcre.step.dependOn(&pcre2_dep.artifact("pcre2-8").step);
+    translate_pcre.run.step.dependOn(&pcre2_dep.artifact("pcre2-8").step);
 
     const c_lib = b.addLibrary(.{
         .name = "grok-c",
@@ -179,7 +184,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const pack = b.addSystemCommand(&.{ "tar", "-czvf" });
-    const gz_file = pack.addOutputFileArg(gz_basename);
+    const gz_file = pack.addOutputFileArg2(gz_basename, .{});
     pack.addArg("-C");
     pack.addDirectoryArg2(.{ .relative = .{ .base = .install_bin } }, .{ .make_absolute = true });
     pack.addArg(".");
@@ -204,8 +209,8 @@ const ModuleDeps = struct {
     pcre2_dep: *std.Build.Dependency,
     c_lib: *std.Build.Step.Compile,
     options: *std.Build.Step.Options,
-    translate_c: *std.Build.Step.TranslateC,
-    translate_pcre: *std.Build.Step.TranslateC,
+    translate_c: Translator,
+    translate_pcre: Translator,
 
     fn applyTo(self: ModuleDeps, mod: *std.Build.Module) void {
         mod.addImport("yazap", self.yazap.module("yazap"));
@@ -213,8 +218,8 @@ const ModuleDeps = struct {
         mod.linkLibrary(self.c_lib);
         mod.linkLibrary(self.pcre2_dep.artifact("pcre2-8"));
         mod.addImport("build_options", self.options.createModule());
-        mod.addImport("c", self.translate_c.createModule());
-        mod.addImport("re", self.translate_pcre.createModule());
+        mod.addImport("c", self.translate_c.mod);
+        mod.addImport("re", self.translate_pcre.mod);
     }
 };
 
@@ -243,7 +248,7 @@ fn generateFuzzMacros(b: *std.Build) []const u8 {
         "pub const names = [_][]const u8{\n") catch @panic("OOM");
     for (names.items) |name| {
         var line_buf: [256]u8 = undefined;
-        const line = std.fmt.bufPrint(&line_buf, "    \"{s}\",\n", .{name}) catch @panic("macro name too long");
+        const line = std.mem.print(&line_buf, "    \"{s}\",\n", .{name}) catch @panic("macro name too long");
         out.appendSlice(b.allocator, line) catch @panic("OOM");
     }
     out.appendSlice(b.allocator, "};\n") catch @panic("OOM");
@@ -266,8 +271,8 @@ fn readNlogUtf8Line(b: *std.Build) []const u8 {
         std.debug.panic("failed to read test_assets/logUTF8.log: {s}", .{@errorName(err)});
     };
     const content = out.written();
-    const end = std.mem.indexOfScalar(u8, content, '\n') orelse content.len;
-    return b.dupe(content[0..end]);
+    const end = std.mem.findScalar(u8, content, '\n') orelse content.len;
+    return b.graph.dupeString(content[0..end]);
 }
 
 fn macroNameIndex(names: []const []const u8, name: []const u8) u8 {
@@ -293,7 +298,7 @@ fn generateFuzzCorpus(b: *std.Build) []const u8 {
 
     const nlog_line = readNlogUtf8Line(b);
     defer b.allocator.free(nlog_line);
-    const nlog_multiline = std.fmt.allocPrint(b.allocator, "{s}\nplain line", .{nlog_line}) catch @panic("OOM");
+    const nlog_multiline = b.allocator.print("{s}\nplain line", .{nlog_line}) catch @panic("OOM");
     defer b.allocator.free(nlog_multiline);
     const notspace_512 = repeatByte(b, 'a', 512);
     defer b.allocator.free(notspace_512);
@@ -371,7 +376,7 @@ fn appendSmithU64(out: *std.ArrayList(u8), b: *std.Build, value: u64) void {
     std.mem.writeInt(u64, &buf, value, .little);
     for (buf) |byte| {
         var elem_buf: [8]u8 = undefined;
-        const elem = std.fmt.bufPrint(&elem_buf, "{d}, ", .{byte}) catch @panic("OOM");
+        const elem = std.mem.print(&elem_buf, "{d}, ", .{byte}) catch @panic("OOM");
         out.appendSlice(b.allocator, elem) catch @panic("OOM");
     }
 }
@@ -396,7 +401,7 @@ fn appendSmithCorpusEntry(
             appendSmithU64(out, b, chunk_len);
             for (subject[offset .. offset + chunk_len]) |byte| {
                 var elem_buf: [8]u8 = undefined;
-                const elem = std.fmt.bufPrint(&elem_buf, "{d}, ", .{byte}) catch @panic("OOM");
+                const elem = std.mem.print(&elem_buf, "{d}, ", .{byte}) catch @panic("OOM");
                 out.appendSlice(b.allocator, elem) catch @panic("OOM");
             }
             offset += chunk_len;
@@ -431,9 +436,9 @@ fn collectPatternMacroNames(b: *std.Build) std.ArrayList([]const u8) {
         while (lines.next()) |line| {
             const trimmed = std.mem.trim(u8, line, " \t\r");
             if (trimmed.len == 0 or trimmed[0] == '#') continue;
-            const end = std.mem.indexOfScalar(u8, trimmed, ' ') orelse continue;
+            const end = std.mem.findScalar(u8, trimmed, ' ') orelse continue;
             if (end == 0) continue;
-            const name = b.dupe(trimmed[0..end]);
+            const name = b.graph.dupeString(trimmed[0..end]);
 
             var duplicate = false;
             for (names.items) |existing| {
@@ -469,7 +474,7 @@ const pinned_glibc: std.Target.Query.SemanticVersion = .{
 };
 
 fn materializeHostTriple(query: *std.Target.Query) void {
-    if (query.cpu_arch == null) query.cpu_arch = builtin.cpu.arch;
+    if (query.cpu_arch == null) query.cpu_arch = builtin.target.cpu.arch;
     if (query.os_tag == null) query.os_tag = builtin.target.os.tag;
     if (query.abi == null) query.abi = builtin.target.abi;
 }
