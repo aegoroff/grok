@@ -105,22 +105,22 @@ CLI entry: `main.zig` → `configuration.zig` (yazap) dispatches to `string`, `f
 ## Build & Test Commands
 ```bash
 # Build
-mise exec zig@0.16.0 -- zig build -Dtarget=x86_64-linux-musl
+mise exec -- zig build -Dtarget=x86_64-linux-musl
 
 # Run tests
-mise exec zig@0.16.0 -- zig build test -Dtarget=x86_64-linux-musl
+mise exec -- zig build test -Dtarget=x86_64-linux-musl
 
 # Build release
-mise exec zig@0.16.0 -- zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-musl
+mise exec -- zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-musl
 
 # Create tarball archive
-mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=1.0.0
+mise exec -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=1.0.0
 
 # Linux release archive + distro packages (.deb/.rpm/.apk, musl static binary)
 mise run build:zig
 
 # Run fuzzing
-mise exec zig@0.16.0 -- zig build test --fuzz -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-musl
+mise exec -- zig build test --fuzz -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-musl
 ```
 
 ## File Structure
