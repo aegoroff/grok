@@ -187,15 +187,10 @@ jobs:
             ./release/**/*.{tar.gz,deb,rpm,apk}
 
       - name: Publish grok-tool-bin
-        uses: nick-fields/retry@v3
+        uses: zokugun/github-actions-aur-releaser@v1
         with:
-          timeout_minutes: 5
-          max_attempts: 3
-          retry_wait_seconds: 60
-          action: zokugun/github-actions-aur-releaser@v1
-          with: |
-            package_name: grok-tool-bin
-            aur_private_key: ${{ secrets.AUR_PRIVATE_KEY }}
-            aur_username: ${{ secrets.AUR_USERNAME }}
-            aur_email: ${{ secrets.AUR_EMAIL }}
-            package_version: ${{ steps.get_version.outputs.VERSION }}
+          package_name: grok-tool-bin
+          aur_private_key: ${{ secrets.AUR_PRIVATE_KEY }}
+          aur_username: ${{ secrets.AUR_USERNAME }}
+          aur_email: ${{ secrets.AUR_EMAIL }}
+          package_version: ${{ steps.get_version.outputs.VERSION }}

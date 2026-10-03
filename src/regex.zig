@@ -9,6 +9,16 @@ pub const Pattern = struct {
     regex: []const u8,
     /// List of property names that this pattern captures
     properties: std.ArrayList([:0]const u8),
+
+    /// Release everything the pattern owns. `gpa` must be the allocator
+    /// `createPattern` was given.
+    pub fn deinit(self: *Pattern, gpa: std.mem.Allocator) void {
+        for (self.properties.items) |prop| {
+            gpa.free(prop);
+        }
+        self.properties.deinit(gpa);
+        gpa.free(self.regex);
+    }
 };
 
 /// A prepared pattern that has been compiled and is ready for matching.
@@ -21,7 +31,7 @@ pub const Prepared = struct {
     regex: []const u8,
     /// Allocator used to prepare this pattern - stored for proper deallocation
     allocator: std.mem.Allocator,
-    boxed_allocator: *std.mem.Allocator, // heap-owned
+    boxed_context: *AllocatorContext, // heap-owned
     general_context: *re.pcre2_general_context_8,
     /// Backing stack for the JIT-compiled code, null when running interpreted
     jit_stack: ?*re.pcre2_jit_stack_8,
@@ -34,14 +44,14 @@ pub const Prepared = struct {
     ///
     /// `want_properties` skips capture extraction entirely when the caller will
     /// not read it, which is the case for every output mode but `-i` and `-j`.
-    pub fn match(self: *Prepared, gpa: std.mem.Allocator, subject: []const u8, want_properties: bool) MatchResult {
-        var call_allocator = gpa;
-        const general_ctx = createGeneralContext(&call_allocator).?;
+    pub fn match(self: *Prepared, gpa: std.mem.Allocator, subject: []const u8, want_properties: bool) !MatchResult {
+        var context: AllocatorContext = .{ .gpa = gpa };
+        const general_ctx = createGeneralContext(&context) orelse return error.OutOfMemory;
         defer freeGeneralContext(general_ctx);
 
-        const match_data = re.pcre2_match_data_create_from_pattern_8(self.re, general_ctx);
+        const match_data = re.pcre2_match_data_create_from_pattern_8(self.re, general_ctx) orelse return error.OutOfMemory;
         defer re.pcre2_match_data_free_8(match_data);
-        const match_ctx = re.pcre2_match_context_create_8(general_ctx);
+        const match_ctx = re.pcre2_match_context_create_8(general_ctx) orelse return error.OutOfMemory;
         defer re.pcre2_match_context_free_8(match_ctx);
         if (self.jit_stack) |stack| {
             re.pcre2_jit_stack_assign_8(match_ctx, null, stack);
@@ -52,6 +62,9 @@ pub const Prepared = struct {
             // Backtracking outgrew the JIT stack; the interpreter has no such ceiling.
             rc = re.pcre2_match_8(self.re, subject.ptr, subject.len, 0, re.PCRE2_NOTEMPTY | re.PCRE2_NO_JIT, match_data, match_ctx);
         }
+        // A failed allocation inside PCRE2 comes back as a negative code that
+        // is easy to mistake for "did not match".
+        if (context.oom) return error.OutOfMemory;
         const matched = rc > 0;
 
         var properties: ?Properties = null;
@@ -81,7 +94,7 @@ pub const Prepared = struct {
         self.allocator.free(self.regex);
         if (self.jit_stack) |stack| re.pcre2_jit_stack_free_8(stack);
         freeGeneralContext(self.general_context);
-        self.allocator.destroy(self.boxed_allocator);
+        self.allocator.destroy(self.boxed_context);
     }
 };
 
@@ -155,13 +168,27 @@ const AllocationHeader = extern struct {
     size: usize,
 };
 
+/// What PCRE2 carries around as opaque user data: the allocator to serve its
+/// requests from, plus a note of whether one of them ever came back empty.
+///
+/// PCRE2 turns a failed allocation into an ordinary error code - compile error
+/// 21, or a null context - which is indistinguishable from a malformed pattern,
+/// so the callback has to record it here for the caller to tell the two apart.
+const AllocatorContext = struct {
+    gpa: std.mem.Allocator,
+    oom: bool = false,
+};
+
 /// Custom allocator function for PCRE2 that ensures proper alignment.
 fn pcre_alloc(size: usize, user_data: ?*anyopaque) callconv(.c) ?*anyopaque {
-    const allocator: *std.mem.Allocator = @ptrCast(@alignCast(user_data.?));
+    const context: *AllocatorContext = @ptrCast(@alignCast(user_data.?));
     const header_size = @sizeOf(AllocationHeader);
     const total_size = header_size + size + 7;
 
-    const raw_mem = allocator.alloc(u8, total_size) catch return null;
+    const raw_mem = context.gpa.alloc(u8, total_size) catch {
+        context.oom = true;
+        return null;
+    };
 
     const data_start_ptr = raw_mem.ptr + header_size;
     const data_start_addr = @intFromPtr(data_start_ptr);
@@ -181,7 +208,7 @@ fn pcre_alloc(size: usize, user_data: ?*anyopaque) callconv(.c) ?*anyopaque {
 /// Custom deallocator function for PCRE2 that frees memory allocated by pcre_alloc.
 fn pcre_free(ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.c) void {
     if (ptr) |p| {
-        const allocator: *std.mem.Allocator = @ptrCast(@alignCast(user_data.?));
+        const context: *AllocatorContext = @ptrCast(@alignCast(user_data.?));
         const data_ptr = @as([*]u8, @ptrCast(p));
         const data_addr = @intFromPtr(data_ptr);
 
@@ -189,15 +216,16 @@ fn pcre_free(ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.c) void {
         const header = @as(*const AllocationHeader, @ptrFromInt(header_addr));
 
         const slice = header.original_ptr[0..header.size];
-        allocator.free(slice);
+        context.gpa.free(slice);
     }
 }
 
-/// Create a PCRE2 general context bound to the given allocator.
-/// `allocator` must remain stable (same address) for the lifetime of the
+/// Create a PCRE2 general context bound to the given allocator context.
+/// `context` must remain stable (same address) for the lifetime of the
 /// returned context, since PCRE2 stores the pointer as opaque user data.
-fn createGeneralContext(allocator: *std.mem.Allocator) ?*re.pcre2_general_context_8 {
-    return re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, allocator);
+/// Null means the context itself could not be allocated.
+fn createGeneralContext(context: *AllocatorContext) ?*re.pcre2_general_context_8 {
+    return re.pcre2_general_context_create_8(&pcre_alloc, &pcre_free, context);
 }
 
 /// Free a context created by `createGeneralContext`.
@@ -209,6 +237,35 @@ const StackItem = union(enum) {
     info: front.Info,
     expansion_end: []const u8,
 };
+
+/// Pick a capture group name that no group in the expansion uses yet.
+///
+/// The bare reference comes first, then `MACRO_reference` when the same name is
+/// referenced twice, then the same with a numeric suffix. A name has to be unique
+/// across the whole expansion: PCRE2 rejects a pattern holding two groups of the
+/// same name unless PCRE2_DUPNAMES is set.
+///
+/// The returned name is owned by the caller.
+fn uniqueReference(
+    gpa: std.mem.Allocator,
+    used_properties: *const std.StringHashMap(bool),
+    macro: []const u8,
+    reference: []const u8,
+) ![:0]const u8 {
+    if (!used_properties.contains(reference)) return gpa.dupeSentinel(u8, reference, 0);
+
+    var name: std.ArrayList(u8) = .empty;
+    errdefer name.deinit(gpa);
+    try name.print(gpa, "{s}_{s}", .{ macro, reference });
+
+    const base_len = name.items.len;
+    var suffix: usize = 1;
+    while (used_properties.contains(name.items)) : (suffix += 1) {
+        name.shrinkRetainingCapacity(base_len);
+        try name.print(gpa, "_{d}", .{suffix});
+    }
+    return name.toOwnedSliceSentinel(gpa, 0);
+}
 
 /// Create a pattern from a macro string by processing nested patterns and references.
 /// This function expands macros and creates a regex pattern with named capture groups.
@@ -227,12 +284,7 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     var used_properties = std.StringHashMap(bool).init(gpa);
     defer used_properties.deinit();
     var result = Pattern{ .properties = .empty, .regex = "" };
-    errdefer {
-        for (result.properties.items) |prop| {
-            gpa.free(prop);
-        }
-        result.properties.deinit(gpa);
-    }
+    errdefer result.deinit(gpa);
     for (m.items) |value| {
         try stack.append(gpa, .{ .info = value });
         while (stack.pop()) |item| {
@@ -252,25 +304,21 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
 
                         if (current.reference) |current_reference| {
                             // leading (?<name> immediately into composition
-                            var reference = std.mem.span(current_reference);
-                            var concat: std.ArrayList(u8) = .empty;
-                            defer concat.deinit(gpa);
-
-                            if (used_properties.contains(reference)) {
-                                try concat.appendSlice(gpa, current_slice);
-                                try concat.appendSlice(gpa, "_");
-                                try concat.appendSlice(gpa, reference);
-                                try concat.append(gpa, 0);
-                                reference = concat.items[0 .. concat.items.len - 1 :0];
-                            }
+                            try result.properties.ensureUnusedCapacity(gpa, 1);
+                            const reference = try uniqueReference(
+                                gpa,
+                                &used_properties,
+                                current_slice,
+                                std.mem.span(current_reference),
+                            );
+                            // `used_properties` borrows the name, so the owner has to be
+                            // recorded first: it outlives the map either way.
+                            result.properties.appendAssumeCapacity(reference);
                             try used_properties.put(reference, true);
 
                             try composition.appendSlice(gpa, "(?<");
                             try composition.appendSlice(gpa, reference);
                             try composition.appendSlice(gpa, ">");
-
-                            const owned = try gpa.dupeSentinel(u8, reference, 0);
-                            try result.properties.append(gpa, owned);
 
                             // trailing ) into stack bottom
                             const trail_paren = front.Info{ .data = ")", .reference = null, .part = .literal };
@@ -290,6 +338,15 @@ pub fn createPattern(gpa: std.mem.Allocator, macro: []const u8) !Pattern {
     return result;
 }
 
+/// Render a PCRE2 error code into `buffer` and return just the written part.
+/// `pcre2_get_error_message_8` reports the length but leaves the rest of the
+/// buffer untouched, so the whole array must never be printed.
+fn errorMessage(errornumber: c_int, buffer: []u8) []const u8 {
+    const len = re.pcre2_get_error_message_8(errornumber, buffer.ptr, buffer.len);
+    if (len < 0) return "unknown error";
+    return buffer[0..@intCast(len)];
+}
+
 /// Starting size of the JIT stack. PCRE2 grows it on demand up to JIT_STACK_MAX_SIZE.
 const JIT_STACK_START_SIZE: usize = 32 * 1024;
 /// Ceiling for the JIT stack. Beyond it matching falls back to the interpreter.
@@ -300,46 +357,47 @@ const JIT_STACK_MAX_SIZE: usize = 1024 * 1024;
 /// that can be used for matching operations.
 ///
 /// `gpa` The allocator to use for memory allocations
-/// `pattern` The Pattern to compile
+/// `pattern` The Pattern to compile. `prepare` takes ownership of it on every
+/// path: what it does not hand over to the returned `Prepared` it releases,
+/// including when it fails, so the caller must never free it itself.
 /// `jit` Whether to additionally JIT-compile the pattern. Worth roughly 10x per
 /// match but costs about a millisecond up front, so it only pays off when many
 /// subjects are matched. A failed JIT compilation is not fatal: PCRE2 keeps
 /// matching with the interpreter.
 /// @return A Prepared struct containing the compiled regex and properties, or an error
 pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
-    const boxed_allocator = try gpa.create(std.mem.Allocator);
-    boxed_allocator.* = gpa;
-    errdefer gpa.destroy(boxed_allocator);
+    var owned = pattern;
+    errdefer owned.deinit(gpa);
 
-    const general_ctx = createGeneralContext(boxed_allocator).?;
+    const boxed_context = try gpa.create(AllocatorContext);
+    boxed_context.* = .{ .gpa = gpa };
+    errdefer gpa.destroy(boxed_context);
+
+    const general_ctx = createGeneralContext(boxed_context) orelse return error.OutOfMemory;
     errdefer freeGeneralContext(general_ctx);
 
     var errornumber: c_int = undefined;
     var erroroffset: re.PCRE2_SIZE = undefined;
-    const compile_ctx = re.pcre2_compile_context_create_8(general_ctx);
+    const compile_ctx = re.pcre2_compile_context_create_8(general_ctx) orelse return error.OutOfMemory;
     defer re.pcre2_compile_context_free_8(compile_ctx);
 
-    const regex = re.pcre2_compile_8(pattern.regex.ptr, pattern.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
+    const regex = re.pcre2_compile_8(owned.regex.ptr, owned.regex.len, 0, &errornumber, &erroroffset, compile_ctx) orelse {
+        // PCRE2 reports a failed allocation as compile error 21, which reads
+        // exactly like a malformed pattern. Only the callback knows better.
+        if (boxed_context.oom) return error.OutOfMemory;
+
         var buffer: [256]u8 = undefined;
-        _ = re.pcre2_get_error_message_8(errornumber, &buffer, buffer.len);
-        std.log.warn("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, buffer, pattern.regex });
-
-        var props = pattern.properties;
-        for (props.items) |prop| {
-            gpa.free(prop);
-        }
-        props.deinit(gpa);
-        gpa.free(pattern.regex);
-
+        const message = errorMessage(errornumber, &buffer);
+        std.log.warn("PCRE2 compilation failed at offset {d}: {s}\nProblem regexp: {s}", .{ erroroffset, message, owned.regex });
         return error.InvalidRegex;
     };
     errdefer re.pcre2_code_free_8(regex);
 
-    const capture_indices = try gpa.alloc(u32, pattern.properties.items.len);
+    const capture_indices = try gpa.alloc(u32, owned.properties.items.len);
     errdefer gpa.free(capture_indices);
-    const capture_values = try gpa.alloc(?[]const u8, pattern.properties.items.len);
+    const capture_values = try gpa.alloc(?[]const u8, owned.properties.items.len);
     errdefer gpa.free(capture_values);
-    for (pattern.properties.items, 0..) |name, i| {
+    for (owned.properties.items, 0..) |name, i| {
         const number = re.pcre2_substring_number_from_name_8(regex, name.ptr);
         capture_indices[i] = if (number > 0) @intCast(number) else CAPTURE_UNAVAILABLE;
         capture_values[i] = null;
@@ -347,10 +405,10 @@ pub fn prepare(gpa: std.mem.Allocator, pattern: Pattern, jit: bool) !Prepared {
 
     return .{
         .re = regex,
-        .properties = pattern.properties,
-        .regex = pattern.regex,
+        .properties = owned.properties,
+        .regex = owned.regex,
         .allocator = gpa,
-        .boxed_allocator = boxed_allocator,
+        .boxed_context = boxed_context,
         .general_context = general_ctx,
         .jit_stack = if (jit) jitCompile(regex, general_ctx) else null,
         .capture_indices = capture_indices,
@@ -364,8 +422,7 @@ fn jitCompile(regex: *re.pcre2_code_8, general_ctx: *re.pcre2_general_context_8)
     const rc = re.pcre2_jit_compile_8(regex, re.PCRE2_JIT_COMPLETE);
     if (rc != 0) {
         var buffer: [256]u8 = undefined;
-        _ = re.pcre2_get_error_message_8(rc, &buffer, buffer.len);
-        std.log.warn("PCRE2 JIT compilation failed, falling back to the interpreter: {s}", .{buffer});
+        std.log.warn("PCRE2 JIT compilation failed, falling back to the interpreter: {s}", .{errorMessage(rc, &buffer)});
         return null;
     }
     return re.pcre2_jit_stack_create_8(JIT_STACK_START_SIZE, JIT_STACK_MAX_SIZE, general_ctx);
@@ -383,4 +440,56 @@ test "createPattern detects circular macros" {
     try std.testing.expectError(error.CircularMacro, createPattern(gpa, "CYCLEA"));
     try std.testing.expectError(error.CircularMacro, createPattern(gpa, "CYCLEB"));
     try std.testing.expectError(error.CircularMacro, createPattern(gpa, "SELFREF"));
+}
+
+test "createPattern gives every repeated reference a unique name" {
+    const gpa = std.testing.allocator;
+    front.deinitLib();
+    defer front.deinitLib();
+
+    var paths_buf = [_][]const u8{"./test_assets/duplicate_reference.patterns"};
+    const paths: [][]const u8 = paths_buf[0..];
+    try front.compileLib(gpa, std.testing.io, paths);
+
+    const cases = [_]struct { macro: []const u8, names: []const []const u8 }{
+        .{ .macro = "DUPTWO", .names = &.{ "x", "WORDY_x" } },
+        .{ .macro = "DUPTHREE", .names = &.{ "x", "WORDY_x", "WORDY_x_1" } },
+        .{ .macro = "DUPCLASH", .names = &.{ "x", "WORDY_x", "WORDY_WORDY_x" } },
+    };
+
+    for (cases) |case| {
+        const pattern = try createPattern(gpa, case.macro);
+        // prepare() takes ownership of the pattern and would reject duplicate
+        // group names with error.InvalidRegex.
+        var prepared = try prepare(gpa, pattern, false);
+        defer prepared.deinit();
+
+        try std.testing.expectEqual(case.names.len, prepared.properties.items.len);
+        for (case.names, prepared.properties.items, prepared.capture_indices) |expected, actual, group| {
+            try std.testing.expectEqualStrings(expected, actual);
+            try std.testing.expect(group != CAPTURE_UNAVAILABLE);
+        }
+    }
+}
+
+/// One full pattern lifecycle, for `checkAllAllocationFailures` to replay with
+/// every allocation in it failing in turn.
+fn preparedRoundTrip(gpa: std.mem.Allocator, macro: []const u8) !void {
+    const pattern = try createPattern(gpa, macro);
+    var prepared = try prepare(gpa, pattern, false);
+    defer prepared.deinit();
+
+    _ = try prepared.match(gpa, "a b c", true);
+}
+
+test "no allocation failure leaks or panics" {
+    const gpa = std.testing.allocator;
+    front.deinitLib();
+    defer front.deinitLib();
+
+    var paths_buf = [_][]const u8{"./test_assets/duplicate_reference.patterns"};
+    const paths: [][]const u8 = paths_buf[0..];
+    try front.compileLib(gpa, std.testing.io, paths);
+
+    try std.testing.checkAllAllocationFailures(gpa, preparedRoundTrip, .{"DUPTHREE"});
 }

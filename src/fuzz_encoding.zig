@@ -31,15 +31,7 @@ pub const FileEncoding = enum(u3) {
     utf32be = 5,
 
     pub fn fromFlagsByte(flags_byte: u8) FileEncoding {
-        return switch ((flags_byte >> 5) & 0x7) {
-            0 => .raw,
-            1 => .utf8_bom,
-            2 => .utf16le,
-            3 => .utf16be,
-            4 => .utf32le,
-            5 => .utf32be,
-            else => .raw,
-        };
+        return std.enums.fromInt(FileEncoding, (flags_byte >> 5) & 0x7) orelse .raw;
     }
 };
 
