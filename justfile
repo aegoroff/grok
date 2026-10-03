@@ -2,21 +2,21 @@ ver := "0.6.0-dev"
 target := "x86_64-linux-musl"
 cpu := "haswell"
 
-build optimize = "ReleaseFast":
+build optimize = "fast":
   mise exec -- zig build  -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}
 
-test optimize = "ReleaseFast":
+test optimize = "fast":
   mise exec -- zig build test -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}} -Dversion={{ver}}
 
-fuzz optimize = "ReleaseSafe":
+fuzz optimize = "safe":
   mise exec -- zig build test --fuzz -Doptimize={{optimize}} -Dtarget={{target}} --summary all -Dcpu={{cpu}}
 
 linux:
   mise run build:zig
 
-all optimize = "ReleaseFast": (build optimize) (test optimize)
+all optimize = "fast": (build optimize) (test optimize)
 
-build_all optimize = "ReleaseFast" version = "0.6.0-dev":
+build_all optimize = "fast" version = "0.6.0-dev":
     #!/usr/bin/env bash
     rm -rf ./zig-out/*.tar.gz
     rm -rf ./zig-out/bin-*
