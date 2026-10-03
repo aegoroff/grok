@@ -18,7 +18,7 @@ pub const CliFlags = packed struct(u5) {
 /// Packs both halves of the flags byte. The single place that defines the layout,
 /// used by `src/fuzz.zig` to decode and by `build.zig` to emit corpus entries.
 pub fn flagsByte(cli: CliFlags, file_encoding: FileEncoding) u8 {
-    return @as(u8, @as(u5, @bitCast(cli))) | (@as(u8, @intFromEnum(file_encoding)) << 5);
+    return @as(u8, @as(u5, @bitCast(cli))) | (@as(u8, @backingInt(file_encoding)) << 5);
 }
 
 /// File encoding selected by bits 5–7 of the fuzz flags byte.
@@ -63,7 +63,14 @@ const LenientUtf8 = struct {
         }
 
         const chunk = self.bytes[self.index .. self.index + seq_len];
-        if (std.unicode.utf8Decode(chunk)) |cp| {
+        const decoded = switch (seq_len) {
+            1 => chunk[0],
+            2 => std.unicode.utf8Decode2(chunk[0..2].*),
+            3 => std.unicode.utf8Decode3(chunk[0..3].*),
+            4 => std.unicode.utf8Decode4(chunk[0..4].*),
+            else => unreachable,
+        };
+        if (decoded) |cp| {
             self.index += seq_len;
             return cp;
         } else |_| {
@@ -93,7 +100,7 @@ fn prependBom(gpa: std.mem.Allocator, subject: []const u8, bom: []const u8) ![]u
     return out.toOwnedSlice(gpa);
 }
 
-fn encodeUtf16(gpa: std.mem.Allocator, subject: []const u8, endian: std.builtin.Endian, bom: []const u8) ![]u8 {
+fn encodeUtf16(gpa: std.mem.Allocator, subject: []const u8, endian: std.lang.Endian, bom: []const u8) ![]u8 {
     var out = try std.ArrayList(u8).initCapacity(gpa, bom.len + subject.len * 2);
     errdefer out.deinit(gpa);
     try out.appendSlice(gpa, bom);
@@ -117,7 +124,7 @@ fn encodeUtf16(gpa: std.mem.Allocator, subject: []const u8, endian: std.builtin.
     return out.toOwnedSlice(gpa);
 }
 
-fn encodeUtf32(gpa: std.mem.Allocator, subject: []const u8, endian: std.builtin.Endian, bom: []const u8) ![]u8 {
+fn encodeUtf32(gpa: std.mem.Allocator, subject: []const u8, endian: std.lang.Endian, bom: []const u8) ![]u8 {
     var out = try std.ArrayList(u8).initCapacity(gpa, bom.len + subject.len * 4);
     errdefer out.deinit(gpa);
     try out.appendSlice(gpa, bom);

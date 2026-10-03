@@ -45,6 +45,7 @@ CLI entry: `main.zig` → `configuration.zig` (yazap) dispatches to `string`, `f
 | `pcre2` | `regex.zig` | Regex engine |
 | `yazap` | `configuration.zig` | CLI parsing |
 | `fehler` | `frontend.zig` | Parser error diagnostics |
+| `translate_c` | `build.zig` | Translate `c.h` and `pcre2.h` into Zig modules |
 
 ### Where to Change What
 
@@ -105,22 +106,22 @@ CLI entry: `main.zig` → `configuration.zig` (yazap) dispatches to `string`, `f
 ## Build & Test Commands
 ```bash
 # Build
-mise exec zig@0.16.0 -- zig build -Dtarget=x86_64-linux-musl
+mise exec -- zig build -Dtarget=x86_64-linux-musl
 
 # Run tests
-mise exec zig@0.16.0 -- zig build test -Dtarget=x86_64-linux-musl
+mise exec -- zig build test -Dtarget=x86_64-linux-musl
 
 # Build release
-mise exec zig@0.16.0 -- zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-musl
+mise exec -- zig build -Doptimize=ReleaseFast -Dtarget=x86_64-linux-musl
 
 # Create tarball archive
-mise exec zig@0.16.0 -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=1.0.0
+mise exec -- zig build archive -Dtarget=x86_64-linux-musl -Dversion=1.0.0
 
 # Linux release archive + distro packages (.deb/.rpm/.apk, musl static binary)
 mise run build:zig
 
 # Run fuzzing
-mise exec zig@0.16.0 -- zig build test --fuzz -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-musl
+mise exec -- zig build test --fuzz -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-musl
 ```
 
 ## File Structure
@@ -142,7 +143,7 @@ mise exec zig@0.16.0 -- zig build test --fuzz -Doptimize=ReleaseSafe -Dtarget=x8
   - `generated/` - Generated C sources (do not edit)
 - `patterns/` - Built-in pattern definitions (`*.patterns`)
 - `test_assets/` - Test logs and invalid pattern fixtures
-- `build.zig` - Build configuration (flex, bison, pcre2, yazap, fehler)
+- `build.zig` - Build configuration (flex, bison, pcre2, yazap, fehler, translate-c)
 
 ## Important Notes
 - Always verify build passes before completing tasks

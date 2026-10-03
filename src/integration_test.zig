@@ -401,7 +401,7 @@ fn runCase(tc: Case) !void {
             try run_result;
             const output = writer.written();
             for (subs) |sub| {
-                try std.testing.expect(std.mem.indexOf(u8, output, sub) != null);
+                try std.testing.expect(std.mem.find(u8, output, sub) != null);
             }
         },
     }

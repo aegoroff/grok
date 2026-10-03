@@ -51,7 +51,7 @@ threadlocal var fuzz_input_basename_len: usize = 0;
 
 fn threadInputBasename() [:0]const u8 {
     if (fuzz_input_basename_len == 0) {
-        const written = std.fmt.bufPrint(&fuzz_input_basename_buf, "fuzz_{d}.log", .{
+        const written = std.mem.print(&fuzz_input_basename_buf, "fuzz_{d}.log", .{
             std.Thread.getCurrentId(),
         }) catch unreachable;
         fuzz_input_basename_buf[written.len] = 0;
@@ -71,7 +71,7 @@ var active_registry_path_len: usize = 0;
 const SIGINT_CLEANUP_SUPPORTED = @hasDecl(std.posix, "sigaction") and @hasDecl(std.posix.SIG, "INT");
 
 fn processId() std.posix.pid_t {
-    return switch (builtin.os.tag) {
+    return switch (builtin.target.os.tag) {
         .linux => std.os.linux.getpid(),
         .macos, .ios, .tvos, .watchos, .visionos => blk: {
             const rc = std.c.getpid();
@@ -82,9 +82,9 @@ fn processId() std.posix.pid_t {
 }
 
 fn isProcessAlive(pid: std.posix.pid_t) bool {
-    if (builtin.os.tag == .linux) {
+    if (builtin.target.os.tag == .linux) {
         var path_buf: [64]u8 = undefined;
-        const path = std.fmt.bufPrint(&path_buf, "/proc/{d}", .{pid}) catch return true;
+        const path = std.mem.print(&path_buf, "/proc/{d}", .{pid}) catch return true;
         std.Io.Dir.cwd().access(std.testing.io, path, .{}) catch return false;
         return true;
     }
@@ -119,7 +119,7 @@ fn cleanupStaleFuzzTmpDirs() void {
 fn registerActiveFuzzTmpDir(tmp_dir: *std.testing.TmpDir) void {
     const io = std.testing.io;
     const pid = processId();
-    const written = std.fmt.bufPrint(
+    const written = std.mem.print(
         &active_registry_path,
         FUZZ_ACTIVE_ROOT ++ "/{d}",
         .{pid},
@@ -133,7 +133,7 @@ fn registerActiveFuzzTmpDir(tmp_dir: *std.testing.TmpDir) void {
     defer active_root.close(io);
 
     var pid_buf: [32]u8 = undefined;
-    const pid_name = std.fmt.bufPrint(&pid_buf, "{d}", .{pid}) catch return;
+    const pid_name = std.mem.print(&pid_buf, "{d}", .{pid}) catch return;
     var registry = active_root.createFile(io, pid_name, .{}) catch return;
     defer registry.close(io);
     var write_buf: [64]u8 = undefined;
@@ -238,10 +238,10 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
     const macro_idx = smith.valueRangeAtMost(u8, 0, KNOWN_MACROS.len - 1);
     const macro = KNOWN_MACROS[macro_idx];
 
-    // var gpa_alloc = std.heap.DebugAllocator(.{
+    // var gpa_alloc: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{
     //     .stack_trace_frames = 10,
-    // }){};
-    // defer std.debug.assert(gpa_alloc.deinit() == .ok);
+    // });
+    // defer std.debug.assert(gpa_alloc.deinit() == 0);
     // const gpa = gpa_alloc.allocator();
 
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -283,8 +283,7 @@ fn fuzzOne(ctx: *FuzzCtx, smith: *std.testing.Smith) anyerror!void {
         try file_writer.interface.flush();
     }
 
-    const file_path = try std.fmt.allocPrintSentinel(
-        gpa,
+    const file_path = try gpa.printSentinel(
         ".zig-cache/tmp/{s}/{s}",
         .{ ctx.tmp_dir.sub_path[0..], basename },
         0,

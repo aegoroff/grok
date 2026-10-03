@@ -7,7 +7,7 @@ const encoding = @import("encoding.zig");
 const configuration = @import("configuration.zig");
 const yazap = @import("yazap");
 
-const utf8_console = if (builtin.os.tag == .windows)
+const utf8_console = if (builtin.target.os.tag == .windows)
     @import("utf8_console.zig")
 else
     struct {

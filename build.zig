@@ -1,11 +1,12 @@
 const std = @import("std");
 const fuzz_wire = @import("src/fuzz_encoding.zig");
 const builtin = @import("builtin");
+const Translator = @import("translate_c").Translator;
 
 pub fn build(b: *std.Build) void {
     const target = resolveTarget(b);
     const optimize = b.standardOptimizeOption(.{});
-    const strip = optimize != .Debug;
+    const strip = optimize != .debug;
     const options = b.addOptions();
 
     const version_opt = b.option([]const u8, "version", "The version of the app") orelse "0.6.0-dev";
@@ -34,7 +35,7 @@ pub fn build(b: *std.Build) void {
     var flex_args: []const []const u8 = undefined;
     var bison_args: []const []const u8 = undefined;
 
-    switch (builtin.os.tag) {
+    switch (builtin.target.os.tag) {
         .linux => {
             flex_args = &[_][]const u8{ "flex", "--fast", flex_opt, flex_hdr_opt, flex_input };
             bison_args = &[_][]const u8{ "bison", bison_opt, "-dy", "-Wno-yacc", "-Wno-other", bison_input };
@@ -47,7 +48,7 @@ pub fn build(b: *std.Build) void {
             flex_args = &[_][]const u8{ "/usr/local/opt/flex/bin/flex", "--fast", flex_opt, flex_hdr_opt, flex_input };
             bison_args = &[_][]const u8{ "/usr/local/opt/bison/bin/bison", bison_opt, "-dy", "-Wno-yacc", "-Wno-other", bison_input };
         },
-        else => @compileError("Unsupported OS: " ++ @tagName(builtin.os.tag)),
+        else => @compileError("Unsupported OS: " ++ @tagName(builtin.target.os.tag)),
     }
 
     const flex = b.addSystemCommand(flex_args);
@@ -63,22 +64,26 @@ pub fn build(b: *std.Build) void {
         .support_jit = true,
     });
 
-    const translate_c = b.addTranslateC(.{
-        .root_source_file = b.path("src/grok/c.h"),
+    const translate_c_dep = b.dependency("translate_c", .{});
+
+    const translate_c: Translator = .init(translate_c_dep, .{
+        .name = "c",
+        .c_source_file = b.path("src/grok/c.h"),
         .target = target,
         .optimize = optimize,
     });
     translate_c.addIncludePath(b.path(c_code_path));
     translate_c.addIncludePath(b.path(generated_path));
-    translate_c.step.dependOn(&bison.step);
+    translate_c.run.step.dependOn(&bison.step);
 
-    const translate_pcre = b.addTranslateC(.{
-        .root_source_file = pcre2_dep.namedLazyPath("pcre2.h"),
+    const translate_pcre: Translator = .init(translate_c_dep, .{
+        .name = "pcre2",
+        .c_source_file = pcre2_dep.namedLazyPath("pcre2.h"),
         .target = target,
         .optimize = optimize,
     });
     translate_pcre.defineCMacro("PCRE2_CODE_UNIT_WIDTH", "8");
-    translate_pcre.step.dependOn(&pcre2_dep.artifact("pcre2-8").step);
+    translate_pcre.run.step.dependOn(&pcre2_dep.artifact("pcre2-8").step);
 
     const c_lib = b.addLibrary(.{
         .name = "grok-c",
@@ -118,7 +123,7 @@ pub fn build(b: *std.Build) void {
     });
     deps.applyTo(exe.root_module);
 
-    if (optimize == .ReleaseFast and target.result.os.tag != .macos and target.result.os.tag != .windows) {
+    if (optimize == .fast and target.result.os.tag != .macos and target.result.os.tag != .windows) {
         exe.lto = .full;
         exe.link_gc_sections = true;
     }
@@ -169,52 +174,32 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_fuzzing.step);
 
-    // Packaging
+    // Packaging — install paths are LazyPath-only since Zig 0.17 (configure/make split).
     const tr = target.result;
-    const tar_file = b.fmt("{s}/grok-{s}-{s}-{s}-{s}.tar", .{
-        b.install_prefix,
+    const gz_basename = b.fmt("grok-{s}-{s}-{s}-{s}.tar.gz", .{
         version_opt,
         @tagName(tr.cpu.arch),
         @tagName(tr.os.tag),
         @tagName(tr.abi),
     });
 
-    const binary_step = b.addSystemCommand(&.{
-        "tar",
-        "-cvf", // c - create, f - file
-        tar_file,
-        "-C",
-        b.exe_dir,
-        ".",
-    });
-    const license_step = b.addSystemCommand(&.{
-        "tar",
-        "-rvf", // r - append, f - file
-        tar_file,
-        "-C",
-        ".",
-        "LICENSE.txt",
-    });
-    const patterns_step = b.addSystemCommand(&.{
-        "tar",
-        "-rvf", // r - append, f - file
-        tar_file,
-        "-C",
-        "patterns/",
-        ".",
-    });
-    const gzip_step = b.addSystemCommand(&.{
-        "gzip",
-        tar_file,
-    });
+    const pack = b.addSystemCommand(&.{ "tar", "-czvf" });
+    const gz_file = pack.addOutputFileArg2(gz_basename, .{});
+    pack.addArg("-C");
+    pack.addDirectoryArg2(.{ .relative = .{ .base = .install_bin } }, .{ .make_absolute = true });
+    pack.addArg(".");
+    pack.addArg("-C");
+    pack.addDirectoryArg2(b.path(""), .{ .make_absolute = true });
+    pack.addArg("LICENSE.txt");
+    pack.addArg("-C");
+    pack.addDirectoryArg2(b.path("patterns"), .{ .make_absolute = true });
+    pack.addArg(".");
+    pack.step.dependOn(b.getInstallStep());
 
-    binary_step.step.dependOn(b.getInstallStep());
-    license_step.step.dependOn(&binary_step.step);
-    patterns_step.step.dependOn(&license_step.step);
-    gzip_step.step.dependOn(&patterns_step.step);
-
+    // Keep the tarball off the default install step to avoid a cycle with getInstallStep().
+    const install_tarball = b.addInstallFile(gz_file, gz_basename);
     const archive_step = b.step("archive", "Create a tar.gz archive of the build");
-    archive_step.dependOn(&gzip_step.step);
+    archive_step.dependOn(&install_tarball.step);
 }
 
 const ModuleDeps = struct {
@@ -224,8 +209,8 @@ const ModuleDeps = struct {
     pcre2_dep: *std.Build.Dependency,
     c_lib: *std.Build.Step.Compile,
     options: *std.Build.Step.Options,
-    translate_c: *std.Build.Step.TranslateC,
-    translate_pcre: *std.Build.Step.TranslateC,
+    translate_c: Translator,
+    translate_pcre: Translator,
 
     fn applyTo(self: ModuleDeps, mod: *std.Build.Module) void {
         mod.addImport("yazap", self.yazap.module("yazap"));
@@ -233,20 +218,15 @@ const ModuleDeps = struct {
         mod.linkLibrary(self.c_lib);
         mod.linkLibrary(self.pcre2_dep.artifact("pcre2-8"));
         mod.addImport("build_options", self.options.createModule());
-        mod.addImport("c", self.translate_c.createModule());
-        mod.addImport("re", self.translate_pcre.createModule());
+        mod.addImport("c", self.translate_c.mod);
+        mod.addImport("re", self.translate_pcre.mod);
     }
 };
 
 fn ensureDirExists(b: *std.Build, dir_path: []const u8) void {
-    const full_path = b.pathFromRoot(dir_path);
-    var dir = std.Io.Dir.cwd().openDir(b.graph.io, full_path, .{}) catch {
-        std.Io.Dir.cwd().createDir(b.graph.io, full_path, .default_dir) catch |err| {
-            std.debug.print("Failed to create directory '{s}': {s}\n", .{ full_path, @errorName(err) });
-        };
-        return;
+    b.root.createDirPath(b.graph.io, dir_path) catch |err| {
+        std.debug.print("Failed to create directory '{s}': {s}\n", .{ dir_path, @errorName(err) });
     };
-    dir.close(b.graph.io);
 }
 
 /// Scans `patterns/*.patterns` and returns Zig source for the `fuzz_macros` module.
@@ -268,7 +248,7 @@ fn generateFuzzMacros(b: *std.Build) []const u8 {
         "pub const names = [_][]const u8{\n") catch @panic("OOM");
     for (names.items) |name| {
         var line_buf: [256]u8 = undefined;
-        const line = std.fmt.bufPrint(&line_buf, "    \"{s}\",\n", .{name}) catch @panic("macro name too long");
+        const line = std.mem.print(&line_buf, "    \"{s}\",\n", .{name}) catch @panic("macro name too long");
         out.appendSlice(b.allocator, line) catch @panic("OOM");
     }
     out.appendSlice(b.allocator, "};\n") catch @panic("OOM");
@@ -277,13 +257,22 @@ fn generateFuzzMacros(b: *std.Build) []const u8 {
 
 /// Reads the first line of `test_assets/logUTF8.log` for the fuzz corpus NLOG seed.
 fn readNlogUtf8Line(b: *std.Build) []const u8 {
-    const log_path = b.pathFromRoot("test_assets/logUTF8.log");
-    const content = std.Io.Dir.cwd().readFileAlloc(b.graph.io, log_path, b.allocator, .unlimited) catch |err| {
+    const io = b.graph.io;
+    const file = b.root.openFile(io, "test_assets/logUTF8.log", .{}) catch |err| {
+        std.debug.panic("failed to open test_assets/logUTF8.log: {s}", .{@errorName(err)});
+    };
+    defer file.close(io);
+
+    var reader_buf: [4096]u8 = undefined;
+    var file_reader = file.reader(io, &reader_buf);
+    var out: std.Io.Writer.Allocating = .init(b.allocator);
+    defer out.deinit();
+    _ = file_reader.interface.streamRemaining(&out.writer) catch |err| {
         std.debug.panic("failed to read test_assets/logUTF8.log: {s}", .{@errorName(err)});
     };
-    defer b.allocator.free(content);
-    const end = std.mem.indexOfScalar(u8, content, '\n') orelse content.len;
-    return b.dupe(content[0..end]);
+    const content = out.written();
+    const end = std.mem.findScalar(u8, content, '\n') orelse content.len;
+    return b.graph.dupeString(content[0..end]);
 }
 
 fn macroNameIndex(names: []const []const u8, name: []const u8) u8 {
@@ -309,7 +298,7 @@ fn generateFuzzCorpus(b: *std.Build) []const u8 {
 
     const nlog_line = readNlogUtf8Line(b);
     defer b.allocator.free(nlog_line);
-    const nlog_multiline = std.fmt.allocPrint(b.allocator, "{s}\nplain line", .{nlog_line}) catch @panic("OOM");
+    const nlog_multiline = b.allocator.print("{s}\nplain line", .{nlog_line}) catch @panic("OOM");
     defer b.allocator.free(nlog_multiline);
     const notspace_512 = repeatByte(b, 'a', 512);
     defer b.allocator.free(notspace_512);
@@ -387,7 +376,7 @@ fn appendSmithU64(out: *std.ArrayList(u8), b: *std.Build, value: u64) void {
     std.mem.writeInt(u64, &buf, value, .little);
     for (buf) |byte| {
         var elem_buf: [8]u8 = undefined;
-        const elem = std.fmt.bufPrint(&elem_buf, "{d}, ", .{byte}) catch @panic("OOM");
+        const elem = std.mem.print(&elem_buf, "{d}, ", .{byte}) catch @panic("OOM");
         out.appendSlice(b.allocator, elem) catch @panic("OOM");
     }
 }
@@ -412,7 +401,7 @@ fn appendSmithCorpusEntry(
             appendSmithU64(out, b, chunk_len);
             for (subject[offset .. offset + chunk_len]) |byte| {
                 var elem_buf: [8]u8 = undefined;
-                const elem = std.fmt.bufPrint(&elem_buf, "{d}, ", .{byte}) catch @panic("OOM");
+                const elem = std.mem.print(&elem_buf, "{d}, ", .{byte}) catch @panic("OOM");
                 out.appendSlice(b.allocator, elem) catch @panic("OOM");
             }
             offset += chunk_len;
@@ -425,20 +414,20 @@ fn appendSmithCorpusEntry(
 fn collectPatternMacroNames(b: *std.Build) std.ArrayList([]const u8) {
     var names: std.ArrayList([]const u8) = .empty;
 
-    const patterns_path = b.pathFromRoot("patterns");
-    var patterns_dir = std.Io.Dir.cwd().openDir(b.graph.io, patterns_path, .{ .iterate = true }) catch |err| {
+    const io = b.graph.io;
+    var patterns_dir = b.root.openDir(io, "patterns", .{ .iterate = true }) catch |err| {
         std.debug.panic("failed to open patterns/: {s}", .{@errorName(err)});
     };
-    defer patterns_dir.close(b.graph.io);
+    defer patterns_dir.close(io);
 
     var it = patterns_dir.iterate();
-    while (it.next(b.graph.io) catch |err| {
+    while (it.next(io) catch |err| {
         std.debug.panic("failed to iterate patterns/: {s}", .{@errorName(err)});
     }) |entry| {
         if (entry.kind != .file) continue;
         if (!std.mem.endsWith(u8, entry.name, ".patterns")) continue;
 
-        const content = patterns_dir.readFileAlloc(b.graph.io, entry.name, b.allocator, .unlimited) catch |err| {
+        const content = patterns_dir.readFileAlloc(io, entry.name, b.allocator, .unlimited) catch |err| {
             std.debug.panic("failed to read patterns/{s}: {s}", .{ entry.name, @errorName(err) });
         };
         defer b.allocator.free(content);
@@ -447,9 +436,9 @@ fn collectPatternMacroNames(b: *std.Build) std.ArrayList([]const u8) {
         while (lines.next()) |line| {
             const trimmed = std.mem.trim(u8, line, " \t\r");
             if (trimmed.len == 0 or trimmed[0] == '#') continue;
-            const end = std.mem.indexOfScalar(u8, trimmed, ' ') orelse continue;
+            const end = std.mem.findScalar(u8, trimmed, ' ') orelse continue;
             if (end == 0) continue;
-            const name = b.dupe(trimmed[0..end]);
+            const name = b.graph.dupeString(trimmed[0..end]);
 
             var duplicate = false;
             for (names.items) |existing| {
@@ -485,7 +474,7 @@ const pinned_glibc: std.Target.Query.SemanticVersion = .{
 };
 
 fn materializeHostTriple(query: *std.Target.Query) void {
-    if (query.cpu_arch == null) query.cpu_arch = builtin.cpu.arch;
+    if (query.cpu_arch == null) query.cpu_arch = builtin.target.cpu.arch;
     if (query.os_tag == null) query.os_tag = builtin.target.os.tag;
     if (query.abi == null) query.abi = builtin.target.abi;
 }
