@@ -1,5 +1,5 @@
 [tools]
-zig = "master"
+zig = "0.17"
 
 [tasks."build:zig"]
 description = "Build project"

@@ -5,8 +5,8 @@
     .minimum_zig_version = "0.17.0-dev",
     .dependencies = .{
         .pcre2 = .{
-            .url = "git+https://github.com/PCRE2Project/pcre2?ref=pcre2-10.48#7978954dbd2efc6f2196869290553cf1871b4ce6",
-            .hash = "pcre2-10.48.0-IZ6r6xbVXgDEFDNJ-plJuG66pvQJIDeYdflXi2zQHoET",
+            .url = "git+https://github.com/PCRE2Project/pcre2#1a30b868d7628f1e847b5eb9b59f296858ba0531",
+            .hash = "pcre2-10.50.0-DEV-IZ6r67wArwCO0RLfwVkVyBlAiKEZiDN_CYHWzf_ftG7b",
         },
         .yazap = .{
             .url = "https://github.com/prajwalch/yazap/archive/refs/tags/0.7.0.tar.gz",
