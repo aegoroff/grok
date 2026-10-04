@@ -147,6 +147,9 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .link_libc = true,
         }),
+        // The self-hosted backend (default for Debug) emits no sancov
+        // instrumentation, which crashes the `--fuzz` coordinator.
+        .use_llvm = true,
     });
     deps.applyTo(fuzzing.root_module);
 
